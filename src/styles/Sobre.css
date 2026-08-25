@@ -1,0 +1,405 @@
+.sobre {
+    width: 100%;
+    color: #292832;
+}
+
+
+/* =========================
+   CONFIGURAÇÃO GERAL
+========================= */
+
+.sobre__container {
+    width: min(100% - 3rem, 1120px);
+    margin: 0 auto;
+}
+
+
+/* =========================
+   HERO
+========================= */
+
+.sobre__hero {
+    background: #e8e1e5;
+    padding: 3rem 0 0.1rem;
+}
+
+.sobre__title {
+    margin: 0 0 0.8rem;
+
+    font-size: clamp(2.7rem, 5vw, 4.4rem);
+    line-height: 1;
+    font-weight: 900;
+
+    color: #292832;
+}
+
+.sobre__title span {
+    color: #ff287d;
+}
+
+.sobre__description {
+    max-width: 730px;
+
+    margin: 0 0 1.3rem;
+
+    color: #6d6970;
+
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+.sobre__image-section {
+    padding: 0 0 2.2rem;
+    background: #e8e1e5;
+}
+
+.sobre__image-wrapper {
+    position: relative;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 0.8rem;
+}
+
+.sobre__image {
+    width: 100%;
+    height: auto;
+
+    max-height: 330px;
+
+    display: block;
+
+    object-fit: cover;
+
+}
+
+.sobre__image-caption {
+    position: absolute;
+    right: 0.8rem;
+    bottom: 0.8rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 0.4rem;
+    background: rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+
+/* =========================
+   PROBLEMA / SOLUÇÃO
+========================= */
+
+.sobre__info {
+    background: #e8e1e5;
+    padding: 2rem 0 2rem;
+}
+
+.sobre__info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.7rem;
+}
+
+.sobre__info-item {
+    padding: 1.5rem 1.6rem;
+    border-radius: 0.8rem;
+    background: #ffffff;
+}
+
+.sobre__label {
+    display: block;
+
+    margin-bottom: 0.1rem;
+
+    font-size: 0.85rem;
+    font-weight: 600;
+
+    letter-spacing: 0.02em;
+}
+
+.sobre__label--blue {
+    color: #159bea;
+}
+
+.sobre__label--pink {
+    color: #ff287d;
+}
+
+.sobre__info-item h2 {
+    margin: 0 0 0.9rem;
+
+    font-size: 1.55rem;
+    line-height: 1.2;
+
+    color: #292832;
+}
+
+.sobre__info-item p {
+    margin: 0;
+
+    color: #706d73;
+
+    font-size: 1.1rem;
+    line-height: 1.55;
+}
+
+
+/* =========================
+   PILARES
+========================= */
+
+.sobre__pillars {
+    padding: 3.2rem 0 3rem;
+
+    background: #e8e1e5;
+}
+
+.sobre__pillars-title {
+    margin: 0 0 1.7rem;
+
+    font-size: 1.65rem;
+    line-height: 1.15;
+
+    color: #292832;
+}
+
+.sobre__pillars-grid {
+    display: grid;
+
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    gap: 1.7rem;
+}
+
+.sobre__card {
+    min-height: 205px;
+
+    padding: 1.3rem 1.6rem;
+
+    background: #ffffff;
+
+    border-radius: 0.8rem;
+}
+
+.sobre__card-icon {
+    width: 2.7rem;
+    height: 2.7rem;
+
+    margin-bottom: 1rem;
+
+    border-radius: 0.7rem;
+
+    background: #d0dbe3cc;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sobre__card-icon svg {
+    width: 1.7rem;
+    fill: var(--color-primary);
+}
+
+.sobre__card h3 {
+    margin: 0 0 0.7rem;
+
+    color: #292832;
+
+    font-size: 1.15rem;
+    line-height: 1.2;
+}
+
+.sobre__card p {
+    margin: 0;
+
+    color: #706d73;
+
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+
+/* =========================
+   CTA
+========================= */
+
+.sobre__cta {
+    padding: 3rem 0 3.2rem;
+
+    background: #202027;
+
+    color: #ffffff;
+}
+
+.sobre__cta h2 {
+    margin: 0 0 0.35rem;
+
+    color: #ffffff;
+
+    font-size: 1.45rem;
+}
+
+.sobre__cta p {
+    max-width: 1000px;
+
+    margin: 0 0 1rem;
+
+    color: #c4c2c7;
+
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.sobre__cta-button {
+    display: inline-block;
+
+    padding: 0.7rem 1.6rem;
+
+    border-radius: 0.4rem;
+
+    background: #ff287d;
+    color: #ffffff;
+
+    font-size: 0.9rem;
+    font-weight: 400;
+
+    text-transform: uppercase;
+    text-decoration: none;
+}
+
+
+/* =========================
+   NOTEBOOK
+========================= */
+
+@media (max-width: 1024px) {
+
+    .sobre__container {
+        width: min(100% - 3rem, 950px);
+    }
+
+    .sobre__hero {
+        padding-top: 2.5rem;
+        padding-bottom: 0rem;
+    }
+
+    .sobre__info-grid {
+        gap: 1.25rem;
+    }
+
+    .sobre__pillars-grid {
+        gap: 1.25rem;
+    }
+}
+
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 768px) {
+
+    .sobre__container {
+        width: calc(100% - 2rem);
+    }
+
+    .sobre__hero {
+        padding: 2.2rem 0;
+    }
+
+    .sobre__description {
+        max-width: 100%;
+    }
+
+    .sobre__image {
+        max-height: 300px;
+    }
+
+    .sobre__info {
+        padding: 2.5rem 0;
+    }
+
+    .sobre__info-grid {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    .sobre__pillars {
+        padding: 2.5rem 0;
+    }
+
+    .sobre__pillars-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sobre__card:last-child {
+        grid-column: 1 / -1;
+    }
+}
+
+
+/* =========================
+   CELULAR
+========================= */
+
+@media (max-width: 480px) {
+
+    .sobre__container {
+        width: calc(100% - 1.5rem);
+    }
+
+    .sobre__hero {
+        padding: 1.8rem 0;
+    }
+
+    .sobre__title {
+        font-size: 2.5rem;
+    }
+
+    .sobre__description {
+        font-size: 0.9rem;
+    }
+
+    .sobre__image {
+        max-height: 220px;
+    }
+
+    .sobre__info {
+        padding: 2rem 0;
+    }
+
+    .sobre__info-grid {
+        gap: 2rem;
+    }
+
+    .sobre__info-item h2 {
+        font-size: 1.35rem;
+    }
+
+    .sobre__info-item p {
+        font-size: 0.9rem;
+    }
+
+    .sobre__pillars-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sobre__card:last-child {
+        grid-column: auto;
+    }
+
+    .sobre__card {
+        min-height: auto;
+
+        padding: 1.3rem;
+    }
+
+    .sobre__cta {
+        padding: 2.3rem 0;
+    }
+
+    .sobre__cta h2 {
+        font-size: 1.3rem;
+    }
+}

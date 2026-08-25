@@ -6,7 +6,7 @@ function ExternalLayout() {
         <>
             <NavBar/>
 
-            <main>
+            <main className="external-layout__content">
                 <Outlet/>
             </main>
         </>

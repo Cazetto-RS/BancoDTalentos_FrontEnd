@@ -73,13 +73,36 @@ html {
 
 body {
   min-width: 320px;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   margin: 0;
+  overflow: hidden;
   background: var(--color-background);
   color: var(--color-text);
   font-family: var(--font-sans);
   font-size: 1rem;
   line-height: 1.5;
+}
+
+#root {
+  height: 100%;
+}
+
+.external-layout__content {
+  position: fixed;
+  inset: 4rem 0 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.external-layout__content > .fullBody {
+  height: 100%;
+}
+
+@media (max-width: 480px) {
+  .external-layout__content {
+    inset-block-start: 3.75rem;
+  }
 }
 
 .sr-only {

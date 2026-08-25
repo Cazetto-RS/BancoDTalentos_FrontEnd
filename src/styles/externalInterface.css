@@ -33,6 +33,15 @@
     margin-top: 1.5rem;
 }
 
+.subtitle__page_left {
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    line-height: 1.5rem;
+    text-align: left;
+    margin-top: 1.5rem;
+}
+
 .span__azul {
     color: var(--color-primary);
 }
