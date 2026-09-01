@@ -7,7 +7,7 @@
 }
 
 .svgCheck {
-    fill: var(--color-background);
+    fill: #fff;
     width: 1rem;
 }
 
@@ -93,6 +93,11 @@
     font-size: .8rem;
 }
 
+.registration-progress__icon svg{
+    fill: #292832;
+    width: 1.2rem;
+}
+
 .registration-progress small {
     font-size: .72rem;
 }
@@ -103,6 +108,10 @@
     color: #fff;
 }
 
+.registration-progress .is-complete .registration-progress__icon svg {
+    fill: #fff;
+}
+
 .registration-progress .is-current {
     color: var(--color-primary);
 }
@@ -111,6 +120,10 @@
     border: 2px solid var(--color-primary);
     color: var(--color-primary);
     box-shadow: 0 0 0 4px rgb(22 156 249 / 10%);
+}
+
+.registration-progress .is-current .registration-progress__icon svg {
+    fill: var(--color-primary);
 }
 
 .registration-form {
@@ -124,6 +137,23 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-content: start;
     gap: 1rem 2rem;
+}
+
+.registration-repeat-list {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 1.5rem;
+}
+
+.registration-repeat-item {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 2rem;
+}
+
+.registration-repeat-item + .registration-repeat-item {
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
 }
 
 .registration-field {
@@ -149,7 +179,7 @@
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
     outline: 0;
-    background: #E9E9E9;
+    background: var(--color-surface-muted);
     color: var(--color-text);
     font: inherit;
     font-size: .86rem;
@@ -199,7 +229,7 @@
     padding: .7rem;
     border: 1px dashed var(--color-border);
     border-radius: var(--radius-sm);
-    background: #E9E9E9;
+    background: var(--color-surface-muted);
     color: var(--color-text-muted);
     font-size: .85rem;
     font-weight: 500;
@@ -244,12 +274,12 @@
     gap: .8rem;
     padding: .8rem;
     border-radius: var(--radius-md);
-    background: var(--color-surface-muted);
+    background: var(--color-surface);
 }
 
 .registration-skill .registration-field input,
 .registration-skill .registration-field select {
-    background: var(--color-surface);
+    background: var(--color-surface-muted);
 }
 
 .registration-actions {
@@ -315,6 +345,29 @@
     box-shadow: var(--shadow-md);
 }
 
+.registration-remove-button {
+    grid-column: 1 / -1;
+    justify-self: end;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-danger);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.registration-remove-button:hover {
+    text-decoration: underline;
+}
+
+.registration-remove-button:focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+}
+
 .registration-success__icon {
     width: 4.5rem;
     height: 4.5rem;
@@ -324,6 +377,11 @@
     background: rgb(22 156 249 / 10%);
     color: var(--color-primary);
     font-size: 2rem;
+}
+
+.registration-success__icon svg {
+    fill: var(--color-primary);
+    width: 1.5rem;
 }
 
 .registration-success h1 {
@@ -367,6 +425,15 @@
     }
 
     .registration-fields {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .registration-repeat-list {
+        grid-column: auto;
+    }
+
+    .registration-repeat-item {
         grid-template-columns: 1fr;
         gap: 1rem;
     }

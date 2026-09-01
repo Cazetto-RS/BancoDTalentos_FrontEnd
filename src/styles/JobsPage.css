@@ -58,7 +58,10 @@
     stroke-linecap: round;
 }
 
-.jobs__list { padding: 0 0 3.5rem; }
+.jobs__list {
+    padding: 0 0 3.5rem;
+    scroll-margin-top: 5rem;
+}
 
 .jobs__grid {
     display: grid;
@@ -67,6 +70,8 @@
 }
 
 .job-card {
+    --job-accent: var(--color-primary);
+    --job-accent-soft: #e6f3fb;
     box-sizing: border-box;
     min-width: 0;
     padding: 1.35rem;
@@ -81,15 +86,24 @@
     transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
-.job-card:hover { transform: translateY(-3px); border-color: rgb(22 156 249 / 30%); box-shadow: var(--shadow-md); }
+.job-card:hover { transform: translateY(-3px); border-color: var(--job-accent); box-shadow: var(--shadow-md); }
 .job-card:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
 
 .job-card__icon {
     width: 2.8rem;
     height: 2.8rem;
+    display: grid;
+    place-items: center;
     margin-bottom: 1rem;
     border-radius: 0.7rem;
-    background: #e6f3fb;
+    background: var(--job-accent);
+    color: #fff;
+}
+
+.job-card__icon svg {
+    width: 1.45rem;
+    height: 1.45rem;
+    fill: currentColor;
 }
 
 .job-card h2 { margin: 0 0 0.45rem; font-size: 1.1rem; line-height: 1.25; }
@@ -118,11 +132,51 @@
 
 .job-card__skills li {
     padding: 0.25rem 0.6rem;
-    border: 1px solid rgba(21, 155, 234, 0.18);
+    border: 1px solid #e6f3fb;
     border-radius: 999px;
-    background: rgba(21, 155, 234, 0.09);
-    color: #168bd0;
+    background: #e6f3fb;
+    color: var(--color-primary);
     font-size: 0.72rem;
+}
+
+.jobs__pagination {
+    display: flex;
+    justify-content: center;
+    gap: .45rem;
+    margin-top: 2rem;
+}
+
+.jobs__pagination button {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.jobs__pagination button:hover:not(:disabled),
+.jobs__pagination button.is-current {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.jobs__pagination button:focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 2px;
+}
+
+.jobs__pagination button:disabled {
+    opacity: .4;
+    cursor: not-allowed;
 }
 
 @media (max-width: 1024px) {

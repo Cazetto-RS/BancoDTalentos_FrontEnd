@@ -1,10 +1,13 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { CSSProperties, FormEvent } from 'react'
 import { createPortal } from 'react-dom'
+import { getJobCategoryTheme, type JobCategoryKey } from '../../constants/jobCategories'
+import JobCategoryIcon from './JobCategoryIcon'
 import '../../styles/JobApplicationModal.css'
 
 export interface JobModalData {
     title: string
+    category: JobCategoryKey
     salary: string
     details: string
     skills: string[]
@@ -20,6 +23,11 @@ function JobApplicationModal({ job, onClose }: JobApplicationModalProps) {
     const titleId = useId()
     const dialogRef = useRef<HTMLDivElement>(null)
     const [contract = 'Contrato a combinar', workModel = 'Modelo a combinar'] = job.details.split(' • ')
+    const theme = getJobCategoryTheme(job.category)
+    const categoryStyle = {
+        '--job-accent': theme.color,
+        '--job-accent-soft': theme.softColor,
+    } as CSSProperties
 
     useEffect(() => {
         const previouslyFocused = document.activeElement as HTMLElement | null
@@ -48,9 +56,9 @@ function JobApplicationModal({ job, onClose }: JobApplicationModalProps) {
 
     return createPortal(
         <div className="job-modal__backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-            <div className="job-modal" role="dialog" aria-modal="true" aria-labelledby={titleId} ref={dialogRef} tabIndex={-1}>
+            <div className="job-modal" style={categoryStyle} role="dialog" aria-modal="true" aria-labelledby={titleId} ref={dialogRef} tabIndex={-1}>
                 <header className="job-modal__header">
-                    <div className="job-modal__icon" aria-hidden="true" />
+                    <div className="job-modal__icon" aria-hidden="true"><JobCategoryIcon category={job.category} /></div>
                     <div>
                         <h2 id={titleId}>{job.title}</h2>
                         <p>Oportunidade em Tecnologia</p>
@@ -115,7 +123,11 @@ function JobApplicationModal({ job, onClose }: JobApplicationModalProps) {
                 {step === 3 && (
                     <div className="job-modal__body">
                         <div className="job-modal__success">
-                            <div className="job-modal__check" aria-hidden="true">✓</div>
+                            <div className="job-modal__check" aria-hidden="true">
+                                <svg viewBox="0 0 500 384" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.125 191.625L76 133.792L191.75 249.458L423.25 18.125L481.125 75.9583L191.75 365.125L18.125 191.625Z" stroke-width="36.25" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </div>
                             <h3>Sua inscrição foi confirmada!</h3>
                             <strong>{job.title}</strong>
                             <span>{job.salary}</span>

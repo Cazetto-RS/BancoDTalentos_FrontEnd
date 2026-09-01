@@ -1,25 +1,57 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import '../../styles/externalInterface.css'
 import '../../styles/JobsPage.css'
 import JobApplicationModal, { type JobModalData } from '../../components/jobs/JobApplicationModal'
+import JobCategoryIcon from '../../components/jobs/JobCategoryIcon'
+import { getJobCategoryTheme } from '../../constants/jobCategories'
+
+const DESKTOP_PAGE_SIZE = 12
+const MOBILE_PAGE_SIZE = 6
+const MOBILE_BREAKPOINT = '(max-width: 600px)'
 
 const jobs: JobModalData[] = [
-    { title: 'Desenvolvedor Web', salary: 'R$ 3.500,00 - R$ 5.000,00', details: 'PJ • Híbrido • Pleno', skills: ['React', 'JavaScript', 'TypeScript'] },
-    { title: 'Designer Gráfico', salary: 'R$ 4.500,00 - R$ 6.000,00', details: 'PJ • Híbrido • Sênior', skills: ['Adobe', 'Photoshop', 'Illustrator'] },
-    { title: 'Desenvolvedor Mobile', salary: 'R$ 4.000,00 - R$ 6.500,00', details: 'CLT • Remoto • Pleno', skills: ['React Native', 'Node.js', 'MongoDB'] },
-    { title: 'Analista de Dados', salary: 'R$ 5.000,00 - R$ 7.500,00', details: 'PJ • Híbrido • Sênior', skills: ['Python', 'SQL', 'Power BI'] },
-    { title: 'UX/UI Designer', salary: 'R$ 4.500,00 - R$ 6.000,00', details: 'CLT • Presencial • Pleno', skills: ['Figma', 'Adobe XD', 'Prototipagem'] },
-    { title: 'DevOps Engineer', salary: 'R$ 6.000,00 - R$ 9.000,00', details: 'PJ • Remoto • Sênior', skills: ['Docker', 'Kubernetes', 'AWS'] },
-    { title: 'Front-end Developer', salary: 'R$ 4.000,00 - R$ 6.000,00', details: 'CLT • Híbrido • Júnior', skills: ['Vue.js', 'Tailwind', 'Nuxt'] },
-    { title: 'Product Designer', salary: 'R$ 5.500,00 - R$ 8.000,00', details: 'PJ • Remoto • Sênior', skills: ['Figma', 'User Research', 'Prototyping'] },
-    { title: 'Back-end Developer', salary: 'R$ 5.000,00 - R$ 7.500,00', details: 'CLT • Presencial • Pleno', skills: ['Java', 'Spring', 'PostgreSQL'] },
-    { title: 'QA Engineer', salary: 'R$ 4.000,00 - R$ 6.000,00', details: 'CLT • Híbrido • Pleno', skills: ['Cypress', 'Selenium', 'Jest'] },
-    { title: 'Analista de Segurança', salary: 'R$ 5.500,00 - R$ 8.500,00', details: 'PJ • Remoto • Sênior', skills: ['Cloud', 'Linux', 'SIEM'] },
-    { title: 'Product Manager', salary: 'R$ 6.000,00 - R$ 9.000,00', details: 'CLT • Híbrido • Sênior', skills: ['Scrum', 'Discovery', 'Analytics'] },
+    { title: 'Desenvolvedor Web', category: 'desenvolvimento', salary: 'R$ 3.500,00 - R$ 5.000,00', details: 'PJ • Híbrido • Pleno', skills: ['React', 'JavaScript', 'TypeScript'] },
+    { title: 'Designer Gráfico', category: 'design', salary: 'R$ 4.500,00 - R$ 6.000,00', details: 'PJ • Híbrido • Sênior', skills: ['Adobe', 'Photoshop', 'Illustrator'] },
+    { title: 'Desenvolvedor Mobile', category: 'mobile', salary: 'R$ 4.000,00 - R$ 6.500,00', details: 'CLT • Remoto • Pleno', skills: ['React Native', 'Node.js', 'MongoDB'] },
+    { title: 'Analista de Dados', category: 'dados', salary: 'R$ 5.000,00 - R$ 7.500,00', details: 'PJ • Híbrido • Sênior', skills: ['Python', 'SQL', 'Power BI'] },
+    { title: 'UX/UI Designer', category: 'ux', salary: 'R$ 4.500,00 - R$ 6.000,00', details: 'CLT • Presencial • Pleno', skills: ['Figma', 'Adobe XD', 'Prototipagem'] },
+    { title: 'DevOps Engineer', category: 'devops', salary: 'R$ 6.000,00 - R$ 9.000,00', details: 'PJ • Remoto • Sênior', skills: ['Docker', 'Kubernetes', 'AWS'] },
+    { title: 'Front-end Developer', category: 'desenvolvimento', salary: 'R$ 4.000,00 - R$ 6.000,00', details: 'CLT • Híbrido • Júnior', skills: ['Vue.js', 'Tailwind', 'Nuxt'] },
+    { title: 'Product Designer', category: 'design', salary: 'R$ 5.500,00 - R$ 8.000,00', details: 'PJ • Remoto • Sênior', skills: ['Figma', 'User Research', 'Prototyping'] },
+    { title: 'Back-end Developer', category: 'desenvolvimento', salary: 'R$ 5.000,00 - R$ 7.500,00', details: 'CLT • Presencial • Pleno', skills: ['Java', 'Spring', 'PostgreSQL'] },
+    { title: 'QA Engineer', category: 'qualidade', salary: 'R$ 4.000,00 - R$ 6.000,00', details: 'CLT • Híbrido • Pleno', skills: ['Cypress', 'Selenium', 'Jest'] },
+    { title: 'Analista de Segurança', category: 'seguranca', salary: 'R$ 5.500,00 - R$ 8.500,00', details: 'PJ • Remoto • Sênior', skills: ['Cloud', 'Linux', 'SIEM'] },
+    { title: 'Product Manager', category: 'produto', salary: 'R$ 6.000,00 - R$ 9.000,00', details: 'CLT • Híbrido • Sênior', skills: ['Scrum', 'Discovery', 'Analytics'] },
+    { title: 'Analista de Segurança', category: 'seguranca', salary: 'R$ 5.500,00 - R$ 8.500,00', details: 'PJ • Remoto • Sênior', skills: ['Cloud', 'Linux', 'SIEM'] },
+    { title: 'Product Manager', category: 'produto', salary: 'R$ 6.000,00 - R$ 9.000,00', details: 'CLT • Híbrido • Sênior', skills: ['Scrum', 'Discovery', 'Analytics'] },
 ]
 
 function JobsPage() {
     const [selectedJob, setSelectedJob] = useState<JobModalData | null>(null)
+    const [currentPage, setCurrentPage] = useState(1)
+    const [pageSize, setPageSize] = useState(() => window.matchMedia(MOBILE_BREAKPOINT).matches ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE)
+    const listRef = useRef<HTMLElement>(null)
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia(MOBILE_BREAKPOINT)
+        const updatePageSize = (event: MediaQueryListEvent) => {
+            setPageSize(event.matches ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE)
+            setCurrentPage(1)
+        }
+
+        mediaQuery.addEventListener('change', updatePageSize)
+        return () => mediaQuery.removeEventListener('change', updatePageSize)
+    }, [])
+
+    const totalPages = Math.ceil(jobs.length / pageSize)
+    const firstJobIndex = (currentPage - 1) * pageSize
+    const visibleJobs = jobs.slice(firstJobIndex, firstJobIndex + pageSize)
+
+    const changePage = (page: number) => {
+        setCurrentPage(page)
+        requestAnimationFrame(() => listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    }
 
     return (
         <main className="jobs">
@@ -45,20 +77,39 @@ function JobsPage() {
                 </div>
             </section>
 
-            <section className="jobs__list" aria-label="Vagas disponíveis">
+            <section className="jobs__list" aria-label="Vagas disponíveis" ref={listRef}>
                 <div className="jobs__container jobs__grid">
-                    {jobs.map((job) => (
-                        <button className="job-card" type="button" key={job.title} onClick={() => setSelectedJob(job)} aria-label={`Ver detalhes da vaga ${job.title}`}>
-                            <div className="job-card__icon" aria-hidden="true" />
-                            <h2>{job.title}</h2>
-                            <p className="job-card__salary">{job.salary}</p>
-                            <p className="job-card__details">{job.details}</p>
-                            <ul className="job-card__skills" aria-label="Tecnologias">
-                                {job.skills.map((skill) => <li key={skill}>{skill}</li>)}
-                            </ul>
-                        </button>
-                    ))}
+                    {visibleJobs.map((job) => {
+                        const theme = getJobCategoryTheme(job.category)
+                        const categoryStyle = {
+                            '--job-accent': theme.color,
+                            '--job-accent-soft': theme.softColor,
+                        } as CSSProperties
+
+                        return (
+                            <button className="job-card" style={categoryStyle} type="button" key={job.title} onClick={() => setSelectedJob(job)} aria-label={`Ver detalhes da vaga ${job.title}`}>
+                                <div className="job-card__icon" aria-hidden="true"><JobCategoryIcon category={job.category} /></div>
+                                <h2>{job.title}</h2>
+                                <p className="job-card__salary">{job.salary}</p>
+                                <p className="job-card__details">{job.details}</p>
+                                <ul className="job-card__skills" aria-label="Tecnologias">
+                                    {job.skills.map((skill) => <li key={skill}>{skill}</li>)}
+                                </ul>
+                            </button>
+                        )
+                    })}
                 </div>
+
+                {totalPages > 1 && (
+                    <nav className="jobs__container jobs__pagination" aria-label="Navegação entre páginas de vagas">
+                        <button type="button" onClick={() => changePage(currentPage - 1)} disabled={currentPage === 1} aria-label="Página anterior">‹</button>
+                        {Array.from({ length: totalPages }, (_, index) => {
+                            const page = index + 1
+                            return <button className={page === currentPage ? 'is-current' : ''} type="button" onClick={() => changePage(page)} aria-current={page === currentPage ? 'page' : undefined} key={page}>{page}</button>
+                        })}
+                        <button type="button" onClick={() => changePage(currentPage + 1)} disabled={currentPage === totalPages} aria-label="Próxima página">›</button>
+                    </nav>
+                )}
             </section>
 
             {selectedJob && <JobApplicationModal job={selectedJob} onClose={() => setSelectedJob(null)} />}
