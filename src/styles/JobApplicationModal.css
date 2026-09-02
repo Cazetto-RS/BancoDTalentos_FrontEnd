@@ -7,6 +7,7 @@
     padding: 1rem;
     background: rgb(18 18 22 / 72%);
     backdrop-filter: blur(2px);
+    overflow-y: auto;
 }
 
 .job-modal {
@@ -19,6 +20,7 @@
     background: var(--color-background);
     box-shadow: 0 1.5rem 5rem rgb(0 0 0 / 35%);
     outline: 0;
+    overscroll-behavior: contain;
 }
 
 .job-modal__header {
@@ -272,11 +274,13 @@
     }
 
     .job-modal {
+        width: 100%;
         max-height: calc(100dvh - 1rem);
     }
 
     .job-modal__header {
         padding: 1rem;
+        gap: .75rem;
     }
 
     .job-modal__header h2 {
@@ -293,6 +297,15 @@
         padding: 1rem;
     }
 
+    .job-modal__progress {
+        padding-inline: 1rem;
+    }
+
+    .job-modal__section,
+    .job-modal__field {
+        padding: .85rem;
+    }
+
     .job-modal__columns {
         grid-template-columns: 1fr;
     }
@@ -304,5 +317,25 @@
     .job-modal__primary,
     .job-modal__secondary {
         width: 100%;
+    }
+}
+
+@media (max-width: 360px) {
+    .job-modal__backdrop {
+        place-items: stretch;
+        padding: 0;
+    }
+
+    .job-modal {
+        max-height: 100dvh;
+        border-radius: 0;
+    }
+
+    .job-modal__header h2 {
+        font-size: .98rem;
+    }
+
+    .job-modal__header p {
+        font-size: .75rem;
     }
 }

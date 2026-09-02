@@ -4,6 +4,7 @@
     place-items: center;
     padding: 2rem;
     background: var(--color-background);
+    overflow-x: hidden;
 }
 
 .svgCheck {
@@ -28,6 +29,7 @@
     align-items: flex-end;
     justify-content: space-between;
     gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .registration-header span {
@@ -79,6 +81,7 @@
     justify-items: center;
     gap: .45rem;
     color: var(--color-text-muted);
+    min-width: 0;
 }
 
 .registration-progress__icon {
@@ -100,6 +103,7 @@
 
 .registration-progress small {
     font-size: .72rem;
+    text-align: center;
 }
 
 .registration-progress .is-complete .registration-progress__icon {
@@ -275,6 +279,7 @@
     padding: .8rem;
     border-radius: var(--radius-md);
     background: var(--color-surface);
+    min-width: 0;
 }
 
 .registration-skill .registration-field input,
@@ -288,6 +293,7 @@
     gap: 1rem;
     margin-top: auto;
     padding-top: 2rem;
+    flex-wrap: wrap;
 }
 
 .registration-actions>div {
@@ -401,6 +407,26 @@
     margin-top: 1.5rem;
 }
 
+@media (max-width: 960px) and (min-width: 761px) {
+    .registration-page {
+        padding: 1.5rem;
+    }
+
+    .registration-card {
+        min-height: 650px;
+        padding: 1.5rem;
+    }
+
+    .registration-fields,
+    .registration-repeat-item {
+        gap: 1rem 1.25rem;
+    }
+
+    .registration-progress small {
+        font-size: .65rem;
+    }
+}
+
 @media (max-width: 760px) {
     .registration-page {
         place-items: start center;
@@ -413,15 +439,28 @@
     }
 
     .registration-progress {
-        overflow-x: auto;
-        grid-template-columns: repeat(6, minmax(5rem, 1fr));
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: .25rem;
         margin-block: 1.5rem;
-        padding-bottom: .5rem;
     }
 
     .registration-progress::before {
-        right: 2.5rem;
-        left: 2.5rem;
+        top: 1rem;
+        right: 8%;
+        left: 8%;
+    }
+
+    .registration-progress__icon {
+        width: 2rem;
+        height: 2rem;
+    }
+
+    .registration-progress__icon svg {
+        width: .95rem;
+    }
+
+    .registration-progress small {
+        font-size: .62rem;
     }
 
     .registration-fields {
@@ -456,12 +495,33 @@
 }
 
 @media (max-width: 480px) {
+    .registration-page {
+        padding: .75rem;
+    }
+
+    .registration-card {
+        padding: 1rem;
+    }
+
     .registration-header h1 {
         font-size: 1.65rem;
     }
 
     .registration-header>strong {
         font-size: .9rem;
+    }
+
+    .registration-progress {
+        margin-block: 1.25rem;
+    }
+
+    .registration-progress small {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
     }
 
     .registration-date-pair,
@@ -474,6 +534,7 @@
     }
 
     .registration-actions>div {
+        width: 100%;
         flex-direction: column;
     }
 
@@ -488,5 +549,24 @@
     .registration-success__actions {
         width: 100%;
         flex-direction: column;
+    }
+}
+
+@media (max-width: 350px) {
+    .registration-page {
+        padding: .5rem;
+    }
+
+    .registration-card {
+        padding: .85rem;
+    }
+
+    .registration-progress__icon {
+        width: 1.8rem;
+        height: 1.8rem;
+    }
+
+    .registration-progress::before {
+        top: .9rem;
     }
 }

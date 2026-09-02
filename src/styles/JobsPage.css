@@ -6,11 +6,11 @@
 }
 
 .jobs__container {
-    width: min(100% - 3rem, 1280px);
+    width: min(calc(100% - 3rem), 1440px);
     margin: 0 auto;
 }
 
-.jobs__hero { padding: 3rem 0 2.4rem; }
+.jobs__hero { padding: clamp(2.25rem, 5vw, 3.5rem) 0 2.4rem; }
 
 .jobs__title {
     margin: 0;
@@ -33,6 +33,7 @@
     width: 100%;
     margin-top: 0;
     box-shadow: none;
+    min-width: 0;
 }
 
 .jobs__filter-button {
@@ -84,6 +85,8 @@
     text-align: left;
     cursor: pointer;
     transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .job-card:hover { transform: translateY(-3px); border-color: var(--job-accent); box-shadow: var(--shadow-md); }
@@ -125,7 +128,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
-    margin: 0.9rem 0 0;
+    margin: auto 0 0;
+    padding-top: .9rem;
     padding: 0;
     list-style: none;
 }
@@ -144,6 +148,7 @@
     justify-content: center;
     gap: .45rem;
     margin-top: 2rem;
+    flex-wrap: wrap;
 }
 
 .jobs__pagination button {
@@ -179,14 +184,42 @@
     cursor: not-allowed;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1180px) {
+    .jobs__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 860px) {
     .jobs__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 600px) {
     .jobs__container { width: calc(100% - 2rem); }
     .jobs__hero { padding: 2.2rem 0 2rem; }
+    .jobs__title { font-size: clamp(2.4rem, 12vw, 3.25rem); }
     .jobs__subtitle br { display: none; }
     .jobs__filter-button { width: 3.75rem; flex-basis: 3.75rem; }
     .jobs__grid { grid-template-columns: 1fr; }
+    .job-card { padding: 1.2rem; }
+}
+
+@media (max-width: 390px) {
+    .jobs__container { width: calc(100% - 1.5rem); }
+
+    .jobs__search-row {
+        gap: .5rem;
+    }
+
+    .jobs__search.input__Search_div {
+        padding-inline: .75rem;
+    }
+
+    .jobs__filter-button {
+        width: 3.25rem;
+        flex-basis: 3.25rem;
+    }
+
+    .jobs__pagination button {
+        width: 2.25rem;
+        height: 2.25rem;
+    }
 }

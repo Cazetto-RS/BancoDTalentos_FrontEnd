@@ -1,5 +1,7 @@
 .fullBody {
-    height: 100vh;
+    width: 100%;
+    min-height: 100%;
+    padding: clamp(2rem, 7vh, 5.5rem) 1.5rem;
 
     display: flex;
     flex-direction: column;
@@ -10,6 +12,7 @@
 }
 
 .align__Center {
+    width: min(100%, 1500px);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -17,15 +20,17 @@
 }
 
 .title__page_lg {
-    font-size: 7.5rem;
-    line-height: 6.5rem;
+    max-width: 15ch;
+    font-size: clamp(3.5rem, 7.5vw, 7.5rem);
+    line-height: .88;
     font-weight: 900;
     text-align: center;
     margin: 0rem;
 }
 
 .subtitle__page {
-    font-size: 1.25rem;
+    max-width: 62rem;
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
     font-weight: 400;
     color: var(--color-text-muted);
     line-height: 1.5rem;
@@ -34,7 +39,8 @@
 }
 
 .subtitle__page_left {
-    font-size: 1.25rem;
+    max-width: 62rem;
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
     font-weight: 400;
     color: var(--color-text-muted);
     line-height: 1.5rem;
@@ -51,13 +57,14 @@
 }
 
 .input__Search_div {
-    width: 60%;
+    width: min(60%, 850px);
+    min-height: 3.25rem;
     display: flex;
     margin-top: 1rem;
     flex-direction: row;
 
     background-color: #ffff;
-    padding: 0.50rem 2rem;
+    padding: 0.5rem clamp(1rem, 3vw, 2rem);
 
     border-radius: var(--radius-sm);
 
@@ -82,6 +89,7 @@
 }
 
 .input__Search {
+    min-width: 0;
     width: 100%;
     background-color: transparent;
     border: none;
@@ -95,4 +103,72 @@
 
 .input__Search:focus {
     outline: none;
+}
+
+@media (max-width: 1024px) {
+    .input__Search_div {
+        width: min(82%, 760px);
+    }
+}
+
+@media (max-width: 768px) {
+    .fullBody {
+        justify-content: center;
+        padding-inline: 1rem;
+    }
+
+    .title__page_lg {
+        font-size: clamp(3rem, 12vw, 5rem);
+        line-height: .94;
+    }
+
+    .subtitle__page br,
+    .subtitle__page_left br {
+        display: none;
+    }
+
+    .input__Search_div {
+        width: min(100%, 680px);
+    }
+}
+
+@media (max-width: 480px) {
+    .fullBody {
+        min-height: 100%;
+        padding: 2rem .75rem;
+    }
+
+    .title__page_lg {
+        max-width: 11ch;
+        font-size: clamp(2.45rem, 14vw, 3.7rem);
+    }
+
+    .subtitle__page,
+    .subtitle__page_left {
+        margin-top: 1rem;
+        font-size: 1rem;
+        line-height: 1.45;
+    }
+
+    .input__Search_div {
+        min-height: 3rem;
+        padding-inline: .9rem;
+        gap: .7rem;
+    }
+
+    .input__Search {
+        font-size: .9rem;
+        text-overflow: ellipsis;
+    }
+}
+
+@media (max-height: 580px) and (orientation: landscape) {
+    .fullBody {
+        justify-content: flex-start;
+        padding-block: 2rem;
+    }
+
+    .title__page_lg {
+        font-size: clamp(2.7rem, 10vh, 4.5rem);
+    }
 }

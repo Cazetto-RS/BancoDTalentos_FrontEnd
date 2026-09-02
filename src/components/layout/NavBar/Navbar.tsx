@@ -1,8 +1,20 @@
 import '../../../styles/Navbar.css'
 import logoImg from '../../../assets/logo.png'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, NavLink } from 'react-router-dom'
 
 function Navbar() {
+    const [menuOpen, setMenuOpen] = useState(false)
+
+    useEffect(() => {
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setMenuOpen(false)
+        }
+
+        window.addEventListener('keydown', closeOnEscape)
+        return () => window.removeEventListener('keydown', closeOnEscape)
+    }, [])
+
     return (
         <header className="navbar">
             <nav className="navbar__content" aria-label="Navegação principal">
@@ -11,9 +23,9 @@ function Navbar() {
                 </Link>
 
                 <ul className="navbar__links">
-                    <Link to="/">Home</Link>
-                    <Link to="/sobre">Sobre</Link>
-                    <Link to="/vagas-abertas">Vagas</Link>
+                    <li><NavLink className={({ isActive }) => isActive ? 'is-active' : ''} to="/" end>Home</NavLink></li>
+                    <li><NavLink className={({ isActive }) => isActive ? 'is-active' : ''} to="/sobre">Sobre</NavLink></li>
+                    <li><NavLink className={({ isActive }) => isActive ? 'is-active' : ''} to="/vagas-abertas">Vagas</NavLink></li>
                 </ul>
 
                 <div className="navbar__actions">
@@ -27,8 +39,8 @@ function Navbar() {
 
                     </Link>
 
-                    <Link className="navbar__profile" to="/perfil">
-                        <span className="navbar__profile-text">Perfil</span>
+                    <Link className="navbar__profile" to="/login">
+                        <span className="navbar__profile-text">Login</span>
 
 
                         <svg viewBox="0 0 445 442" className="navbar__profile-arrow" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -46,12 +58,32 @@ function Navbar() {
                     <button
                         className="navbar__menu-button"
                         type="button"
-                        aria-label="Abrir menu"
+                        aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+                        aria-expanded={menuOpen}
+                        aria-controls="navbar-mobile-menu"
+                        onClick={() => setMenuOpen((current) => !current)}
                     >
-                        ☰
+                        <span aria-hidden="true" />
+                        <span aria-hidden="true" />
+                        <span aria-hidden="true" />
                     </button>
                 </div>
             </nav>
+
+            <nav
+                className={`navbar__mobile-menu${menuOpen ? ' is-open' : ''}`}
+                id="navbar-mobile-menu"
+                aria-label="Navegação mobile"
+                aria-hidden={!menuOpen}
+            >
+                <NavLink className={({ isActive }) => isActive ? 'is-active' : ''} to="/" end onClick={() => setMenuOpen(false)}>Home</NavLink>
+                <NavLink className={({ isActive }) => isActive ? 'is-active' : ''} to="/sobre" onClick={() => setMenuOpen(false)}>Sobre</NavLink>
+                <NavLink className={({ isActive }) => isActive ? 'is-active' : ''} to="/vagas-abertas" onClick={() => setMenuOpen(false)}>Vagas</NavLink>
+                <Link className="navbar__mobile-register" to="/cadastro" onClick={() => setMenuOpen(false)}>Registrar-se</Link>
+                <Link className="navbar__mobile-login" to="/login" onClick={() => setMenuOpen(false)}>Login</Link>
+            </nav>
+
+            {menuOpen && <button className="navbar__backdrop" type="button" aria-label="Fechar menu" onClick={() => setMenuOpen(false)} />}
         </header>
     )
 }

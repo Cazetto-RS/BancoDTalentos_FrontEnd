@@ -1,5 +1,6 @@
 .sobre {
     width: 100%;
+    overflow-x: hidden;
     color: #292832;
 }
 
@@ -101,6 +102,7 @@
 }
 
 .sobre__info-item {
+    min-width: 0;
     padding: 1.5rem 1.6rem;
     border-radius: 0.8rem;
     background: #ffffff;
@@ -172,6 +174,7 @@
 }
 
 .sobre__card {
+    min-width: 0;
     min-height: 205px;
 
     padding: 1.3rem 1.6rem;
@@ -268,6 +271,21 @@
     text-decoration: none;
 }
 
+.sobre__cta-button:focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 3px;
+}
+
+@media (max-width: 1180px) and (min-width: 769px) {
+    .sobre__pillars-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sobre__card:last-child {
+        grid-column: 1 / -1;
+    }
+}
+
 
 /* =========================
    NOTEBOOK
@@ -316,13 +334,18 @@
         max-height: 300px;
     }
 
+    .sobre__image-caption {
+        max-width: calc(100% - 1.5rem);
+        font-size: .78rem;
+    }
+
     .sobre__info {
         padding: 2.5rem 0;
     }
 
     .sobre__info-grid {
         grid-template-columns: 1fr;
-        gap: 2.5rem;
+        gap: 1.25rem;
     }
 
     .sobre__pillars {
@@ -354,7 +377,7 @@
     }
 
     .sobre__title {
-        font-size: 2.5rem;
+        font-size: clamp(2.25rem, 12vw, 2.75rem);
     }
 
     .sobre__description {
@@ -363,6 +386,14 @@
 
     .sobre__image {
         max-height: 220px;
+    }
+
+    .sobre__image-caption {
+        position: static;
+        max-width: none;
+        border-radius: 0;
+        background: #292832;
+        font-size: .75rem;
     }
 
     .sobre__info {
@@ -375,6 +406,10 @@
 
     .sobre__info-item h2 {
         font-size: 1.35rem;
+    }
+
+    .sobre__info-item {
+        padding: 1.25rem;
     }
 
     .sobre__info-item p {

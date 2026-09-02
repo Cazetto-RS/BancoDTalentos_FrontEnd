@@ -6,6 +6,7 @@
     place-items: center;
     padding: 1.5rem;
     background: rgb(30 30 38 / 48%);
+    overflow-y: auto;
 }
 
 .alert-modal {
@@ -84,4 +85,20 @@
 .alert-modal__button:focus-visible {
     outline: 3px solid var(--color-focus-ring);
     outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+    .alert-modal__overlay {
+        align-items: end;
+        padding: .75rem;
+    }
+
+    .alert-modal {
+        padding: 1.75rem 1.25rem 1.25rem;
+        border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-sm);
+    }
+
+    .alert-modal__button {
+        width: 100%;
+    }
 }

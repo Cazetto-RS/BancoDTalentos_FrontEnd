@@ -6,7 +6,7 @@
 }
 
 .profile-container {
-    width: min(100% - 3rem, 1180px);
+    width: min(calc(100% - 3rem), 1180px);
     margin-inline: auto;
 }
 
@@ -110,6 +110,7 @@
     margin: .25rem 0 .4rem;
     font-size: clamp(2rem, 4vw, 3.15rem);
     line-height: 1.05;
+    overflow-wrap: anywhere;
 }
 
 .profile-hero__role {
@@ -200,6 +201,7 @@
     gap: 1.25rem;
     margin-top: -2.2rem;
     padding-bottom: 3.5rem;
+    min-width: 0;
 }
 
 .profile-sidebar,
@@ -226,6 +228,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .profile-card__heading h2,
@@ -572,6 +575,12 @@
     min-width: 0;
 }
 
+.profile-job__content h3,
+.profile-job__content p,
+.profile-job__content strong {
+    overflow-wrap: anywhere;
+}
+
 .profile-job__content strong {
     display: block;
     margin-top: .32rem;
@@ -630,6 +639,12 @@
     }
 }
 
+@media (min-width: 1600px) {
+    .profile-container {
+        width: min(calc(100% - 5rem), 1320px);
+    }
+}
+
 @media (max-width: 680px) {
     .profile-container {
         width: calc(100% - 2rem);
@@ -660,7 +675,7 @@
     }
 
     .profile-hero__identity h1 {
-        font-size: 1.65rem;
+        font-size: clamp(1.45rem, 7vw, 1.8rem);
     }
 
     .profile-hero__role {
@@ -728,9 +743,58 @@
     }
 }
 
+@media (max-width: 480px) {
+    .profile-container {
+        width: calc(100% - 1.5rem);
+    }
+
+    .profile-hero {
+        padding-block: 1.5rem 3.5rem;
+    }
+
+    .profile-hero__content {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .profile-avatar {
+        width: 4.75rem;
+        height: 4.75rem;
+        padding: .9rem;
+    }
+
+    .profile-hero__actions {
+        grid-column: 1 / -1;
+    }
+
+    .profile-card {
+        padding: 1rem;
+    }
+
+    .profile-job__icon {
+        width: 2.8rem;
+        height: 2.8rem;
+        flex-basis: 2.8rem;
+    }
+
+    .profile-summary > p {
+        font-size: .9rem;
+        line-height: 1.65;
+    }
+}
+
 @media (max-width: 390px) {
+    .profile-hero__content {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-photo {
+        justify-self: start;
+    }
+
     .profile-hero__actions {
         grid-template-columns: 1fr;
+        grid-column: auto;
     }
 
     .profile-preferences {

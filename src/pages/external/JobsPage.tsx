@@ -79,7 +79,7 @@ function JobsPage() {
 
             <section className="jobs__list" aria-label="Vagas disponíveis" ref={listRef}>
                 <div className="jobs__container jobs__grid">
-                    {visibleJobs.map((job) => {
+                    {visibleJobs.map((job, index) => {
                         const theme = getJobCategoryTheme(job.category)
                         const categoryStyle = {
                             '--job-accent': theme.color,
@@ -87,7 +87,7 @@ function JobsPage() {
                         } as CSSProperties
 
                         return (
-                            <button className="job-card" style={categoryStyle} type="button" key={job.title} onClick={() => setSelectedJob(job)} aria-label={`Ver detalhes da vaga ${job.title}`}>
+                            <button className="job-card" style={categoryStyle} type="button" key={`${job.title}-${firstJobIndex + index}`} onClick={() => setSelectedJob(job)} aria-label={`Ver detalhes da vaga ${job.title}`}>
                                 <div className="job-card__icon" aria-hidden="true"><JobCategoryIcon category={job.category} /></div>
                                 <h2>{job.title}</h2>
                                 <p className="job-card__salary">{job.salary}</p>
