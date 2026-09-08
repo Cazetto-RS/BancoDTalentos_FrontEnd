@@ -1,13 +1,36 @@
 import { useEffect, useRef } from 'react'
 import Chart from 'chart.js/auto'
 import type { Plugin } from 'chart.js'
+import { useOutletContext } from 'react-router-dom'
+import type { AdminTheme } from '../../layouts/Admin/AdminLayout'
 import '../../styles/DashboardPage.css'
 
 const summaryCards = [
-    { label: 'Vagas ativas', value: 24, icon: 'jobs' },
-    { label: 'Candidatos', value: 156, icon: 'candidates' },
-    { label: 'Candidaturas', value: 89, icon: 'applications' },
-    { label: 'Contratações', value: 12, icon: 'hires' },
+    {
+        label: 'Vagas ativas', value: 24, icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+            <path
+                d="M160-120q-33 0-56.5-23.5T80-200v-440q0-33 23.5-56.5T160-720h160v-80q0-33 23.5-56.5T400-880h160q33 0 56.5 23.5T640-800v80h160q33 0 56.5 23.5T880-640v440q0 33-23.5 56.5T800-120H160Zm240-600h160v-80H400v80Z"
+            />
+        </svg>
+    },
+    {
+        label: 'Candidatos', value: 156, icon: <svg viewBox="0 0 435 435" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M217.5 217C277.423 217 326 168.423 326 108.5C326 48.5771 277.423 0 217.5 0C157.577 0 109 48.5771 109 108.5C109 168.423 157.577 217 217.5 217Z" />
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M217.5 245C144.909 245 0 281.371 0 353.571V435H435V353.571C435 281.371 290.091 245 217.5 245Z" />
+        </svg>
+    },
+    {
+        label: 'Candidaturas', value: 89, icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+            <path
+                d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm80-160h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Z"
+            />
+        </svg>
+    },
+    {
+        label: 'Contratações', value: 12, icon: <svg viewBox="0 0 500 384" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M18.125 191.625L76 133.792L191.75 249.458L423.25 18.125L481.125 75.9583L191.75 365.125L18.125 191.625Z" stroke-width="36.25" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+    },
 ]
 
 const candidateStatus = [
@@ -42,7 +65,7 @@ const centerTextPlugin: Plugin<'doughnut'> = {
         if (!chartArea) return
 
         ctx.save()
-        ctx.fillStyle = '#292832'
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-text').trim() || '#30303a'
         ctx.font = '700 1.25rem Inter, sans-serif'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
@@ -54,9 +77,16 @@ const centerTextPlugin: Plugin<'doughnut'> = {
 function DashboardPage() {
     const applicationsCanvasRef = useRef<HTMLCanvasElement>(null)
     const statusCanvasRef = useRef<HTMLCanvasElement>(null)
+    const { theme } = useOutletContext<{ theme: AdminTheme }>()
 
     useEffect(() => {
         if (!applicationsCanvasRef.current || !statusCanvasRef.current) return
+
+        const rootStyles = getComputedStyle(document.documentElement)
+        const surfaceColor = rootStyles.getPropertyValue('--color-surface').trim() || '#ffffff'
+        const mutedTextColor = rootStyles.getPropertyValue('--color-text-muted').trim() || '#77757e'
+        const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(48, 48, 58, 0.08)'
+        const tooltipColor = theme === 'dark' ? '#15151b' : '#292832'
 
         const applicationsChart = new Chart(applicationsCanvasRef.current, {
             type: 'line',
@@ -72,7 +102,7 @@ function DashboardPage() {
                     tension: .28,
                     pointRadius: 3.5,
                     pointHoverRadius: 5,
-                    pointBackgroundColor: '#ffffff',
+                    pointBackgroundColor: surfaceColor,
                     pointBorderColor: '#169cf9',
                     pointBorderWidth: 2,
                 }],
@@ -84,7 +114,7 @@ function DashboardPage() {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#292832',
+                        backgroundColor: tooltipColor,
                         displayColors: false,
                         padding: 10,
                     },
@@ -93,13 +123,13 @@ function DashboardPage() {
                     x: {
                         grid: { display: false },
                         border: { display: false },
-                        ticks: { color: '#77757e', font: { size: 11 }, autoSkip: true, maxTicksLimit: 10, maxRotation: 0 },
+                        ticks: { color: mutedTextColor, font: { size: 11 }, autoSkip: true, maxTicksLimit: 10, maxRotation: 0 },
                     },
                     y: {
                         beginAtZero: true,
                         max: 65,
-                        ticks: { stepSize: 13, color: '#77757e', font: { size: 11 } },
-                        grid: { color: 'rgba(48, 48, 58, 0.08)' },
+                        ticks: { stepSize: 13, color: mutedTextColor, font: { size: 11 } },
+                        grid: { color: gridColor },
                         border: { display: false },
                     },
                 },
@@ -113,7 +143,7 @@ function DashboardPage() {
                 datasets: [{
                     data: candidateStatus.map((status) => status.value),
                     backgroundColor: candidateStatus.map((status) => status.color),
-                    borderColor: '#ffffff',
+                    borderColor: surfaceColor,
                     borderWidth: 2,
                     hoverOffset: 4,
                 }],
@@ -138,7 +168,7 @@ function DashboardPage() {
             applicationsChart.destroy()
             statusChart.destroy()
         }
-    }, [])
+    }, [theme])
 
     return (
         <section className="dashboard-page">
@@ -151,7 +181,7 @@ function DashboardPage() {
                 {summaryCards.map((card) => (
                     <article className="dashboard-stat" key={card.label}>
                         <span className="dashboard-stat__icon" data-icon={card.icon} aria-hidden="true">
-                            {/* Coloque o ícone deste indicador aqui */}
+                            {card.icon}
                         </span>
                         <div>
                             <span>{card.label}</span>

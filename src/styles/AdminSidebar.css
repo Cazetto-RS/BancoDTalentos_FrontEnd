@@ -53,6 +53,15 @@
     transition: color 180ms ease, background 180ms ease, transform 180ms ease;
 }
 
+.admin-sidebar__settings {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
 .admin-sidebar__link:hover,
 .admin-sidebar__logout:hover {
     background: rgb(255 255 255 / 6%);

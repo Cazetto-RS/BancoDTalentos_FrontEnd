@@ -1,0 +1,800 @@
+.admin-candidates-page {
+    width: min(100%, 1800px);
+    min-height: 100%;
+    margin-inline: auto;
+    padding: 1.75rem;
+    background: var(--color-background);
+    color: var(--color-text);
+}
+
+.admin-candidates-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.admin-candidates-header h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 2.65rem);
+    line-height: 1.1;
+}
+
+.admin-candidates-header p {
+    margin: .25rem 0 0;
+    color: var(--color-text-muted);
+    font-size: .95rem;
+}
+
+.admin-candidates-header__count {
+    flex: 0 0 auto;
+    padding: .45rem .8rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+.admin-candidates-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.admin-candidate-stat {
+    min-width: 0;
+    min-height: 7.8rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-candidate-stat__icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: 0 0 2.75rem;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-md);
+}
+
+.admin-candidate-stat__icon svg {
+    width: 1.3rem;
+    height: 1.3rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.admin-candidate-stat > div {
+    align-self: flex-end;
+    display: grid;
+    margin-left: auto;
+    text-align: right;
+}
+
+.admin-candidate-stat > div span {
+    color: var(--color-text-muted);
+    font-size: .82rem;
+}
+
+.admin-candidate-stat strong {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.admin-candidate-stat--total .admin-candidate-stat__icon {
+    background: rgb(22 156 249 / 12%);
+    color: var(--color-primary);
+}
+
+.admin-candidate-stat--new .admin-candidate-stat__icon {
+    background: rgb(67 139 236 / 12%);
+    color: #438bec;
+}
+
+.admin-candidate-stat--process .admin-candidate-stat__icon {
+    background: rgb(244 162 10 / 14%);
+    color: #e59605;
+}
+
+.admin-candidate-stat--hired .admin-candidate-stat__icon {
+    background: rgb(22 183 134 / 13%);
+    color: #16a97d;
+}
+
+.admin-candidates-toolbar {
+    display: grid;
+    grid-template-columns: minmax(15rem, 1fr) minmax(9.5rem, .28fr) minmax(10rem, .38fr) minmax(9rem, .25fr) auto;
+    gap: .75rem;
+    margin-bottom: 1rem;
+    padding: .75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-candidates-search {
+    min-width: 0;
+    min-height: 2.8rem;
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    padding-inline: .85rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-muted);
+}
+
+.admin-candidates-search svg {
+    width: 1.15rem;
+    flex: 0 0 1.15rem;
+    fill: none;
+    stroke: var(--color-text-muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.admin-candidates-search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--color-text);
+    font-size: .83rem;
+}
+
+.admin-candidates-search input::placeholder {
+    color: #85838d;
+}
+
+.admin-candidates-select {
+    min-width: 0;
+    display: grid;
+    align-content: center;
+    gap: .05rem;
+    padding: .25rem .75rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-muted);
+}
+
+.admin-candidates-select > span {
+    color: var(--color-text-muted);
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.admin-candidates-select select {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--color-text);
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-candidates-favorites {
+    min-height: 2.8rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    padding: .65rem .85rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.admin-candidates-favorites svg {
+    width: 1.1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+}
+
+.admin-candidates-favorites:hover,
+.admin-candidates-favorites.is-active {
+    border-color: rgb(255 54 142 / 30%);
+    background: rgb(255 54 142 / 9%);
+    color: var(--color-secondary);
+}
+
+.admin-candidates-favorites.is-active svg {
+    fill: currentColor;
+}
+
+.admin-candidates-search:focus-within,
+.admin-candidates-select:focus-within,
+.admin-candidates-favorites:focus-visible,
+.admin-candidate-row__actions button:focus-visible,
+.admin-candidates-pagination button:focus-visible,
+.admin-candidates-empty button:focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 2px;
+}
+
+.admin-candidates-table {
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-candidates-table__head,
+.admin-candidate-row {
+    display: grid;
+    grid-template-columns: minmax(15rem, 1.25fr) minmax(13rem, 1fr) minmax(7rem, .48fr) minmax(9.5rem, .52fr) 5.6rem;
+    align-items: center;
+    gap: 1rem;
+}
+
+.admin-candidates-table__head {
+    min-height: 2.9rem;
+    padding: .55rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-muted);
+    color: var(--color-text-muted);
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .045em;
+    text-transform: uppercase;
+}
+
+.admin-candidates-table__head span:last-child {
+    text-align: center;
+}
+
+.admin-candidates-table__body {
+    display: grid;
+}
+
+.admin-candidate-row {
+    min-width: 0;
+    min-height: 5.8rem;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    transition: background 180ms ease;
+}
+
+.admin-candidate-row:last-child {
+    border-bottom: 0;
+}
+
+.admin-candidate-row:hover {
+    background: rgb(22 156 249 / 3%);
+}
+
+.admin-candidate-row__person {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+}
+
+.admin-candidate-avatar {
+    width: 2.8rem;
+    height: 2.8rem;
+    flex: 0 0 2.8rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgb(22 156 249 / 18%), rgb(22 156 249 / 7%));
+    color: var(--color-primary);
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.admin-candidate-row__person > div,
+.admin-candidate-row__job,
+.admin-candidate-row__date {
+    min-width: 0;
+    display: grid;
+}
+
+.admin-candidate-row__person strong,
+.admin-candidate-row__job strong,
+.admin-candidate-row__date strong {
+    overflow: hidden;
+    font-size: .82rem;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-candidate-row__person span,
+.admin-candidate-row__job span,
+.admin-candidate-row__date span {
+    overflow: hidden;
+    color: var(--color-text-muted);
+    font-size: .72rem;
+    line-height: 1.45;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-candidate-row__person small {
+    display: none;
+    color: var(--color-text-muted);
+    font-size: .7rem;
+}
+
+.admin-candidate-status {
+    width: fit-content;
+    min-width: 8.7rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: .35rem;
+    padding: .42rem .6rem;
+    border-radius: var(--radius-full);
+}
+
+.admin-candidate-status select {
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    appearance: none;
+    background: transparent;
+    color: inherit;
+    font-size: .7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.admin-candidate-status svg {
+    width: .95rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+.admin-candidate-status--novo {
+    background: rgb(22 156 249 / 11%);
+    color: #087ecf;
+}
+
+.admin-candidate-status--em-analise {
+    background: rgb(67 139 236 / 12%);
+    color: #3479d7;
+}
+
+.admin-candidate-status--em-triagem {
+    background: rgb(244 162 10 / 14%);
+    color: #c77e00;
+}
+
+.admin-candidate-status--contratado {
+    background: rgb(22 183 134 / 13%);
+    color: #0d936b;
+}
+
+.admin-candidate-status--dispensado {
+    background: rgb(223 92 88 / 13%);
+    color: #c8423e;
+}
+
+.admin-candidate-row__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .45rem;
+}
+
+.admin-candidate-row__actions button {
+    width: 2.35rem;
+    height: 2.35rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: border-color 180ms ease, background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.admin-candidate-row__actions button:hover {
+    border-color: rgb(22 156 249 / 30%);
+    background: rgb(22 156 249 / 9%);
+    color: var(--color-primary);
+    transform: translateY(-1px);
+}
+
+.admin-candidate-row__actions button.is-favorite {
+    border-color: rgb(22 156 249 / 30%);
+    background: rgb(22 156 249 / 9%);
+    color: var(--color-primary);
+}
+
+.admin-candidate-row__actions button svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    fill: none;
+    stroke: var(--color-primary);;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.admin-candidate-row__actions button.is-favorite svg {
+    fill: var(--color-primary);
+}
+
+.admin-candidates-empty {
+    min-height: 19rem;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    padding: 2rem;
+    text-align: center;
+}
+
+.admin-candidates-empty > span {
+    width: 3.5rem;
+    height: 3.5rem;
+    display: grid;
+    place-items: center;
+    margin-bottom: .8rem;
+    border-radius: 50%;
+    background: rgb(22 156 249 / 10%);
+    color: var(--color-primary);
+}
+
+.admin-candidates-empty svg {
+    width: 1.45rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.admin-candidates-empty strong {
+    font-size: 1rem;
+}
+
+.admin-candidates-empty p {
+    margin: .25rem 0 1rem;
+    color: var(--color-text-muted);
+    font-size: .82rem;
+}
+
+.admin-candidates-empty button {
+    padding: .6rem 1rem;
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-primary);
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-candidates-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.admin-candidates-pagination > span {
+    color: var(--color-text-muted);
+    font-size: .75rem;
+}
+
+.admin-candidates-pagination > div {
+    display: flex;
+    gap: .35rem;
+}
+
+.admin-candidates-pagination button {
+    width: 2.35rem;
+    height: 2.35rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: .75rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-candidates-pagination button:hover:not(:disabled),
+.admin-candidates-pagination button.is-active {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.admin-candidates-pagination button:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.admin-candidates-pagination svg {
+    width: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+@media (max-width: 1450px) {
+    .admin-candidates-toolbar {
+        grid-template-columns: minmax(14rem, 1fr) repeat(3, minmax(8.5rem, .35fr));
+    }
+
+    .admin-candidates-favorites {
+        grid-column: 4;
+    }
+
+    .admin-candidates-select--sort {
+        grid-column: 3;
+    }
+
+    .admin-candidates-table__head,
+    .admin-candidate-row {
+        grid-template-columns: minmax(13rem, 1.15fr) minmax(11rem, .9fr) minmax(6.5rem, .4fr) minmax(9rem, .52fr) 5.4rem;
+    }
+}
+
+@media (max-width: 1180px) {
+    .admin-candidates-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-candidate-stat {
+        min-height: 6.6rem;
+    }
+
+    .admin-candidates-toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-candidates-search {
+        grid-column: 1 / -1;
+    }
+
+    .admin-candidates-favorites,
+    .admin-candidates-select--sort {
+        grid-column: auto;
+    }
+
+    .admin-candidates-table__head {
+        display: none;
+    }
+
+    .admin-candidates-table {
+        border: 0;
+        overflow: visible;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .admin-candidates-table__body {
+        gap: .75rem;
+    }
+
+    .admin-candidate-row {
+        grid-template-columns: minmax(13rem, 1.2fr) minmax(11rem, 1fr) minmax(9rem, .55fr) auto;
+        min-height: 6.5rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        background: var(--color-surface);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .admin-candidate-row__date {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .admin-candidates-page {
+        padding: 1.25rem;
+    }
+
+    .admin-candidate-row {
+        grid-template-columns: minmax(13rem, 1.2fr) minmax(10rem, .9fr) auto;
+    }
+
+    .admin-candidate-status {
+        display: none;
+    }
+}
+
+@media (max-width: 680px) {
+    .admin-candidates-page {
+        padding: 1rem;
+    }
+
+    .admin-candidates-header {
+        align-items: flex-start;
+    }
+
+    .admin-candidates-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .admin-candidates-header p {
+        max-width: 28rem;
+        font-size: .82rem;
+    }
+
+    .admin-candidates-header__count {
+        display: none;
+    }
+
+    .admin-candidates-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .65rem;
+    }
+
+    .admin-candidate-stat {
+        min-height: 6rem;
+        align-items: center;
+        padding: .85rem;
+    }
+
+    .admin-candidate-stat__icon {
+        width: 2.35rem;
+        height: 2.35rem;
+        flex-basis: 2.35rem;
+    }
+
+    .admin-candidate-stat > div span {
+        font-size: .68rem;
+    }
+
+    .admin-candidate-stat strong {
+        font-size: 1.55rem;
+    }
+
+    .admin-candidates-toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .55rem;
+        padding: .6rem;
+    }
+
+    .admin-candidates-select {
+        min-height: 2.8rem;
+    }
+
+    .admin-candidates-favorites {
+        grid-column: 1 / -1;
+    }
+
+    .admin-candidate-row {
+        position: relative;
+        grid-template-columns: 1fr auto;
+        gap: .8rem;
+        padding: 1rem;
+    }
+
+    .admin-candidate-row__person {
+        grid-column: 1;
+        align-self: start;
+    }
+
+    .admin-candidate-row__person small {
+        display: block;
+    }
+
+    .admin-candidate-row__job {
+        grid-column: 1 / -1;
+        padding-top: .75rem;
+        border-top: 1px solid var(--color-border);
+    }
+
+    .admin-candidate-row__job::before {
+        content: attr(data-label);
+        margin-bottom: .1rem;
+        color: var(--color-text-muted);
+        font-size: .62rem;
+        font-weight: 800;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
+    .admin-candidate-row__actions {
+        grid-column: 2;
+        grid-row: 1;
+        align-self: start;
+    }
+
+    .admin-candidates-pagination {
+        justify-content: center;
+    }
+
+    .admin-candidates-pagination > span {
+        display: none;
+    }
+}
+
+@media (max-width: 420px) {
+    .admin-candidates-page {
+        padding: .75rem;
+    }
+
+    .admin-candidates-summary {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .admin-candidate-stat {
+        min-height: 5.7rem;
+        display: grid;
+        gap: .5rem;
+    }
+
+    .admin-candidate-stat__icon {
+        width: 2rem;
+        height: 2rem;
+    }
+
+    .admin-candidate-stat__icon svg {
+        width: 1rem;
+    }
+
+    .admin-candidate-stat > div {
+        margin-left: 0;
+        text-align: left;
+    }
+
+    .admin-candidates-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-candidates-search,
+    .admin-candidates-favorites {
+        grid-column: auto;
+    }
+
+    .admin-candidate-row__person > div {
+        max-width: calc(100vw - 10.5rem);
+    }
+
+    .admin-candidate-row__actions {
+        gap: .3rem;
+    }
+
+    .admin-candidate-row__actions button {
+        width: 2.15rem;
+        height: 2.15rem;
+    }
+}

@@ -8,8 +8,9 @@ import JobsPage from './pages/external/JobsPage'
 import ProfilePage from './pages/external/ProfilePage'
 import RegistrationPage from './pages/external/RegistrationPage'
 import LoginPage from './pages/external/LoginPage'
-import AdminPlaceholderPage from './pages/admin/AdminPlaceholderPage'
 import DashboardPage from './pages/admin/DashboardPage'
+import AdminJobsPage from './pages/admin/AdminJobsPage'
+import AdminCandidatesPage from './pages/admin/AdminCandidatesPage'
 
 function App() {
   return (
@@ -26,8 +27,8 @@ function App() {
       <Route path='/admin' element={<AdminLayout/>}>
         <Route index element={<Navigate to='/admin/dashboard' replace/>}/>
         <Route path='dashboard' element={<DashboardPage/>}/>
-        <Route path='vagas' element={<AdminPlaceholderPage title='Vagas' description='Gerencie as oportunidades publicadas pela empresa.'/>}/>
-        <Route path='candidatos' element={<AdminPlaceholderPage title='Candidatos' description='Consulte e acompanhe os candidatos cadastrados.'/>}/>
+        <Route path='vagas' element={<AdminJobsPage/>}/>
+        <Route path='candidatos' element={<AdminCandidatesPage/>}/>
       </Route>
     </Routes>
   )

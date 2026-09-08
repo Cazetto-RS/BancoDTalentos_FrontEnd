@@ -5,7 +5,7 @@ function HomePage() {
     return (
         <section className='fullBody'>
             <div className="align__Center">
-                <h1 className='title__page_lg'>Sua <span className='span__rosa'>carreira</span> conosco <br /> começa <span className='span__azul'>aqui...</span></h1>
+                <h1 className='title__page_lg'>Sua <span className='span__rosa'>carreira</span> conosco começa <span className='span__azul'>aqui...</span></h1>
                 <p className='subtitle__page'>Quer fazer a diferença? Cadastre-se em nosso banco de talentos <br /> e mostre do que é capaz!</p>
 
                 <div className="input__Search_div">

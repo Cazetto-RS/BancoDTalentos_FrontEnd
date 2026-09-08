@@ -237,14 +237,14 @@
     height: 3rem;
     margin-bottom: .5rem;
     border-radius: var(--radius-md);
-    background: var(--job-accent-soft);
+    background: #e6f3fb;
     color: var(--job-accent);
     font-size: 1.4rem;
     font-weight: 700;
 }
 
 .job-modal__check svg {
-    fill: var(--job-accent);
+    fill: var(--color-primary);
     width: 1.5rem;
 }
 
@@ -254,7 +254,8 @@
 }
 
 .job-modal__success strong {
-    color: var(--job-accent);
+    color: var(--color-primary);
+    font-weight: 400;
 }
 
 .job-modal__success span {

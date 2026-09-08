@@ -20,7 +20,7 @@
 }
 
 .title__page_lg {
-    max-width: 15ch;
+    max-width: 16ch;
     font-size: clamp(3.5rem, 7.5vw, 7.5rem);
     line-height: .88;
     font-weight: 900;

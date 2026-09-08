@@ -51,6 +51,7 @@
 }
 
 :root[data-theme='dark'] {
+  color-scheme: dark;
   --color-background: #1e1e26;
   --color-surface: #2c2c36;
   --color-surface-muted: #353540;
