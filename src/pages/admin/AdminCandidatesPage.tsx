@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react'
+import AdminIcon from '../../components/admin/AdminIcon'
+import AdminStatusSelect from '../../components/admin/AdminStatusSelect'
+import AdminSummaryCards from '../../components/admin/AdminSummaryCards'
 import CandidateDetailsModal from '../../components/admin/CandidateDetailsModal'
 import type { AdminCandidate, CandidateStatus } from '../../types/AdminCandidate'
 import { candidateStatusLabels } from '../../types/AdminCandidate'
@@ -247,6 +250,7 @@ const initialCandidates: AdminCandidate[] = [
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 const PAGE_SIZE = 6
+const statusOptions = Object.entries(candidateStatusLabels).map(([value, label]) => ({ value, label }))
 
 function getInitials(name: string) {
     const parts = name.trim().split(/\s+/)
@@ -302,6 +306,12 @@ function AdminCandidatesPage() {
     const safeCurrentPage = Math.min(currentPage, totalPages)
     const paginatedCandidates = filteredCandidates.slice((safeCurrentPage - 1) * PAGE_SIZE, safeCurrentPage * PAGE_SIZE)
     const selectedCandidate = candidates.find((candidate) => candidate.id === selectedCandidateId) ?? null
+    const summaryCards = [
+        { label: 'Total de candidatos', value: summary.total, icon: 'users' as const },
+        { label: 'Novos perfis', value: summary.newCandidates, icon: 'plus' as const },
+        { label: 'Em andamento', value: summary.inProcess, icon: 'clipboard' as const },
+        { label: 'Contratados', value: summary.hired, icon: 'check' as const },
+    ]
 
     const updateCandidate = (updatedCandidate: AdminCandidate) => {
         setCandidates((current) => current.map((candidate) => candidate.id === updatedCandidate.id ? updatedCandidate : candidate))
@@ -337,37 +347,12 @@ function AdminCandidatesPage() {
                 <span className="admin-candidates-header__count">{filteredCandidates.length} {filteredCandidates.length === 1 ? 'resultado' : 'resultados'}</span>
             </header>
 
-            <div className="admin-candidates-summary" aria-label="Resumo dos candidatos">
-                <article className="admin-candidate-stat admin-candidate-stat--total">
-                    <span className="admin-candidate-stat__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                    </span>
-                    <div><span>Total de candidatos</span><strong>{summary.total}</strong></div>
-                </article>
-                <article className="admin-candidate-stat admin-candidate-stat--new">
-                    <span className="admin-candidate-stat__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M12 8v8M8 12h8M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                    </span>
-                    <div><span>Novos perfis</span><strong>{summary.newCandidates}</strong></div>
-                </article>
-                <article className="admin-candidate-stat admin-candidate-stat--process">
-                    <span className="admin-candidate-stat__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                    </span>
-                    <div><span>Em andamento</span><strong>{summary.inProcess}</strong></div>
-                </article>
-                <article className="admin-candidate-stat admin-candidate-stat--hired">
-                    <span className="admin-candidate-stat__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>
-                    </span>
-                    <div><span>Contratados</span><strong>{summary.hired}</strong></div>
-                </article>
-            </div>
+            <AdminSummaryCards items={summaryCards} ariaLabel="Resumo dos candidatos" />
 
             <div className="admin-candidates-toolbar">
                 <label className="admin-candidates-search">
                     <span className="sr-only">Pesquisar candidatos</span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
+                    <AdminIcon name="search" aria-hidden="true" />
                     <input type="search" value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1) }} placeholder="Nome, e-mail, habilidade ou cidade..." />
                 </label>
 
@@ -397,7 +382,7 @@ function AdminCandidatesPage() {
                 </label>
 
                 <button className={`admin-candidates-favorites${favoritesOnly ? ' is-active' : ''}`} type="button" onClick={() => { setFavoritesOnly((current) => !current); setCurrentPage(1) }} aria-pressed={favoritesOnly}>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" /></svg>
+                    <AdminIcon name="star" aria-hidden="true" />
                     <span>Favoritos</span>
                 </button>
             </div>
@@ -433,26 +418,26 @@ function AdminCandidatesPage() {
                                 <span>#{String(candidate.application.id).padStart(4, '0')}</span>
                             </div>
 
-                            <label className={`admin-candidate-status admin-candidate-status--${candidate.application.status.replaceAll(' ', '-').replace('á', 'a')}`}>
-                                <span className="sr-only">Alterar status de {candidate.fullName}</span>
-                                <select value={candidate.application.status} onChange={(event) => updateStatus(candidate.id, event.target.value as CandidateStatus)}>
-                                    {Object.entries(candidateStatusLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-                                </select>
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4" /></svg>
-                            </label>
+                            <AdminStatusSelect
+                                value={candidate.application.status}
+                                options={statusOptions}
+                                onChange={(status) => updateStatus(candidate.id, status as CandidateStatus)}
+                                ariaLabel={`Alterar status de ${candidate.fullName}`}
+                                className={`admin-candidate-status admin-candidate-status--${candidate.application.status.replaceAll(' ', '-').replace('á', 'a')}`}
+                            />
 
                             <div className="admin-candidate-row__actions">
                                 <button className={candidate.application.favorite ? 'is-favorite' : ''} type="button" onClick={() => toggleFavorite(candidate.id)} aria-label={candidate.application.favorite ? `Remover ${candidate.fullName} dos favoritos` : `Adicionar ${candidate.fullName} aos favoritos`} title="Favoritar candidato">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" /></svg>
+                                    <AdminIcon name="star" aria-hidden="true" />
                                 </button>
                                 <button type="button" onClick={() => setSelectedCandidateId(candidate.id)} aria-label={`Visualizar perfil de ${candidate.fullName}`} title="Visualizar candidato">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                                    <AdminIcon name="arrow-right" aria-hidden="true" />
                                 </button>
                             </div>
                         </article>
                     )) : (
                         <div className="admin-candidates-empty">
-                            <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg></span>
+                            <span aria-hidden="true"><AdminIcon name="search" /></span>
                             <strong>Nenhum candidato encontrado</strong>
                             <p>Não encontramos perfis com os filtros selecionados.</p>
                             <button type="button" onClick={clearFilters}>Limpar filtros</button>
@@ -466,13 +451,13 @@ function AdminCandidatesPage() {
                     <span>Página {safeCurrentPage} de {totalPages}</span>
                     <div>
                         <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={safeCurrentPage === 1} aria-label="Página anterior">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                            <AdminIcon name="chevron-down" className="admin-icon--previous" aria-hidden="true" />
                         </button>
                         {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
                             <button className={page === safeCurrentPage ? 'is-active' : ''} type="button" onClick={() => setCurrentPage(page)} aria-current={page === safeCurrentPage ? 'page' : undefined} key={page}>{page}</button>
                         ))}
                         <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={safeCurrentPage === totalPages} aria-label="Próxima página">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                            <AdminIcon name="chevron-down" className="admin-icon--next" aria-hidden="true" />
                         </button>
                     </div>
                 </nav>

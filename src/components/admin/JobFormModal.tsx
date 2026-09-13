@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import type { AdminJob } from '../../pages/admin/AdminJobsPage'
+import AdminIcon from './AdminIcon'
 import '../../styles/AdminJobModal.css'
 
 interface JobFormModalProps {
@@ -70,7 +71,7 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
                 <header className="admin-job-modal__header">
                     <div className="admin-job-modal__identity">
                         <span className="admin-job-modal__header-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M4 7h16v13H4V7ZM9 7V4h6v3M12 11v5M9.5 13.5h5" /></svg>
+                            <AdminIcon name={mode === 'create' ? 'plus' : 'edit'} aria-hidden="true" />
                         </span>
                         <div>
                             <span>GERENCIAMENTO DE VAGAS</span>
@@ -85,7 +86,7 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
                     <div className="admin-job-form__content">
                         <section className="admin-job-form__section">
                             <div className="admin-job-form__section-heading">
-                                <span className="admin-job-form__section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4V7ZM9 7V4h6v3" /></svg></span>
+                                <span className="admin-job-form__section-icon" aria-hidden="true"><AdminIcon name="briefcase" /></span>
                                 <div><span>INFORMAÇÕES PRINCIPAIS</span><h3>Dados da oportunidade</h3></div>
                             </div>
 
@@ -118,7 +119,7 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
 
                         <section className="admin-job-form__section">
                             <div className="admin-job-form__section-heading">
-                                <span className="admin-job-form__section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v18M17 7H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H7" /></svg></span>
+                                <span className="admin-job-form__section-icon" aria-hidden="true"><AdminIcon name="money" /></span>
                                 <div><span>CONDIÇÕES E PUBLICAÇÃO</span><h3>Detalhes da contratação</h3></div>
                             </div>
 

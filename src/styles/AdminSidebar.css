@@ -46,6 +46,7 @@
     align-items: center;
     gap: .85rem;
     padding: .72rem .8rem;
+    border-radius: var(--radius-md);
     color: #d6d5da;
     font-size: .9rem;
     font-weight: 400;
@@ -69,8 +70,8 @@
 }
 
 .admin-sidebar__link.is-active {
-    border-left: solid 5px var(--color-primary);
     background: rgb(22 156 249 / 14%);
+    color: var(--color-primary);
 }
 
 .admin-sidebar__link.is-active::before {
@@ -91,7 +92,6 @@
     width: 80%;
     height: 80%;
     fill: currentColor;
-    stroke: currentColor;
 }
 
 .admin-sidebar__link.is-active .admin-sidebar__icon {

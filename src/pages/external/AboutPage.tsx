@@ -120,7 +120,7 @@ function Sobre() {
                             <div className="sobre__card-icon">
                                 <svg viewBox="0 0 435 435" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M217.5 217C277.423 217 326 168.423 326 108.5C326 48.5771 277.423 0 217.5 0C157.577 0 109 48.5771 109 108.5C109 168.423 157.577 217 217.5 217Z" />
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M217.5 245C144.909 245 0 281.371 0 353.571V435H435V353.571C435 281.371 290.091 245 217.5 245Z" />
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M217.5 245C144.909 245 0 281.371 0 353.571V435H435V353.571C435 281.371 290.091 245 217.5 245Z" />
                                 </svg>
 
                             </div>
@@ -138,7 +138,7 @@ function Sobre() {
                         <article className="sobre__card">
                             <div className="sobre__card-icon">
                                 <svg viewBox="0 0 500 384" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.125 191.625L76 133.792L191.75 249.458L423.25 18.125L481.125 75.9583L191.75 365.125L18.125 191.625Z" stroke-width="36.25" stroke-linecap="round" stroke-linejoin="round" />
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M18.125 191.625L76 133.792L191.75 249.458L423.25 18.125L481.125 75.9583L191.75 365.125L18.125 191.625Z" strokeWidth="36.25" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
 
                             </div>

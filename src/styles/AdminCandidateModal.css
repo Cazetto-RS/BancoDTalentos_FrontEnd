@@ -114,16 +114,13 @@
 }
 
 .admin-candidate-modal__header-actions button.is-favorite {
-    background: rgb(255 54 142 / 18%);
-    color: var(--color-secondary);
+    background: rgb(22 156 249 / 18%);
+    color: var(--color-primary);
 }
 
 .admin-candidate-modal__header-actions svg {
     width: 1.15rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linejoin: round;
+    fill: currentColor;
 }
 
 .admin-candidate-modal__header-actions button.is-favorite svg {
@@ -246,34 +243,9 @@
 
 .admin-candidate-modal__status {
     min-width: 9.3rem;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: .35rem;
     padding: .48rem .65rem;
-    border-radius: var(--radius-full);
-}
-
-.admin-candidate-modal__status select {
-    min-width: 0;
-    border: 0;
-    outline: 0;
-    appearance: none;
-    background: transparent;
-    color: inherit;
     font-size: .7rem;
     font-weight: 800;
-    text-transform: uppercase;
-    cursor: pointer;
-}
-
-.admin-candidate-modal__status svg {
-    width: .95rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
 }
 
 .admin-candidate-modal__status--novo {
@@ -512,11 +484,7 @@
 
 .admin-candidate-modal__education-icon svg {
     width: 1.25rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
 }
 
 .admin-candidate-modal__education-list article > div > div {
@@ -615,11 +583,7 @@
 
 .admin-candidate-modal__documents svg {
     width: 1.15rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
 }
 
 .admin-candidate-modal__documents > a > div {

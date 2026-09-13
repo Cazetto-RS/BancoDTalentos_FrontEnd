@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { AdminTheme } from '../../layouts/Admin/AdminLayout'
 import type { AdminUser } from '../../types/AdminUser'
+import AdminIcon from './AdminIcon'
 import '../../styles/AdminSettingsModal.css'
 
 interface AdminSettingsModalProps {
@@ -90,7 +91,7 @@ function AdminSettingsModal({ user, theme, onThemeChange, onClose }: AdminSettin
                 <header className="admin-settings-modal__header">
                     <div className="admin-settings-modal__heading">
                         <span className="admin-settings-modal__heading-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3.08 14H3v-4h.08A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8.97 4.6 1.7 1.7 0 0 0 10 3.08V3h4v.08a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15Z" /></svg>
+                            <AdminIcon name="settings" />
                         </span>
                         <div>
                             <span>PAINEL ADMINISTRATIVO</span>
@@ -103,11 +104,11 @@ function AdminSettingsModal({ user, theme, onThemeChange, onClose }: AdminSettin
 
                 <nav className="admin-settings-modal__tabs" aria-label="Seções das configurações">
                     <button className={activeTab === 'preferences' ? 'is-active' : ''} type="button" onClick={() => setActiveTab('preferences')}>
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6" /></svg>
+                        <AdminIcon name="sliders" aria-hidden="true" />
                         Preferências
                     </button>
                     <button className={activeTab === 'profile' ? 'is-active' : ''} type="button" onClick={() => setActiveTab('profile')}>
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" /></svg>
+                        <AdminIcon name="profile" aria-hidden="true" />
                         Meu perfil
                     </button>
                 </nav>
@@ -148,25 +149,25 @@ function AdminSettingsModal({ user, theme, onThemeChange, onClose }: AdminSettin
 
                                 <div className="admin-settings-modal__preferences">
                                     <div className="admin-settings-modal__preference">
-                                        <span className="admin-settings-modal__preference-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" /></svg></span>
+                                        <span className="admin-settings-modal__preference-icon" aria-hidden="true"><AdminIcon name="bell" /></span>
                                         <div><strong>Novos candidatos</strong><span>Avisar quando uma nova candidatura chegar</span></div>
                                         <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.newCandidateAlerts} onClick={() => togglePreference('newCandidateAlerts')}><span /></button>
                                     </div>
 
                                     <div className="admin-settings-modal__preference">
-                                        <span className="admin-settings-modal__preference-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4V7ZM9 7V4h6v3M8 12h8M8 16h5" /></svg></span>
+                                        <span className="admin-settings-modal__preference-icon" aria-hidden="true"><AdminIcon name="briefcase" /></span>
                                         <div><strong>Alertas de vagas</strong><span>Receber avisos sobre vagas pausadas ou próximas do fechamento</span></div>
                                         <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.vacancyAlerts} onClick={() => togglePreference('vacancyAlerts')}><span /></button>
                                     </div>
 
                                     <div className="admin-settings-modal__preference">
-                                        <span className="admin-settings-modal__preference-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg></span>
+                                        <span className="admin-settings-modal__preference-icon" aria-hidden="true"><AdminIcon name="check" /></span>
                                         <div><strong>Atualizações de status</strong><span>Avisar quando candidatos avançarem no processo</span></div>
                                         <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.statusUpdates} onClick={() => togglePreference('statusUpdates')}><span /></button>
                                     </div>
 
                                     <div className="admin-settings-modal__preference">
-                                        <span className="admin-settings-modal__preference-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4V4ZM8 9h8M8 13h8M8 17h5" /></svg></span>
+                                        <span className="admin-settings-modal__preference-icon" aria-hidden="true"><AdminIcon name="clipboard" /></span>
                                         <div><strong>Resumo semanal</strong><span>Receber um resumo das vagas e candidaturas da semana</span></div>
                                         <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.weeklySummary} onClick={() => togglePreference('weeklySummary')}><span /></button>
                                     </div>
@@ -200,7 +201,7 @@ function AdminSettingsModal({ user, theme, onThemeChange, onClose }: AdminSettin
                             </section>
 
                             <section className="admin-settings-modal__section admin-settings-profile__access">
-                                <span className="admin-settings-modal__preference-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-3-10 2 2 4-4" /></svg></span>
+                                <span className="admin-settings-modal__preference-icon" aria-hidden="true"><AdminIcon name="shield" /></span>
                                 <div>
                                     <span>NÍVEL DE ACESSO</span>
                                     <h3>{user.role === 'admin' ? 'Acesso administrativo completo' : 'Acesso de Recursos Humanos'}</h3>

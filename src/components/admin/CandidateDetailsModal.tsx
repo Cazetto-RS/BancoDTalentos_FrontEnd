@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { AdminCandidate, CandidateStatus } from '../../types/AdminCandidate'
 import { candidateStatusLabels } from '../../types/AdminCandidate'
+import AdminIcon from './AdminIcon'
+import AdminStatusSelect from './AdminStatusSelect'
 import '../../styles/AdminCandidateModal.css'
 
 interface CandidateDetailsModalProps {
@@ -21,6 +23,7 @@ const educationStatusLabels = {
     concluido: 'Concluído',
     trancado: 'Trancado',
 }
+const statusOptions = Object.entries(candidateStatusLabels).map(([value, label]) => ({ value, label }))
 
 function getInitials(name: string) {
     const parts = name.trim().split(/\s+/)
@@ -77,7 +80,7 @@ function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetail
 
                     <div className="admin-candidate-modal__header-actions">
                         <button className={candidate.application.favorite ? 'is-favorite' : ''} type="button" onClick={toggleFavorite} aria-label={candidate.application.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} title="Favoritar candidato">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" /></svg>
+                            <AdminIcon name="star" aria-hidden="true" />
                         </button>
                         <button type="button" onClick={onClose} aria-label="Fechar modal">×</button>
                     </div>
@@ -95,13 +98,13 @@ function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetail
                             <section className="admin-candidate-modal__application">
                                 <div className="admin-candidate-modal__section-heading">
                                     <div><span>CANDIDATURA</span><h3>Etapa do processo</h3></div>
-                                    <label className={`admin-candidate-modal__status admin-candidate-modal__status--${candidate.application.status.replaceAll(' ', '-').replace('á', 'a')}`}>
-                                        <span className="sr-only">Alterar etapa do processo</span>
-                                        <select value={candidate.application.status} onChange={(event) => updateStatus(event.target.value as CandidateStatus)}>
-                                            {Object.entries(candidateStatusLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-                                        </select>
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4" /></svg>
-                                    </label>
+                                    <AdminStatusSelect
+                                        value={candidate.application.status}
+                                        options={statusOptions}
+                                        onChange={(status) => updateStatus(status as CandidateStatus)}
+                                        ariaLabel="Alterar etapa do processo"
+                                        className={`admin-candidate-modal__status admin-candidate-modal__status--${candidate.application.status.replaceAll(' ', '-').replace('á', 'a')}`}
+                                    />
                                 </div>
 
                                 <div className="admin-candidate-modal__application-grid">
@@ -192,7 +195,7 @@ function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetail
                                     {candidate.education.map((education, index) => (
                                         <article key={`${education.course}-${index}`}>
                                             <span className="admin-candidate-modal__education-icon" aria-hidden="true">
-                                                <svg viewBox="0 0 24 24"><path d="m3 10 9-5 9 5-9 5-9-5ZM7 12.5V17c3 2.2 7 2.2 10 0v-4.5M21 10v6" /></svg>
+                                                <AdminIcon name="education" />
                                             </span>
                                             <div>
                                                 <div><h4>{education.course}</h4><span>{educationStatusLabels[education.status]}</span></div>
@@ -236,9 +239,9 @@ function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetail
                                 </div>
                                 {candidate.culture.recommendationUrl ? (
                                     <a href={candidate.culture.recommendationUrl} target="_blank" rel="noreferrer">
-                                        <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6V2Zm8 0v5h5M9 13h6M9 17h6" /></svg></span>
+                                        <span aria-hidden="true"><AdminIcon name="document" /></span>
                                         <div><strong>Carta de recomendação</strong><small>Documento em PDF</small></div>
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M19 14v5H5V5h5" /></svg>
+                                        <AdminIcon name="external" aria-hidden="true" />
                                     </a>
                                 ) : <p className="admin-candidate-modal__empty-section">Nenhum documento de recomendação foi enviado.</p>}
                             </section>

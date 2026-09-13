@@ -125,7 +125,7 @@ function JobApplicationModal({ job, onClose }: JobApplicationModalProps) {
                         <div className="job-modal__success">
                             <div className="job-modal__check" aria-hidden="true">
                                 <svg viewBox="0 0 500 384" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.125 191.625L76 133.792L191.75 249.458L423.25 18.125L481.125 75.9583L191.75 365.125L18.125 191.625Z" stroke-width="36.25" stroke-linecap="round" stroke-linejoin="round" />
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M18.125 191.625L76 133.792L191.75 249.458L423.25 18.125L481.125 75.9583L191.75 365.125L18.125 191.625Z" strokeWidth="36.25" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                             </div>
                             <h3>Sua inscrição foi confirmada!</h3>

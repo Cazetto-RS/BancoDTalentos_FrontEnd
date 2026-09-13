@@ -1,0 +1,137 @@
+.admin-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.15rem;
+}
+
+.admin-summary-card {
+    min-width: 0;
+    min-height: 9.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.2rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-summary-card__icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-md);
+    background: rgb(22 156 249 / 10%);
+    color: var(--color-primary);
+}
+
+.admin-summary-card__icon svg {
+    width: 1.35rem;
+    height: 1.35rem;
+    display: block;
+    fill: currentColor;
+}
+
+.admin-summary-card > div {
+    display: grid;
+    gap: 0;
+}
+
+.admin-summary-card > div > span {
+    color: var(--color-text-muted);
+    font-size: .83rem;
+    font-weight: 400;
+}
+
+.admin-summary-card strong {
+    color: var(--color-text);
+    font-size: 2rem;
+    line-height: 1.05;
+}
+
+.admin-status-select {
+    position: relative;
+    min-width: 7rem;
+    min-height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .55rem;
+    padding: .48rem .7rem .48rem .85rem;
+    border-radius: var(--radius-full);
+    background: rgb(22 156 249 / 12%);
+    color: var(--color-primary);
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: box-shadow 180ms ease, filter 180ms ease;
+}
+
+.admin-status-select:hover {
+    filter: brightness(.97);
+}
+
+.admin-status-select:focus-within {
+    box-shadow: 0 0 0 3px rgb(22 156 249 / 24%);
+}
+
+.admin-status-select > select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.admin-status-select > svg {
+    width: .9rem;
+    height: .9rem;
+    flex: 0 0 .9rem;
+    fill: currentColor;
+    pointer-events: none;
+}
+
+.admin-layout small {
+    font-weight: 400;
+}
+
+.admin-icon--previous {
+    transform: rotate(90deg);
+}
+
+.admin-icon--next {
+    transform: rotate(-90deg);
+}
+
+@media (max-width: 1200px) {
+    .admin-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .admin-summary-card {
+        min-height: 7.5rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .admin-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-summary-card {
+        min-height: 6.75rem;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 1rem;
+    }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { AdminJob } from '../../pages/admin/AdminJobsPage'
+import AdminIcon from './AdminIcon'
 import '../../styles/AdminJobModal.css'
 
 interface JobShareModalProps {
@@ -73,7 +74,7 @@ function JobShareModal({ job, onClose }: JobShareModalProps) {
 
                 <header className="admin-job-share-modal__header">
                     <span className="admin-job-share-modal__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none"><path d="M8.5 12.5 15.5 8M8.5 15.5l7 4M8.5 9.5l7-4M6 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /></svg>
+                        <AdminIcon name="share" />
                     </span>
                     <div>
                         <span>COMPARTILHAR VAGA</span>
@@ -83,7 +84,7 @@ function JobShareModal({ job, onClose }: JobShareModalProps) {
                 </header>
 
                 <div className="admin-job-share-modal__job">
-                    <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4V7ZM9 7V4h6v3" /></svg></span>
+                    <span aria-hidden="true"><AdminIcon name="briefcase" /></span>
                     <div><small>{job.area}</small><strong>{job.title}</strong></div>
                 </div>
 
@@ -105,14 +106,9 @@ function JobShareModal({ job, onClose }: JobShareModalProps) {
                         <a id="admin-job-share-url" href={job.formUrl} target="_blank" rel="noreferrer" title={job.formUrl}>{job.formUrl}</a>
                         <button className={copied ? 'is-copied' : ''} type="button" onClick={copyUrl} aria-label={copied ? 'Link copiado' : 'Copiar link da vaga'}>
                             {copied ? (
-                                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path d="m5 12.5 4.2 4.2L19 7" />
-                                </svg>
+                                <AdminIcon name="check" aria-hidden="true" />
                             ) : (
-                                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <rect x="8" y="8" width="11" height="11" rx="2" />
-                                    <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
-                                </svg>
+                                <AdminIcon name="copy" aria-hidden="true" />
                             )}
                             <span>{copied ? 'Copiado!' : 'Copiar'}</span>
                         </button>
@@ -124,7 +120,7 @@ function JobShareModal({ job, onClose }: JobShareModalProps) {
 
                 <a className="admin-job-share-modal__open" href={job.formUrl} target="_blank" rel="noreferrer">
                     Abrir formulário
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></svg>
+                    <AdminIcon name="external" aria-hidden="true" />
                 </a>
             </div>
         </div>,

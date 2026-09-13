@@ -54,11 +54,7 @@
 
 .admin-settings-modal__heading-icon svg {
     width: 1.55rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: var(--color-primary);
 }
 
 .admin-settings-modal__heading > div {
@@ -157,11 +153,7 @@
 
 .admin-settings-modal__tabs svg {
     width: 1.05rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.9;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
 }
 
 .admin-settings-modal__content {
@@ -362,11 +354,7 @@
 
 .admin-settings-modal__preference-icon svg {
     width: 1.15rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
 }
 
 .admin-settings-modal__preference > div {

@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react'
+import AdminIcon, { type AdminIconName } from '../../components/admin/AdminIcon'
+import AdminStatusSelect from '../../components/admin/AdminStatusSelect'
+import AdminSummaryCards from '../../components/admin/AdminSummaryCards'
 import JobFormModal from '../../components/admin/JobFormModal'
 import JobShareModal from '../../components/admin/JobShareModal'
 import '../../styles/AdminJobsPage.css'
@@ -100,7 +103,7 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
     currency: 'BRL',
 })
 
-function getJobIcon(area: string) {
+function getJobIcon(area: string): AdminIconName {
     const normalizedArea = area.toLocaleLowerCase('pt-BR')
 
     if (normalizedArea.includes('design')) return 'design'
@@ -111,14 +114,7 @@ function getJobIcon(area: string) {
 }
 
 const JOBS_PER_PAGE = 6
-
-function JobAreaIcon({ type }: { type: string }) {
-    if (type === 'design') return <svg viewBox="0 0 24 24"><path d="m14 5 5 5M4 20l3.5-.7L19 7.8 16.2 5 4.7 16.5 4 20ZM13 8l3 3" /></svg>
-    if (type === 'data') return <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5V4ZM9 16v-4M12 16V8M15 16v-6" /></svg>
-    if (type === 'mobile') return <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2" /><path d="M10 5h4M11 19h2" /></svg>
-
-    return <svg viewBox="0 0 24 24"><path d="m9 6-6 6 6 6M15 6l6 6-6 6" /></svg>
-}
+const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({ value, label }))
 
 function AdminJobsPage() {
     const [jobs, setJobs] = useState(initialJobs)
@@ -156,10 +152,18 @@ function AdminJobsPage() {
     }, [jobs, search, sortBy, statusFilter])
 
     const totalPages = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE))
+    const safeCurrentPage = Math.min(currentPage, totalPages)
     const paginatedJobs = filteredJobs.slice(
-        (currentPage - 1) * JOBS_PER_PAGE,
-        currentPage * JOBS_PER_PAGE,
+        (safeCurrentPage - 1) * JOBS_PER_PAGE,
+        safeCurrentPage * JOBS_PER_PAGE,
     )
+
+    const summaryCards = [
+        { label: 'Total de vagas', value: summary.total, icon: 'briefcase' as const },
+        { label: 'Vagas ativas', value: summary.active, icon: 'check' as const },
+        { label: 'Vagas pausadas', value: summary.paused, icon: 'pause' as const },
+        { label: 'Vagas fechadas', value: summary.closed, icon: 'clipboard' as const },
+    ]
 
     const saveEditedJob = (job: AdminJob) => {
         setJobs((current) => current.map((item) => item.id === job.id ? job : item))
@@ -173,6 +177,10 @@ function AdminJobsPage() {
         setCreatingJob(false)
     }
 
+    const updateStatus = (jobId: number, status: JobStatus) => {
+        setJobs((current) => current.map((job) => job.id === jobId ? { ...job, status } : job))
+    }
+
     return (
         <section className="admin-jobs-page">
             <header className="admin-jobs-header">
@@ -183,29 +191,12 @@ function AdminJobsPage() {
                 <span className="admin-jobs-header__count">{filteredJobs.length} {filteredJobs.length === 1 ? 'resultado' : 'resultados'}</span>
             </header>
 
-            <div className="admin-jobs-summary" aria-label="Resumo das vagas">
-                <article className="admin-jobs-stat admin-jobs-stat--total">
-                    <span className="admin-jobs-stat__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4zM9 7V4h6v3" /></svg></span>
-                    <div><span>Total de vagas</span><strong>{summary.total}</strong><small>Todos os processos</small></div>
-                </article>
-                <article className="admin-jobs-stat admin-jobs-stat--active">
-                    <span className="admin-jobs-stat__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4zM9 7V4h6v3" /></svg></span>
-                    <div><span>Vagas ativas</span><strong>{summary.active}</strong><small>Recebendo candidatos</small></div>
-                </article>
-                <article className="admin-jobs-stat admin-jobs-stat--paused">
-                    <span className="admin-jobs-stat__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5h3v14H8zM13 5h3v14h-3z" /></svg></span>
-                    <div><span>Vagas pausadas</span><strong>{summary.paused}</strong><small>Temporariamente paradas</small></div>
-                </article>
-                <article className="admin-jobs-stat admin-jobs-stat--closed">
-                    <span className="admin-jobs-stat__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5" /></svg></span>
-                    <div><span>Vagas fechadas</span><strong>{summary.closed}</strong><small>Processos finalizados</small></div>
-                </article>
-            </div>
+            <AdminSummaryCards items={summaryCards} ariaLabel="Resumo das vagas" />
 
             <div className="admin-jobs-toolbar">
                 <label className="admin-jobs-search">
                     <span className="sr-only">Pesquisar vagas</span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
+                    <AdminIcon name="search" aria-hidden="true" />
                     <input value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1) }} type="search" placeholder="Cargo, tecnologia ou área..." />
                 </label>
 
@@ -229,7 +220,7 @@ function AdminJobsPage() {
                 </label>
 
                 <button className="admin-jobs-create" type="button" onClick={() => setCreatingJob(true)}>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                    <AdminIcon name="plus" aria-hidden="true" />
                     Criar vaga
                 </button>
             </div>
@@ -257,7 +248,7 @@ function AdminJobsPage() {
                         {paginatedJobs.map((job) => (
                             <article className="admin-job-row" key={job.id}>
                                 <div className="admin-job-row__identity">
-                                    <span className="admin-job-row__icon" aria-hidden="true"><JobAreaIcon type={getJobIcon(job.area)} /></span>
+                                    <span className="admin-job-row__icon" aria-hidden="true"><AdminIcon name={getJobIcon(job.area)} /></span>
                                     <div>
                                         <strong>{job.title}</strong>
                                         <span>{job.area}</span>
@@ -270,7 +261,13 @@ function AdminJobsPage() {
                                     <span>{currencyFormatter.format(job.salaryMin)} – {currencyFormatter.format(job.salaryMax)}</span>
                                 </div>
 
-                                <span className={`admin-job-status admin-job-status--${job.status}`}><i aria-hidden="true" />{statusLabels[job.status]}</span>
+                                <AdminStatusSelect
+                                    value={job.status}
+                                    options={statusOptions}
+                                    onChange={(status) => updateStatus(job.id, status as JobStatus)}
+                                    ariaLabel={`Alterar status da vaga ${job.title}`}
+                                    className={`admin-job-status admin-job-status--${job.status}`}
+                                />
 
                                 <div className="admin-job-row__candidates">
                                     <strong>{job.candidates}</strong>
@@ -284,10 +281,10 @@ function AdminJobsPage() {
 
                                 <div className="admin-job-row__actions">
                                     <button type="button" onClick={() => setSharingJob(job)} aria-label={`Compartilhar vaga ${job.title}`} title="Compartilhar vaga">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3-5-7-2Z" /></svg>
+                                        <AdminIcon name="share" aria-hidden="true" />
                                     </button>
                                     <button type="button" onClick={() => setEditingJob(job)} aria-label={`Editar vaga ${job.title}`} title="Editar vaga">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l11-11-4-4L4 16Zm9.5-9.5 4 4" /></svg>
+                                        <AdminIcon name="edit" aria-hidden="true" />
                                     </button>
                                 </div>
                             </article>
@@ -296,7 +293,7 @@ function AdminJobsPage() {
                 </div>
             ) : (
                     <div className="admin-jobs-empty">
-                        <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg></span>
+                        <span aria-hidden="true"><AdminIcon name="search" /></span>
                         <strong>Nenhuma vaga encontrada</strong>
                         <p>Tente alterar a pesquisa ou selecionar outro status.</p>
                         <button type="button" onClick={() => { setSearch(''); setStatusFilter('todos'); setCurrentPage(1) }}>Limpar filtros</button>
@@ -305,20 +302,20 @@ function AdminJobsPage() {
 
             {filteredJobs.length > JOBS_PER_PAGE && (
                 <nav className="admin-jobs-pagination" aria-label="Paginação das vagas">
-                    <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} aria-label="Página anterior">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                    <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={safeCurrentPage === 1} aria-label="Página anterior">
+                        <AdminIcon name="chevron-down" className="admin-icon--previous" aria-hidden="true" />
                     </button>
 
                     <div className="admin-jobs-pagination__pages">
                         {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-                            <button className={page === currentPage ? 'is-active' : ''} type="button" key={page} onClick={() => setCurrentPage(page)} aria-label={`Ir para a página ${page}`} aria-current={page === currentPage ? 'page' : undefined}>
+                            <button className={page === safeCurrentPage ? 'is-active' : ''} type="button" key={page} onClick={() => setCurrentPage(page)} aria-label={`Ir para a página ${page}`} aria-current={page === safeCurrentPage ? 'page' : undefined}>
                                 {page}
                             </button>
                         ))}
                     </div>
 
-                    <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} aria-label="Próxima página">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                    <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={safeCurrentPage === totalPages} aria-label="Próxima página">
+                        <AdminIcon name="chevron-down" className="admin-icon--next" aria-hidden="true" />
                     </button>
                 </nav>
             )}
