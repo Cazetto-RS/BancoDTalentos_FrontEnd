@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import type { AdminJob } from '../../pages/admin/AdminJobsPage'
+import { createJobShareUrl } from '../../services/jobStorage'
+import type { AdminJob } from '../../types/Job'
 import AdminIcon from './AdminIcon'
 import '../../styles/AdminJobModal.css'
 
@@ -27,7 +28,7 @@ const emptyJob = (id: number): AdminJob => ({
     visibility: 'Público',
     candidates: 0,
     skills: [],
-    formUrl: '',
+    shareUrl: createJobShareUrl(id),
 })
 
 function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalProps) {
@@ -59,6 +60,7 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
         event.preventDefault()
         onSave({
             ...form,
+            shareUrl: form.shareUrl || createJobShareUrl(form.id),
             skills: skillsText.split(',').map((skill) => skill.trim()).filter(Boolean),
         })
     }
@@ -71,7 +73,7 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
                 <header className="admin-job-modal__header">
                     <div className="admin-job-modal__identity">
                         <span className="admin-job-modal__header-icon" aria-hidden="true">
-                            <AdminIcon name={mode === 'create' ? 'plus' : 'edit'} aria-hidden="true" />
+                            <AdminIcon name={mode === 'create' ? 'plus' : 'edit'} />
                         </span>
                         <div>
                             <span>GERENCIAMENTO DE VAGAS</span>
@@ -157,17 +159,17 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
                                     <small>Separe cada habilidade por vírgula.</small>
                                 </label>
 
-                                <label className="admin-job-field">
+                                <label className="admin-job-field admin-job-field--wide">
                                     <span>Visibilidade</span>
                                     <select value={form.visibility} onChange={(event) => setForm({ ...form, visibility: event.target.value as AdminJob['visibility'] })}>
-                                        <option value="Público">Público</option>
-                                        <option value="Interno">Interno</option>
+                                        <option value="Público">Pública</option>
+                                        <option value="Interno">Privada</option>
                                     </select>
-                                </label>
-
-                                <label className="admin-job-field">
-                                    <span>Link do formulário</span>
-                                    <input value={form.formUrl} onChange={(event) => setForm({ ...form, formUrl: event.target.value })} type="url" placeholder="https://forms..." required />
+                                    <small>
+                                        {form.visibility === 'Público'
+                                            ? 'A vaga aparecerá automaticamente na página de vagas abertas.'
+                                            : 'A vaga ficará fora da listagem pública e deverá ser acessada pelo link de compartilhamento.'}
+                                    </small>
                                 </label>
                             </div>
                         </section>

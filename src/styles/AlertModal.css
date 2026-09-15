@@ -81,6 +81,52 @@
     background: var(--color-primary-hover);
 }
 
+.alert-modal__actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
+    margin-top: 1.5rem;
+}
+
+.alert-modal__actions .alert-modal__button {
+    width: 100%;
+    min-width: 0;
+    margin-top: 0;
+}
+
+.alert-modal--danger .alert-modal__icon {
+    background: rgb(223 92 88 / 13%);
+    color: var(--color-danger);
+}
+
+.alert-modal--danger .alert-modal__icon svg {
+    width: 1.35rem;
+    height: 1.35rem;
+    fill: currentColor;
+}
+
+.alert-modal__button--secondary {
+    border-color: var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+
+.alert-modal__button--secondary:hover {
+    border-color: rgb(22 156 249 / 30%);
+    background: rgb(22 156 249 / 8%);
+    color: var(--color-primary);
+}
+
+.alert-modal__button--danger {
+    border-color: var(--color-danger);
+    background: var(--color-danger);
+}
+
+.alert-modal__button--danger:hover {
+    background: #c84946;
+}
+
 .alert-modal__close:focus-visible,
 .alert-modal__button:focus-visible {
     outline: 3px solid var(--color-focus-ring);
@@ -100,5 +146,9 @@
 
     .alert-modal__button {
         width: 100%;
+    }
+
+    .alert-modal__actions {
+        grid-template-columns: 1fr;
     }
 }

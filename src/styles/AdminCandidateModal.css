@@ -47,10 +47,9 @@
     flex: 0 0 3.8rem;
     display: grid;
     place-items: center;
-    border: 2px solid rgb(255 255 255 / 18%);
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary), #68bdff);
-    color: #fff;
+    background: rgb(22 156 249 / 18%);
+    color: var(--color-primary);
     font-size: 1rem;
     font-weight: 800;
 }
@@ -298,6 +297,7 @@
 .admin-candidate-modal__application-grid strong {
     overflow-wrap: anywhere;
     font-size: .78rem;
+    font-weight: 500;
 }
 
 .admin-candidate-modal__columns {
@@ -325,7 +325,7 @@
     margin: 0;
     overflow-wrap: anywhere;
     font-size: .78rem;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .admin-candidate-modal__tags {

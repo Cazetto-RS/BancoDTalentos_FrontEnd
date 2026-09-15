@@ -338,16 +338,15 @@
     flex: 0 0 3.5rem;
     display: grid;
     place-items: center;
-    border: 2px solid rgb(255 255 255 / 16%);
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary), #68bdff);
+    background: rgb(22 156 249 / 11%);
     color: #fff;
 }
 
 .admin-job-share-modal__icon svg {
     width: 1.45rem;
     height: 1.45rem;
-    fill: currentColor;
+    fill: var(--color-primary);
 }
 
 .admin-job-share-modal__header > div {

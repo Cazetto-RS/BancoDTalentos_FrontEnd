@@ -4,26 +4,10 @@ import AdminStatusSelect from '../../components/admin/AdminStatusSelect'
 import AdminSummaryCards from '../../components/admin/AdminSummaryCards'
 import JobFormModal from '../../components/admin/JobFormModal'
 import JobShareModal from '../../components/admin/JobShareModal'
+import ConfirmModal from '../../components/common/ConfirmModal'
+import { createJobShareUrl, getStoredJobs, hasStoredJobs, replaceStoredJobs } from '../../services/jobStorage'
+import type { AdminJob, JobStatus } from '../../types/Job'
 import '../../styles/AdminJobsPage.css'
-
-export type JobStatus = 'ativo' | 'pausado' | 'fechado'
-
-export interface AdminJob {
-    id: number
-    title: string
-    area: string
-    description: string
-    workModel: 'remoto' | 'hibrido' | 'presencial'
-    contractType: 'CLT' | 'PJ'
-    salaryMin: number
-    salaryMax: number
-    status: JobStatus
-    createdAt: string
-    visibility: 'Público' | 'Interno'
-    candidates: number
-    skills: string[]
-    formUrl: string
-}
 
 const initialJobs: AdminJob[] = [
     {
@@ -40,7 +24,7 @@ const initialJobs: AdminJob[] = [
         visibility: 'Público',
         candidates: 112,
         skills: ['React', 'TypeScript', 'Node.js'],
-        formUrl: 'https://forms.pointmedia.com.br/vaga/desenvolvedor-web-senior',
+        shareUrl: createJobShareUrl(1),
     },
     {
         id: 2,
@@ -56,7 +40,7 @@ const initialJobs: AdminJob[] = [
         visibility: 'Público',
         candidates: 48,
         skills: ['Figma', 'UX Research', 'Prototipagem'],
-        formUrl: 'https://forms.pointmedia.com.br/vaga/designer-produto',
+        shareUrl: createJobShareUrl(2),
     },
     {
         id: 3,
@@ -72,7 +56,7 @@ const initialJobs: AdminJob[] = [
         visibility: 'Público',
         candidates: 76,
         skills: ['SQL', 'Python', 'Power BI'],
-        formUrl: 'https://forms.pointmedia.com.br/vaga/analista-dados',
+        shareUrl: createJobShareUrl(3),
     },
     {
         id: 4,
@@ -88,7 +72,7 @@ const initialJobs: AdminJob[] = [
         visibility: 'Público',
         candidates: 64,
         skills: ['React Native', 'TypeScript', 'APIs REST'],
-        formUrl: 'https://forms.pointmedia.com.br/vaga/desenvolvedor-mobile',
+        shareUrl: createJobShareUrl(4),
     },
 ]
 
@@ -117,13 +101,18 @@ const JOBS_PER_PAGE = 6
 const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({ value, label }))
 
 function AdminJobsPage() {
-    const [jobs, setJobs] = useState(initialJobs)
+    const [jobs, setJobs] = useState(() => {
+        if (hasStoredJobs()) return getStoredJobs()
+        replaceStoredJobs(initialJobs)
+        return initialJobs
+    })
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<'todos' | JobStatus>('todos')
     const [sortBy, setSortBy] = useState<'recentes' | 'candidatos' | 'titulo'>('recentes')
     const [currentPage, setCurrentPage] = useState(1)
     const [editingJob, setEditingJob] = useState<AdminJob | null>(null)
     const [sharingJob, setSharingJob] = useState<AdminJob | null>(null)
+    const [deletingJob, setDeletingJob] = useState<AdminJob | null>(null)
     const [creatingJob, setCreatingJob] = useState(false)
 
     const summary = useMemo(() => ({
@@ -166,19 +155,42 @@ function AdminJobsPage() {
     ]
 
     const saveEditedJob = (job: AdminJob) => {
-        setJobs((current) => current.map((item) => item.id === job.id ? job : item))
+        setJobs((current) => {
+            const nextJobs = current.map((item) => item.id === job.id ? job : item)
+            replaceStoredJobs(nextJobs)
+            return nextJobs
+        })
         setCurrentPage(1)
         setEditingJob(null)
     }
 
     const createJob = (job: AdminJob) => {
-        setJobs((current) => [job, ...current])
+        setJobs((current) => {
+            const nextJobs = [job, ...current]
+            replaceStoredJobs(nextJobs)
+            return nextJobs
+        })
         setCurrentPage(1)
         setCreatingJob(false)
     }
 
     const updateStatus = (jobId: number, status: JobStatus) => {
-        setJobs((current) => current.map((job) => job.id === jobId ? { ...job, status } : job))
+        setJobs((current) => {
+            const nextJobs = current.map((job) => job.id === jobId ? { ...job, status } : job)
+            replaceStoredJobs(nextJobs)
+            return nextJobs
+        })
+    }
+
+    const deleteJob = () => {
+        if (!deletingJob) return
+        setJobs((current) => {
+            const nextJobs = current.filter((job) => job.id !== deletingJob.id)
+            replaceStoredJobs(nextJobs)
+            return nextJobs
+        })
+        setCurrentPage(1)
+        setDeletingJob(null)
     }
 
     return (
@@ -286,6 +298,9 @@ function AdminJobsPage() {
                                     <button type="button" onClick={() => setEditingJob(job)} aria-label={`Editar vaga ${job.title}`} title="Editar vaga">
                                         <AdminIcon name="edit" aria-hidden="true" />
                                     </button>
+                                    <button className="admin-job-row__delete" type="button" onClick={() => setDeletingJob(job)} aria-label={`Excluir vaga ${job.title}`} title="Excluir vaga">
+                                        <AdminIcon name="trash" aria-hidden="true" />
+                                    </button>
                                 </div>
                             </article>
                         ))}
@@ -323,6 +338,15 @@ function AdminJobsPage() {
             {editingJob && <JobFormModal mode="edit" job={editingJob} onClose={() => setEditingJob(null)} onSave={saveEditedJob} />}
             {creatingJob && <JobFormModal mode="create" nextId={Math.max(0, ...jobs.map((job) => job.id)) + 1} onClose={() => setCreatingJob(false)} onSave={createJob} />}
             {sharingJob && <JobShareModal job={sharingJob} onClose={() => setSharingJob(null)} />}
+            <ConfirmModal
+                isOpen={Boolean(deletingJob)}
+                title="Excluir vaga?"
+                message={deletingJob ? `A vaga “${deletingJob.title}” será removida da administração e da página pública. Esta ação não pode ser desfeita.` : ''}
+                icon={<AdminIcon name="trash" />}
+                confirmText="Excluir vaga"
+                onConfirm={deleteJob}
+                onClose={() => setDeletingJob(null)}
+            />
         </section>
     )
 }

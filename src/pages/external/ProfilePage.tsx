@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import '../../styles/ProfilePage.css'
 import profileIcon from '../../assets/svgs/Profile.svg'
+import JobApplicationModal from '../../components/jobs/JobApplicationModal'
 import JobCategoryIcon from '../../components/jobs/JobCategoryIcon'
+import type { JobModalData } from '../../types/Job'
 
 const skills = [
     { name: 'React', level: 75 },
@@ -20,7 +23,18 @@ const education = [
     { course: 'Curso de especialização', institution: 'Instituição de ensino', period: '2023 — 2024' },
 ]
 
+const currentApplication: JobModalData = {
+    title: 'Desenvolvedor Web Sênior',
+    category: 'desenvolvimento',
+    salary: 'R$ 3.500,00 — R$ 4.500,00',
+    details: 'PJ • Híbrido',
+    description: 'Atuação no desenvolvimento e manutenção de aplicações web, trabalhando em conjunto com as equipes de produto e design.',
+    skills: ['React', 'TypeScript', 'Node.js'],
+}
+
 function ProfilePage() {
+    const [showJobDetails, setShowJobDetails] = useState(false)
+
     return (
         <main className="profile-page">
             <section className="profile-hero">
@@ -197,11 +211,15 @@ function ProfilePage() {
                                 <p>Desenvolvimento Web <span>•</span> PJ <span>•</span> Híbrido</p>
                                 <strong>R$ 3.500,00 — R$ 4.500,00</strong>
                             </div>
-                            <button className="profile-job__button" type="button">Ver candidatura</button>
+                            <button className="profile-job__button" type="button" onClick={() => setShowJobDetails(true)}>Ver vaga</button>
                         </div>
                     </section>
                 </div>
             </div>
+
+            {showJobDetails && (
+                <JobApplicationModal job={currentApplication} mode="details" onClose={() => setShowJobDetails(false)} />
+            )}
         </main>
     )
 }

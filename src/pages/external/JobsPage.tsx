@@ -2,15 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import '../../styles/externalInterface.css'
 import '../../styles/JobsPage.css'
-import JobApplicationModal, { type JobModalData } from '../../components/jobs/JobApplicationModal'
+import JobApplicationModal from '../../components/jobs/JobApplicationModal'
 import JobCategoryIcon from '../../components/jobs/JobCategoryIcon'
 import { getJobCategoryTheme } from '../../constants/jobCategories'
+import { getStoredJobs, toPublicJob } from '../../services/jobStorage'
+import type { JobModalData } from '../../types/Job'
 
 const DESKTOP_PAGE_SIZE = 12
 const MOBILE_PAGE_SIZE = 6
 const MOBILE_BREAKPOINT = '(max-width: 600px)'
 
-const jobs: JobModalData[] = [
+const defaultJobs: JobModalData[] = [
     { title: 'Desenvolvedor Web', category: 'desenvolvimento', salary: 'R$ 3.500,00 - R$ 5.000,00', details: 'PJ • Híbrido • Pleno', skills: ['React', 'JavaScript', 'TypeScript'] },
     { title: 'Designer Gráfico', category: 'design', salary: 'R$ 4.500,00 - R$ 6.000,00', details: 'PJ • Híbrido • Sênior', skills: ['Adobe', 'Photoshop', 'Illustrator'] },
     { title: 'Desenvolvedor Mobile', category: 'mobile', salary: 'R$ 4.000,00 - R$ 6.500,00', details: 'CLT • Remoto • Pleno', skills: ['React Native', 'Node.js', 'MongoDB'] },
@@ -27,8 +29,29 @@ const jobs: JobModalData[] = [
     { title: 'Product Manager', category: 'produto', salary: 'R$ 6.000,00 - R$ 9.000,00', details: 'CLT • Híbrido • Sênior', skills: ['Scrum', 'Discovery', 'Analytics'] },
 ]
 
+function getPublishedJobs(): JobModalData[] {
+    const storedPublicJobs = getStoredJobs()
+        .filter((job) => job.visibility === 'Público' && job.status === 'ativo')
+        .map(toPublicJob)
+    const storedTitles = new Set(storedPublicJobs.map((job) => job.title.toLocaleLowerCase('pt-BR')))
+
+    return [
+        ...storedPublicJobs,
+        ...defaultJobs.filter((job) => !storedTitles.has(job.title.toLocaleLowerCase('pt-BR'))),
+    ]
+}
+
+function getRequestedJob(): JobModalData | null {
+    const requestedJobId = Number(new URLSearchParams(window.location.search).get('vaga'))
+    if (!requestedJobId) return null
+
+    const requestedJob = getStoredJobs().find((job) => job.id === requestedJobId && job.status === 'ativo')
+    return requestedJob ? toPublicJob(requestedJob) : null
+}
+
 function JobsPage() {
-    const [selectedJob, setSelectedJob] = useState<JobModalData | null>(null)
+    const [selectedJob, setSelectedJob] = useState<JobModalData | null>(getRequestedJob)
+    const [jobs, setJobs] = useState<JobModalData[]>(getPublishedJobs)
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(() => window.matchMedia(MOBILE_BREAKPOINT).matches ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE)
     const listRef = useRef<HTMLElement>(null)
@@ -42,6 +65,16 @@ function JobsPage() {
 
         mediaQuery.addEventListener('change', updatePageSize)
         return () => mediaQuery.removeEventListener('change', updatePageSize)
+    }, [])
+
+    useEffect(() => {
+        const refreshJobs = () => {
+            setJobs(getPublishedJobs())
+            setCurrentPage(1)
+        }
+
+        window.addEventListener('storage', refreshJobs)
+        return () => window.removeEventListener('storage', refreshJobs)
     }, [])
 
     const totalPages = Math.ceil(jobs.length / pageSize)

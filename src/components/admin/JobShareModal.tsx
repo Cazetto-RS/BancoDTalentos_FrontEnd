@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { AdminJob } from '../../pages/admin/AdminJobsPage'
+import type { AdminJob } from '../../types/Job'
 import AdminIcon from './AdminIcon'
 import '../../styles/AdminJobModal.css'
 
@@ -45,11 +45,11 @@ function JobShareModal({ job, onClose }: JobShareModalProps) {
         let copiedSuccessfully = false
 
         try {
-            await navigator.clipboard.writeText(job.formUrl)
+            await navigator.clipboard.writeText(job.shareUrl)
             copiedSuccessfully = true
         } catch {
             const textarea = document.createElement('textarea')
-            textarea.value = job.formUrl
+            textarea.value = job.shareUrl
             textarea.style.position = 'fixed'
             textarea.style.opacity = '0'
             document.body.appendChild(textarea)
@@ -78,19 +78,19 @@ function JobShareModal({ job, onClose }: JobShareModalProps) {
                     </span>
                     <div>
                         <span>COMPARTILHAR VAGA</span>
-                        <h2 id="admin-job-share-title">Acesso ao formulário</h2>
-                        <p>Escaneie o QR Code ou copie o link para compartilhar.</p>
+                        <h2 id="admin-job-share-title">Compartilhar oportunidade</h2>
+                        <p>Escaneie o QR Code ou copie o link de acesso à vaga.</p>
                     </div>
                 </header>
 
                 <div className="admin-job-share-modal__job">
-                    <span aria-hidden="true"><AdminIcon name="briefcase" /></span>
+                    <span aria-hidden="true"><AdminIcon name="briefcase" aria-hidden="true" /></span>
                     <div><small>{job.area}</small><strong>{job.title}</strong></div>
                 </div>
 
                 <div className="admin-job-share-modal__qr-card">
                     <div className="admin-job-share-modal__qr">
-                        <svg viewBox="0 0 21 21" role="img" aria-label="QR Code de acesso ao formulário da vaga" shapeRendering="crispEdges">
+                        <svg viewBox="0 0 21 21" role="img" aria-label="QR Code de acesso à vaga" shapeRendering="crispEdges">
                             <rect width="21" height="21" fill="#fff" />
                             {qrPattern.flatMap((row, rowIndex) => [...row].map((cell, columnIndex) => cell === '1' ? (
                                 <rect x={columnIndex} y={rowIndex} width="1" height="1" fill="#000" key={`${rowIndex}-${columnIndex}`} />
@@ -103,7 +103,7 @@ function JobShareModal({ job, onClose }: JobShareModalProps) {
                 <div className="admin-job-share-modal__link">
                     <label htmlFor="admin-job-share-url">Link da vaga</label>
                     <div className="admin-job-share-modal__link-control">
-                        <a id="admin-job-share-url" href={job.formUrl} target="_blank" rel="noreferrer" title={job.formUrl}>{job.formUrl}</a>
+                        <a id="admin-job-share-url" href={job.shareUrl} target="_blank" rel="noreferrer" title={job.shareUrl}>{job.shareUrl}</a>
                         <button className={copied ? 'is-copied' : ''} type="button" onClick={copyUrl} aria-label={copied ? 'Link copiado' : 'Copiar link da vaga'}>
                             {copied ? (
                                 <AdminIcon name="check" aria-hidden="true" />
@@ -117,11 +117,6 @@ function JobShareModal({ job, onClose }: JobShareModalProps) {
                         {copied ? 'O link foi copiado para a área de transferência.' : ''}
                     </span>
                 </div>
-
-                <a className="admin-job-share-modal__open" href={job.formUrl} target="_blank" rel="noreferrer">
-                    Abrir formulário
-                    <AdminIcon name="external" aria-hidden="true" />
-                </a>
             </div>
         </div>,
         document.body,

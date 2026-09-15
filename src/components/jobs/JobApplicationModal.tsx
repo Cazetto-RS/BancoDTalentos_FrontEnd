@@ -1,24 +1,18 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { getJobCategoryTheme, type JobCategoryKey } from '../../constants/jobCategories'
+import { getJobCategoryTheme } from '../../constants/jobCategories'
+import type { JobModalData } from '../../types/Job'
 import JobCategoryIcon from './JobCategoryIcon'
 import '../../styles/JobApplicationModal.css'
-
-export interface JobModalData {
-    title: string
-    category: JobCategoryKey
-    salary: string
-    details: string
-    skills: string[]
-}
 
 interface JobApplicationModalProps {
     job: JobModalData
     onClose: () => void
+    mode?: 'apply' | 'details'
 }
 
-function JobApplicationModal({ job, onClose }: JobApplicationModalProps) {
+function JobApplicationModal({ job, onClose, mode = 'apply' }: JobApplicationModalProps) {
     const [step, setStep] = useState(1)
     const titleId = useId()
     const dialogRef = useRef<HTMLDivElement>(null)
@@ -61,14 +55,16 @@ function JobApplicationModal({ job, onClose }: JobApplicationModalProps) {
                     <div className="job-modal__icon" aria-hidden="true"><JobCategoryIcon category={job.category} /></div>
                     <div>
                         <h2 id={titleId}>{job.title}</h2>
-                        <p>Oportunidade em Tecnologia</p>
+                        <p>{mode === 'details' ? 'Informações da vaga em que você se inscreveu' : 'Oportunidade em Tecnologia'}</p>
                     </div>
                     <button className="job-modal__close" type="button" onClick={onClose} aria-label="Fechar modal">×</button>
                 </header>
 
-                <div className="job-modal__progress" aria-label={`Etapa ${step} de 3`}>
-                    {[1, 2, 3].map((item) => <span className={item <= step ? 'is-active' : ''} key={item} />)}
-                </div>
+                {mode === 'apply' && (
+                    <div className="job-modal__progress" aria-label={`Etapa ${step} de 3`}>
+                        {[1, 2, 3].map((item) => <span className={item <= step ? 'is-active' : ''} key={item} />)}
+                    </div>
+                )}
 
                 {step === 1 && (
                     <div className="job-modal__body">
@@ -79,7 +75,7 @@ function JobApplicationModal({ job, onClose }: JobApplicationModalProps) {
                         </div>
                         <div className="job-modal__section">
                             <span>Descrição</span>
-                            <p>Buscamos uma pessoa colaborativa, curiosa e comprometida com boas práticas para integrar nossa equipe e desenvolver soluções que gerem impacto.</p>
+                            <p>{job.description ?? 'Buscamos uma pessoa colaborativa, curiosa e comprometida com boas práticas para integrar nossa equipe e desenvolver soluções que gerem impacto.'}</p>
                         </div>
                         <div className="job-modal__section"><span>Salário</span><strong>{job.salary}</strong></div>
                         <div className="job-modal__section">
@@ -87,12 +83,16 @@ function JobApplicationModal({ job, onClose }: JobApplicationModalProps) {
                             <ul className="job-modal__tags">{job.skills.map((skill) => <li key={skill}>{skill}</li>)}</ul>
                         </div>
                         <footer className="job-modal__actions job-modal__actions--end">
-                            <button className="job-modal__primary" type="button" onClick={() => setStep(2)}>Próximo</button>
+                            {mode === 'details' ? (
+                                <button className="job-modal__primary" type="button" onClick={onClose}>Fechar</button>
+                            ) : (
+                                <button className="job-modal__primary" type="button" onClick={() => setStep(2)}>Próximo</button>
+                            )}
                         </footer>
                     </div>
                 )}
 
-                {step === 2 && (
+                {mode === 'apply' && step === 2 && (
                     <form className="job-modal__body" onSubmit={handleSubmit}>
                         <label className="job-modal__field">
                             <span>Pretensão salarial</span>
@@ -120,7 +120,7 @@ function JobApplicationModal({ job, onClose }: JobApplicationModalProps) {
                     </form>
                 )}
 
-                {step === 3 && (
+                {mode === 'apply' && step === 3 && (
                     <div className="job-modal__body">
                         <div className="job-modal__success">
                             <div className="job-modal__check" aria-hidden="true">

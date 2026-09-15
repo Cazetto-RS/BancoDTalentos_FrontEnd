@@ -30,13 +30,14 @@ export type AdminIconName =
     | 'shield'
     | 'sliders'
     | 'star'
+    | 'trash'
     | 'users'
 
 const paths: Record<AdminIconName, string> = {
     'arrow-left': 'M11 5 4 12l7 7v-4h9V9h-9V5Z',
     'arrow-right': 'm13 5 7 7-7 7v-4H4V9h9V5Z',
     bell: 'M12 22a2.5 2.5 0 0 0 2.35-1.65h-4.7A2.5 2.5 0 0 0 12 22Zm7-6.5-1.7-2.1V9a5.3 5.3 0 0 0-4.2-5.2V3a1.1 1.1 0 0 0-2.2 0v.8A5.3 5.3 0 0 0 6.7 9v4.4L5 15.5V18h14v-2.5Z',
-    briefcase: 'M9 4V2h6v2h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5Zm2 0h2V3h-2v1Zm-7 7v7h16v-7a21.7 21.7 0 0 1-7 1.2V14h-2v-1.8A21.7 21.7 0 0 1 4 11Zm16-2V6H4v3c2.3.8 4.6 1.2 7 1.3V9h2v1.3c2.4-.1 4.7-.5 7-1.3Z',
+    briefcase: 'M0 23.3684V5.4183H7.2V0.6316H16.8V5.4183H24V23.3684H0ZM9.6 5.4183H14.4V3.0249H9.6V5.4183Z',
     calendar: 'M7 2h2v2h6V2h2v2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V2Zm12 8H5v10h14V10ZM5 8h14V6H5v2Z',
     check: 'm9.1 16.2-4.3-4.3-2 2 6.3 6.3L21.5 7.8l-2-2L9.1 16.2Z',
     'chevron-down': 'm5.3 8.6 6.7 6.7 6.7-6.7-1.8-1.8-4.9 4.9-4.9-4.9-1.8 1.8Z',
@@ -62,6 +63,7 @@ const paths: Record<AdminIconName, string> = {
     shield: 'm12 2 8 3v6c0 5.1-3.4 9.8-8 11-4.6-1.2-8-5.9-8-11V5l8-3Zm-1.2 14.2 5.8-5.8-1.4-1.4-4.4 4.4-2-2-1.4 1.4 3.4 3.4Z',
     sliders: 'M4 5h9v2H4V5Zm13 0h3v2h-3V5Zm-2-2h2v6h-2V3ZM4 11h3v2H4v-2Zm7 0h9v2h-9v-2ZM9 9h2v6H9V9Zm-5 8h11v2H4v-2Zm15 0h1v2h-1v-2Zm-2-2h2v6h-2v-6Z',
     star: 'm12 2.5 3 6.1 6.7 1-4.8 4.7 1.1 6.7-6-3.2L6 21l1.1-6.7-4.8-4.7 6.7-1 3-6.1Z',
+    trash: 'M8 2h8l1 2h5v2H2V4h5l1-2Zm-3 6h14l-1 14H6L5 8Zm4 3v8h2v-8H9Zm4 0v8h2v-8h-2Z',
     users: 'M9 11a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm8-1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM9 13c-5 0-8 2.5-8 5.5V21h16v-2.5C17 15.5 14 13 9 13Zm8 0c-.8 0-1.5.1-2.2.2 2.5 1.3 4.2 3.1 4.2 5.3V21h4v-2.5c0-3-2.3-5.5-6-5.5Z',
 }
 
@@ -74,6 +76,8 @@ function AdminIcon({ name, title, ...props }: AdminIconProps) {
     return (
         <svg
             viewBox="0 0 24 24"
+            width="24"
+            height="24"
             fill="currentColor"
             aria-hidden={title ? undefined : true}
             role={title ? 'img' : undefined}

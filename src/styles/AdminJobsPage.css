@@ -368,6 +368,16 @@
     transform: translateY(-1px);
 }
 
+.admin-job-row__actions .admin-job-row__delete:hover {
+    border-color: rgb(223 92 88 / 35%);
+    background: rgb(223 92 88 / 10%);
+    color: var(--color-danger);
+}
+
+.admin-job-row__actions .admin-job-row__delete:hover svg {
+    fill: currentColor;
+}
+
 .admin-job-row__actions svg {
     width: 1.05rem;
     height: 1.05rem;
