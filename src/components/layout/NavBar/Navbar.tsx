@@ -1,10 +1,20 @@
 import '../../../styles/Navbar.css'
 import logoImg from '../../../assets/logo.png'
 import { useEffect, useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../../contexts/AuthContext'
 
 function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false)
+    const { user, isAuthenticated, logout } = useAuth()
+    const navigate = useNavigate()
+    const accountPath = user?.cargo === 'candidato' ? '/perfil' : '/admin/dashboard'
+
+    const handleLogout = async () => {
+        await logout()
+        setMenuOpen(false)
+        navigate('/')
+    }
 
     useEffect(() => {
         const closeOnEscape = (event: KeyboardEvent) => {
@@ -29,8 +39,8 @@ function Navbar() {
                 </ul>
 
                 <div className="navbar__actions">
-                    <Link className="navbar__profile__vazado" to="/cadastro">
-                        <span className="navbar__profile-text">Registrar-se</span>
+                    <Link className="navbar__profile__vazado" to={isAuthenticated ? accountPath : '/cadastro'}>
+                        <span className="navbar__profile-text">{isAuthenticated ? 'Minha conta' : 'Registrar-se'}</span>
 
 
                         <svg viewBox="0 0 445 442" className="navbar__profile-arrow" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -39,7 +49,15 @@ function Navbar() {
 
                     </Link>
 
-                    <Link className="navbar__profile" to="/login">
+                    {isAuthenticated ? <button className="navbar__profile" type="button" onClick={handleLogout}>
+                        <span className="navbar__profile-text">Sair</span>
+
+
+                        <svg viewBox="0 0 445 442" className="navbar__profile-arrow" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1.09721e-05 305.566L1.09721e-05 136.434L224.747 136.434L224.747 1.33701e-05L445 221L224.747 442L224.747 305.566L1.09721e-05 305.566Z" fill='#ffffff' />
+                        </svg>
+
+                    </button> : <Link className="navbar__profile" to="/login">
                         <span className="navbar__profile-text">Login</span>
 
 
@@ -47,7 +65,7 @@ function Navbar() {
                             <path d="M1.09721e-05 305.566L1.09721e-05 136.434L224.747 136.434L224.747 1.33701e-05L445 221L224.747 442L224.747 305.566L1.09721e-05 305.566Z" fill='#ffffff' />
                         </svg>
 
-                    </Link>
+                    </Link>}
 
                     {/* <svg viewBox="0 0 435 435" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M217.5 217C277.423 217 326 168.423 326 108.5C326 48.5771 277.423 0 217.5 0C157.577 0 109 48.5771 109 108.5C109 168.423 157.577 217 217.5 217Z" />
@@ -79,8 +97,10 @@ function Navbar() {
                 <NavLink className={({ isActive }) => isActive ? 'is-active' : ''} to="/" end onClick={() => setMenuOpen(false)}>Home</NavLink>
                 <NavLink className={({ isActive }) => isActive ? 'is-active' : ''} to="/sobre" onClick={() => setMenuOpen(false)}>Sobre</NavLink>
                 <NavLink className={({ isActive }) => isActive ? 'is-active' : ''} to="/vagas-abertas" onClick={() => setMenuOpen(false)}>Vagas</NavLink>
-                <Link className="navbar__mobile-register" to="/cadastro" onClick={() => setMenuOpen(false)}>Registrar-se</Link>
-                <Link className="navbar__mobile-login" to="/login" onClick={() => setMenuOpen(false)}>Login</Link>
+                <Link className="navbar__mobile-register" to={isAuthenticated ? accountPath : '/cadastro'} onClick={() => setMenuOpen(false)}>{isAuthenticated ? 'Minha conta' : 'Registrar-se'}</Link>
+                {isAuthenticated
+                    ? <button className="navbar__mobile-login" type="button" onClick={handleLogout}>Sair</button>
+                    : <Link className="navbar__mobile-login" to="/login" onClick={() => setMenuOpen(false)}>Login</Link>}
             </nav>
 
             {menuOpen && <button className="navbar__backdrop" type="button" aria-label="Fechar menu" onClick={() => setMenuOpen(false)} />}

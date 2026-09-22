@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import AlertModal from '../../components/common/AlertModal'
+import { useAuth } from '../../contexts/AuthContext'
+import { api } from '../../services/api'
 import '../../styles/RegistrationPage.css'
 
 const MAX_REPEATABLE_ITEMS = 5
@@ -40,20 +42,24 @@ const steps = [
     },
 ]
 
-const Field = ({ label, type = 'text', placeholder }: { label: string; type?: string; placeholder: string }) => (
+const Field = ({ label, name, type = 'text', placeholder, required = false }: { label: string; name: string; type?: string; placeholder: string; required?: boolean }) => (
     <label className="registration-field">
         <span>{label}</span>
-        <input type={type} placeholder={placeholder} />
+        <input name={name} type={type} placeholder={placeholder} required={required} />
     </label>
 )
 
 function RegistrationPage() {
+    const { login } = useAuth()
     const [step, setStep] = useState(1)
     const [completed, setCompleted] = useState(false)
     const [experienceCount, setExperienceCount] = useState(1)
     const [courseCompleted, setCourseCompleted] = useState<Array<'yes' | 'no' | null>>([null])
     const [skillCount, setSkillCount] = useState(3)
     const [limitModalOpen, setLimitModalOpen] = useState(false)
+    const [submitting, setSubmitting] = useState(false)
+    const [submitError, setSubmitError] = useState('')
+    const values = useRef<Record<string, string>>({})
 
     const repeatableItemName = step === 3 ? 'experiências' : step === 4 ? 'formações' : 'competências'
 
@@ -94,10 +100,53 @@ function RegistrationPage() {
         setCourseCompleted((current) => current.map((item, itemIndex) => itemIndex === index ? value : item))
     }
 
-    const nextStep = (event: FormEvent<HTMLFormElement>) => {
+    const nextStep = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        if (step === steps.length) setCompleted(true)
-        else setStep((current) => current + 1)
+        setSubmitError('')
+
+        const currentValues = new FormData(event.currentTarget)
+        currentValues.forEach((value, key) => {
+            if (typeof value === 'string') values.current[key] = value
+        })
+
+        if (step !== steps.length) {
+            setStep((current) => current + 1)
+            return
+        }
+
+        setSubmitting(true)
+        try {
+            const data = values.current
+            await api('/usuarios/registrar', {
+                method: 'POST',
+                body: JSON.stringify({ nome_completo: data.nome_completo, email: data.email, senha: data.senha }),
+            })
+            await login(data.email, data.senha)
+            await api('/candidatos/perfil-base', {
+                method: 'POST',
+                body: JSON.stringify({
+                    telefone: data.telefone || null,
+                    cep: data.cep?.replace(/\D/g, '') || null,
+                    data_nascimento: data.data_nascimento || null,
+                    linkedin_url: data.linkedin_url || null,
+                    portfolio_url: data.portfolio_url || null,
+                    cargo_desejado: data.cargo_desejado || null,
+                }),
+            })
+            await api('/candidatos/cultura', {
+                method: 'POST',
+                body: JSON.stringify({
+                    motivacao: data.motivacao || null,
+                    apresentacao: data.apresentacao || null,
+                    descricao_valores: data.descricao_valores || null,
+                }),
+            })
+            setCompleted(true)
+        } catch (reason) {
+            setSubmitError(reason instanceof Error ? reason.message : 'Não foi possível concluir o cadastro.')
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     if (completed) {
@@ -148,29 +197,29 @@ function RegistrationPage() {
                 <form className="registration-form" onSubmit={nextStep}>
                     <div className="registration-fields">
                         {step === 1 && <>
-                            <Field label="Nome completo" placeholder="Digite seu nome completo" />
-                            <Field label="CEP" placeholder="00000-000" />
-                            <Field label="E-mail" type="email" placeholder="E-mail pessoal" />
-                            <Field label="Data de nascimento" type="date" placeholder="DD/MM/AAAA" />
-                            <Field label="Senha" type="password" placeholder="Mínimo de 6 dígitos" />
+                            <Field label="Nome completo" name="nome_completo" placeholder="Digite seu nome completo" required />
+                            <Field label="CEP" name="cep" placeholder="00000-000" />
+                            <Field label="E-mail" name="email" type="email" placeholder="E-mail pessoal" required />
+                            <Field label="Data de nascimento" name="data_nascimento" type="date" placeholder="DD/MM/AAAA" />
+                            <Field label="Senha" name="senha" type="password" placeholder="Mínimo de 8 dígitos" required />
                             <label className="registration-field registration-upload"><span>Foto</span><input type="file" accept="image/*" /><strong>Enviar foto pessoal</strong></label>
-                            <Field label="Telefone" type="tel" placeholder="+55 (00) 00000-0000" />
+                            <Field label="Telefone" name="telefone" type="tel" placeholder="+55 (00) 00000-0000" />
                         </>}
 
                         {step === 2 && <>
-                            <Field label="LinkedIn" type="url" placeholder="linkedin.com/in/usuario" />
+                            <Field label="LinkedIn" name="linkedin_url" type="url" placeholder="https://linkedin.com/in/usuario" />
                             <label className="registration-field registration-upload"><span>Currículo</span><input type="file" accept=".pdf" /><strong>Enviar currículo em PDF</strong></label>
-                            <Field label="Portfólio" type="url" placeholder="https://seuportfolio.com" />
-                            <Field label="Cargo desejado" placeholder="Ex.: Desenvolvedor Front-end" />
+                            <Field label="Portfólio" name="portfolio_url" type="url" placeholder="https://seuportfolio.com" />
+                            <Field label="Cargo desejado" name="cargo_desejado" placeholder="Ex.: Desenvolvedor Front-end" />
                         </>}
 
                         {step === 3 && <div className="registration-repeat-list">
                             {Array.from({ length: experienceCount }, (_, index) => (
                                 <div className="registration-repeat-item" key={`experience-${index}`}>
-                                    <Field label="Empresa" placeholder="Nome da empresa" />
-                                    <Field label="Data de entrada" type="date" placeholder="DD/MM/AAAA" />
-                                    <Field label="Cargo" placeholder="Cargo exercido" />
-                                    <Field label="Data de saída" type="date" placeholder="Deixe vazio se ainda trabalha lá" />
+                                    <Field label="Empresa" name={`empresa-${index}`} placeholder="Nome da empresa" />
+                                    <Field label="Data de entrada" name={`experiencia-inicio-${index}`} type="date" placeholder="DD/MM/AAAA" />
+                                    <Field label="Cargo" name={`experiencia-cargo-${index}`} placeholder="Cargo exercido" />
+                                    <Field label="Data de saída" name={`experiencia-fim-${index}`} type="date" placeholder="Deixe vazio se ainda trabalha lá" />
                                     <label className="registration-field registration-field--wide"><span>Descrição</span><textarea placeholder="Descreva suas principais atividades" /></label>
 
                                     {experienceCount > 1 && index === experienceCount - 1 && (
@@ -189,9 +238,9 @@ function RegistrationPage() {
                         {step === 4 && <div className="registration-repeat-list">
                             {courseCompleted.map((completedCourse, index) => (
                                 <div className="registration-repeat-item" key={`course-${index}`}>
-                                    <Field label="Curso" placeholder="Nome do curso" />
-                                    <div className="registration-date-pair"><Field label="Data de entrada" type="date" placeholder="DD/MM/AAAA" /><Field label="Data de conclusão" type="date" placeholder="DD/MM/AAAA" /></div>
-                                    <Field label="Instituição" placeholder="Nome da instituição" />
+                                    <Field label="Curso" name={`curso-${index}`} placeholder="Nome do curso" />
+                                    <div className="registration-date-pair"><Field label="Data de entrada" name={`formacao-inicio-${index}`} type="date" placeholder="DD/MM/AAAA" /><Field label="Data de conclusão" name={`formacao-fim-${index}`} type="date" placeholder="DD/MM/AAAA" /></div>
+                                    <Field label="Instituição" name={`instituicao-${index}`} placeholder="Nome da instituição" />
                                     <fieldset className="registration-options">
                                         <legend>Já concluiu o curso?</legend>
                                         <label><input type="radio" name={`completed-course-${index}`} checked={completedCourse === 'yes'} onChange={() => updateCourseCompleted(index, 'yes')} /> Sim</label>
@@ -207,7 +256,7 @@ function RegistrationPage() {
                                     )}
 
                                     {completedCourse === 'no' && <>
-                                        <Field label="Semestre atual" type="number" placeholder="Digite apenas números" />
+                                        <Field label="Semestre atual" name={`semestre-${index}`} type="number" placeholder="Digite apenas números" />
                                         <fieldset className="registration-options">
                                             <legend>Qual é a situação atual?</legend>
                                             <label><input type="radio" name={`course-status-${index}`} /> Cursando</label>
@@ -234,15 +283,15 @@ function RegistrationPage() {
                         </div>}
 
                         {step === 5 && <>
-                            <Field label="Motivação" placeholder="O que te motiva a trabalhar conosco?" />
-                            <label className="registration-field registration-field--tall"><span>Apresentação</span><textarea placeholder="Fale um pouco sobre você" /></label>
-                            <Field label="Valores" placeholder="Quais são os seus valores?" />
+                            <Field label="Motivação" name="motivacao" placeholder="O que te motiva a trabalhar conosco?" />
+                            <label className="registration-field registration-field--tall"><span>Apresentação</span><textarea name="apresentacao" placeholder="Fale um pouco sobre você" /></label>
+                            <Field label="Valores" name="descricao_valores" placeholder="Quais são os seus valores?" />
                             <label className="registration-field registration-upload"><span>Carta de indicação (opcional)</span><input type="file" accept=".pdf" /><strong>Enviar indicação em PDF</strong></label>
                         </>}
 
                         {step === 6 && <div className="registration-skills">
                             {Array.from({ length: skillCount }, (_, index) => <div className="registration-skill" key={`skill-${index}`}>
-                                <Field label="Competência" placeholder="Nome da habilidade" />
+                                <Field label="Competência" name={`competencia-${index}`} placeholder="Nome da habilidade" />
                                 <label className="registration-field"><span>Nível</span><select defaultValue=""><option value="" disabled>Selecione</option><option>1 - Básico</option><option>2 - Iniciante</option><option>3 - Intermediário</option><option>4 - Avançado</option><option>5 - Especialista</option></select></label>
                                 <label className="registration-field"><span>Categoria</span><select defaultValue=""><option value="" disabled>Selecione</option><option>Hard skill</option><option>Soft skill</option></select></label>
                                 <label className="registration-field"><span>Experiência</span><select defaultValue=""><option value="" disabled>Selecione</option><option>Júnior</option><option>Pleno</option><option>Sênior</option></select></label>
@@ -263,9 +312,10 @@ function RegistrationPage() {
                         <button className="registration-button registration-button--secondary" type="button" disabled={step === 1} onClick={() => setStep((current) => current - 1)}>Voltar</button>
                         <div>
                             {(step === 3 || step === 4 || step === 6) && <button className="registration-button registration-button--secondary" type="button" onClick={addAnother}>Adicionar outro</button>}
-                            <button className="registration-button registration-button--primary" type="submit">{step === steps.length ? 'Finalizar' : 'Próximo'}</button>
+                            <button className="registration-button registration-button--primary" type="submit" disabled={submitting}>{submitting ? 'Enviando...' : step === steps.length ? 'Finalizar' : 'Próximo'}</button>
                         </div>
                     </footer>
+                    {submitError && <p className="registration-error" role="alert">{submitError}</p>}
                 </form>
             </section>
             <AlertModal

@@ -7,6 +7,16 @@ import JobCategoryIcon from '../../components/jobs/JobCategoryIcon'
 import { getJobCategoryTheme } from '../../constants/jobCategories'
 import { getStoredJobs, toPublicJob } from '../../services/jobStorage'
 import type { JobModalData } from '../../types/Job'
+import { api } from '../../services/api'
+
+interface ApiJob { id:number; titulo:string; descricao?:string; modelo_trabalho?:string; tipo_contrato?:string; salario_min?:number; salario_max?:number; habilidades:Array<{nome:string}> }
+const money = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' })
+const fromApi = (job: ApiJob): JobModalData => ({
+    id: job.id, title: job.titulo, category: 'desenvolvimento', description: job.descricao,
+    salary: job.salario_min != null && job.salario_max != null ? `${money.format(job.salario_min)} - ${money.format(job.salario_max)}` : 'A combinar',
+    details: `${job.tipo_contrato || 'Contrato a combinar'} • ${job.modelo_trabalho || 'Modelo a combinar'}`,
+    skills: job.habilidades?.map((item) => item.nome) || [],
+})
 
 const DESKTOP_PAGE_SIZE = 12
 const MOBILE_PAGE_SIZE = 6
@@ -55,6 +65,14 @@ function JobsPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(() => window.matchMedia(MOBILE_BREAKPOINT).matches ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE)
     const listRef = useRef<HTMLElement>(null)
+
+    useEffect(() => {
+        api<ApiJob[]>('/vagas').then((data) => {
+            const mapped = data.map(fromApi); setJobs(mapped); setCurrentPage(1)
+            const requested = Number(new URLSearchParams(location.search).get('vaga'))
+            if (requested) setSelectedJob(mapped.find((job) => job.id === requested) || null)
+        }).catch(() => setJobs([]))
+    }, [])
 
     useEffect(() => {
         const mediaQuery = window.matchMedia(MOBILE_BREAKPOINT)

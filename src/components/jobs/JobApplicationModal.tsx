@@ -5,6 +5,9 @@ import { getJobCategoryTheme } from '../../constants/jobCategories'
 import type { JobModalData } from '../../types/Job'
 import JobCategoryIcon from './JobCategoryIcon'
 import '../../styles/JobApplicationModal.css'
+import { api } from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
+import { useNavigate } from 'react-router-dom'
 
 interface JobApplicationModalProps {
     job: JobModalData
@@ -14,6 +17,8 @@ interface JobApplicationModalProps {
 
 function JobApplicationModal({ job, onClose, mode = 'apply' }: JobApplicationModalProps) {
     const [step, setStep] = useState(1)
+    const [error, setError] = useState(''); const [loading, setLoading] = useState(false)
+    const { user } = useAuth(); const navigate = useNavigate()
     const titleId = useId()
     const dialogRef = useRef<HTMLDivElement>(null)
     const [contract = 'Contrato a combinar', workModel = 'Modelo a combinar'] = job.details.split(' • ')
@@ -43,9 +48,18 @@ function JobApplicationModal({ job, onClose, mode = 'apply' }: JobApplicationMod
         }
     }, [onClose])
 
-    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        setStep(3)
+        if (!user) return navigate('/login')
+        if (user.cargo !== 'candidato') return setError('Somente candidatos podem se inscrever.')
+        const form = new FormData(event.currentTarget); setLoading(true); setError('')
+        try {
+            await api('/candidaturas/inscrever', { method:'POST', body:JSON.stringify({
+                vaga_id: job.id, pretensao_salarial: Number(String(form.get('salary')).replace(/[^\d,]/g,'').replace(',','.')),
+                disponibilidade: form.get('availability'), preferencia_contrato: form.get('contract'), preferencia_modelo_trabalho: form.get('workModel'),
+            }) }); setStep(3)
+        } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível concluir a candidatura.') }
+        finally { setLoading(false) }
     }
 
     return createPortal(
@@ -96,27 +110,25 @@ function JobApplicationModal({ job, onClose, mode = 'apply' }: JobApplicationMod
                     <form className="job-modal__body" onSubmit={handleSubmit}>
                         <label className="job-modal__field">
                             <span>Pretensão salarial</span>
-                            <input type="text" inputMode="decimal" placeholder="R$ 0.000,00" required />
+                            <input name="salary" type="text" inputMode="decimal" placeholder="R$ 0.000,00" required />
                         </label>
                         <fieldset className="job-modal__field">
                             <legend>Disponibilidade de horário</legend>
-                            <div className="job-modal__columns">
-                                <input type="time" aria-label="Horário inicial" required />
-                                <input type="time" aria-label="Horário final" required />
-                            </div>
+                            <select name="availability" defaultValue="" required><option value="" disabled>Selecione</option><option value="manhã">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option><option value="integral">Integral</option></select>
                         </fieldset>
                         <label className="job-modal__field">
                             <span>Tipo de contrato desejado</span>
-                            <select defaultValue="" required><option value="" disabled>Selecione uma opção</option><option>CLT</option><option>PJ</option><option>Estágio</option></select>
+                            <select name="contract" defaultValue="" required><option value="" disabled>Selecione uma opção</option><option value="CLT">CLT</option><option value="PJ">PJ</option><option value="Estágio">Estágio</option></select>
                         </label>
                         <label className="job-modal__field">
                             <span>Modelo de trabalho desejado</span>
-                            <select defaultValue="" required><option value="" disabled>Selecione uma opção</option><option>Híbrido</option><option>Remoto</option><option>Presencial</option></select>
+                            <select name="workModel" defaultValue="" required><option value="" disabled>Selecione uma opção</option><option value="hibrido">Híbrido</option><option value="remoto">Remoto</option><option value="presencial">Presencial</option></select>
                         </label>
                         <footer className="job-modal__actions">
                             <button className="job-modal__secondary" type="button" onClick={() => setStep(1)}>Voltar</button>
-                            <button className="job-modal__primary" type="submit">Confirmar candidatura</button>
+                            <button className="job-modal__primary" type="submit" disabled={loading}>{loading ? 'Enviando...' : 'Confirmar candidatura'}</button>
                         </footer>
+                        {error && <p role="alert">{error}</p>}
                     </form>
                 )}
 

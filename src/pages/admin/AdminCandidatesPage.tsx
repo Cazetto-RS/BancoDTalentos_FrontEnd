@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AdminIcon from '../../components/admin/AdminIcon'
 import AdminStatusSelect from '../../components/admin/AdminStatusSelect'
 import AdminSummaryCards from '../../components/admin/AdminSummaryCards'
 import CandidateDetailsModal from '../../components/admin/CandidateDetailsModal'
 import type { AdminCandidate, CandidateStatus } from '../../types/AdminCandidate'
+import { api } from '../../services/api'
 import { candidateStatusLabels } from '../../types/AdminCandidate'
 import '../../styles/AdminCandidatesPage.css'
 
@@ -259,6 +260,16 @@ function getInitials(name: string) {
 
 function AdminCandidatesPage() {
     const [candidates, setCandidates] = useState(initialCandidates)
+    useEffect(() => {
+        api<Array<Record<string, any>>>('/candidaturas').then((rows) => setCandidates(rows.map((row) => ({
+            id: row.candidato_id, userId: 0, fullName: row.candidato_nome, email: row.candidato_email,
+            phone: row.telefone || '', city: row.cidade || '', state: row.estado || '', birthDate: row.data_nascimento || '', photoUrl: row.url_foto,
+            createdAt: row.candidato_criado_em || row.data_inscricao,
+            application: { id:row.candidatura_id, jobId:row.vaga_id, jobTitle:row.vaga_titulo, area:'Tecnologia', status:row.candidatura_status, favorite:row.favorito,
+                salaryExpectation:Number(row.pretensao_salarial || 0), availability:row.disponibilidade, contractPreference:row.preferencia_contrato, workModelPreference:row.preferencia_modelo_trabalho, createdAt:row.data_inscricao },
+            culture:{ motivation:'', values:'', presentation:'' }, skills:[], interests:[], education:[], experiences:[],
+        })))).catch(() => setCandidates([]))
+    }, [])
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<'todos' | CandidateStatus>('todos')
     const [jobFilter, setJobFilter] = useState('todas')

@@ -321,6 +321,18 @@
     color: #fff;
 }
 
+.registration-button:disabled {
+    cursor: not-allowed;
+    opacity: .6;
+}
+
+.registration-error {
+    margin: 1rem 0 0;
+    color: #b42318;
+    font-size: .85rem;
+    text-align: right;
+}
+
 .registration-button--primary:hover {
     background: var(--color-primary-hover);
 }

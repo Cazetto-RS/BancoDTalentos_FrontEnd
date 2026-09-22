@@ -1,80 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AdminIcon, { type AdminIconName } from '../../components/admin/AdminIcon'
 import AdminStatusSelect from '../../components/admin/AdminStatusSelect'
 import AdminSummaryCards from '../../components/admin/AdminSummaryCards'
 import JobFormModal from '../../components/admin/JobFormModal'
 import JobShareModal from '../../components/admin/JobShareModal'
 import ConfirmModal from '../../components/common/ConfirmModal'
-import { createJobShareUrl, getStoredJobs, hasStoredJobs, replaceStoredJobs } from '../../services/jobStorage'
+import { createJobShareUrl } from '../../services/jobStorage'
+import { api } from '../../services/api'
 import type { AdminJob, JobStatus } from '../../types/Job'
 import '../../styles/AdminJobsPage.css'
-
-const initialJobs: AdminJob[] = [
-    {
-        id: 1,
-        title: 'Vaga para Desenvolvedor Web Sênior',
-        area: 'Desenvolvimento Web',
-        description: 'Atuação no desenvolvimento e manutenção de aplicações web, trabalhando em conjunto com as equipes de produto e design.',
-        workModel: 'hibrido',
-        contractType: 'PJ',
-        salaryMin: 3500,
-        salaryMax: 4500,
-        status: 'ativo',
-        createdAt: '3h atrás',
-        visibility: 'Público',
-        candidates: 112,
-        skills: ['React', 'TypeScript', 'Node.js'],
-        shareUrl: createJobShareUrl(1),
-    },
-    {
-        id: 2,
-        title: 'Vaga para Designer de Produto',
-        area: 'Design',
-        description: 'Criação de interfaces, protótipos e experiências digitais alinhadas às necessidades dos usuários e do negócio.',
-        workModel: 'remoto',
-        contractType: 'PJ',
-        salaryMin: 4000,
-        salaryMax: 6000,
-        status: 'pausado',
-        createdAt: '1 dia atrás',
-        visibility: 'Público',
-        candidates: 48,
-        skills: ['Figma', 'UX Research', 'Prototipagem'],
-        shareUrl: createJobShareUrl(2),
-    },
-    {
-        id: 3,
-        title: 'Vaga para Analista de Dados',
-        area: 'Dados',
-        description: 'Análise de indicadores, construção de relatórios e apoio às decisões estratégicas das áreas internas.',
-        workModel: 'presencial',
-        contractType: 'CLT',
-        salaryMin: 3800,
-        salaryMax: 5200,
-        status: 'fechado',
-        createdAt: '4 dias atrás',
-        visibility: 'Público',
-        candidates: 76,
-        skills: ['SQL', 'Python', 'Power BI'],
-        shareUrl: createJobShareUrl(3),
-    },
-    {
-        id: 4,
-        title: 'Vaga para Desenvolvedor Mobile',
-        area: 'Desenvolvimento Mobile',
-        description: 'Desenvolvimento de novas funcionalidades para aplicativos móveis e evolução dos produtos existentes.',
-        workModel: 'hibrido',
-        contractType: 'CLT',
-        salaryMin: 4200,
-        salaryMax: 6500,
-        status: 'ativo',
-        createdAt: '1 semana atrás',
-        visibility: 'Público',
-        candidates: 64,
-        skills: ['React Native', 'TypeScript', 'APIs REST'],
-        shareUrl: createJobShareUrl(4),
-    },
-]
 
 const statusLabels: Record<JobStatus, string> = {
     ativo: 'Ativo',
@@ -101,11 +35,7 @@ const JOBS_PER_PAGE = 6
 const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({ value, label }))
 
 function AdminJobsPage() {
-    const [jobs, setJobs] = useState(() => {
-        if (hasStoredJobs()) return getStoredJobs()
-        replaceStoredJobs(initialJobs)
-        return initialJobs
-    })
+    const [jobs, setJobs] = useState<AdminJob[]>([])
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<'todos' | JobStatus>('todos')
     const [sortBy, setSortBy] = useState<'recentes' | 'candidatos' | 'titulo'>('recentes')
@@ -114,6 +44,13 @@ function AdminJobsPage() {
     const [sharingJob, setSharingJob] = useState<AdminJob | null>(null)
     const [deletingJob, setDeletingJob] = useState<AdminJob | null>(null)
     const [creatingJob, setCreatingJob] = useState(false)
+    const loadJobs = () => api<Array<Record<string, any>>>('/vagas/admin/todas').then((rows) => setJobs(rows.map((row) => ({
+        id: row.id, title: row.titulo, area: row.area_nome || 'Tecnologia', description: row.descricao || '', workModel: row.modelo_trabalho,
+        contractType: row.tipo_contrato, salaryMin: Number(row.salario_min || 0), salaryMax: Number(row.salario_max || 0), status: row.status,
+        createdAt: new Date(row.criado_em).toLocaleDateString('pt-BR'), visibility: 'Público', candidates: Number(row.candidatos || 0),
+        skills: row.habilidades?.map((h: { nome:string }) => h.nome) || [], shareUrl: createJobShareUrl(row.id),
+    }))))
+    useEffect(() => { loadJobs().catch(() => setJobs([])) }, [])
 
     const summary = useMemo(() => ({
         total: jobs.length,
@@ -154,43 +91,22 @@ function AdminJobsPage() {
         { label: 'Vagas fechadas', value: summary.closed, icon: 'clipboard' as const },
     ]
 
-    const saveEditedJob = (job: AdminJob) => {
-        setJobs((current) => {
-            const nextJobs = current.map((item) => item.id === job.id ? job : item)
-            replaceStoredJobs(nextJobs)
-            return nextJobs
-        })
-        setCurrentPage(1)
-        setEditingJob(null)
+    const payload = (job: AdminJob) => ({ titulo:job.title, descricao:job.description, modelo_trabalho:job.workModel, tipo_contrato:job.contractType, salario_min:job.salaryMin, salario_max:job.salaryMax, status:job.status })
+    const saveEditedJob = async (job: AdminJob) => {
+        await api(`/vagas/update/${job.id}`, { method:'PUT', body:JSON.stringify(payload(job)) }); await loadJobs(); setCurrentPage(1); setEditingJob(null)
     }
 
-    const createJob = (job: AdminJob) => {
-        setJobs((current) => {
-            const nextJobs = [job, ...current]
-            replaceStoredJobs(nextJobs)
-            return nextJobs
-        })
-        setCurrentPage(1)
-        setCreatingJob(false)
+    const createJob = async (job: AdminJob) => {
+        await api('/vagas/create', { method:'POST', body:JSON.stringify(payload(job)) }); await loadJobs(); setCurrentPage(1); setCreatingJob(false)
     }
 
-    const updateStatus = (jobId: number, status: JobStatus) => {
-        setJobs((current) => {
-            const nextJobs = current.map((job) => job.id === jobId ? { ...job, status } : job)
-            replaceStoredJobs(nextJobs)
-            return nextJobs
-        })
+    const updateStatus = async (jobId: number, status: JobStatus) => {
+        await api(`/vagas/update/${jobId}`, { method:'PUT', body:JSON.stringify({ status }) }); setJobs(current => current.map(job => job.id === jobId ? {...job,status} : job))
     }
 
-    const deleteJob = () => {
+    const deleteJob = async () => {
         if (!deletingJob) return
-        setJobs((current) => {
-            const nextJobs = current.filter((job) => job.id !== deletingJob.id)
-            replaceStoredJobs(nextJobs)
-            return nextJobs
-        })
-        setCurrentPage(1)
-        setDeletingJob(null)
+        await api(`/vagas/delete/${deletingJob.id}`, { method:'DELETE' }); setJobs(current => current.filter(job => job.id !== deletingJob.id)); setCurrentPage(1); setDeletingJob(null)
     }
 
     return (

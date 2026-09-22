@@ -1,23 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import logoImg from '../../../assets/logo.png'
 import AdminIcon, { type AdminIconName } from '../../admin/AdminIcon'
 import AdminSettingsModal from '../../admin/AdminSettingsModal'
 import type { AdminTheme } from '../../../layouts/Admin/AdminLayout'
 import type { AdminUser } from '../../../types/AdminUser'
 import '../../../styles/AdminSidebar.css'
+import { useAuth } from '../../../contexts/AuthContext'
 
 interface AdminSidebarProps {
     theme: AdminTheme
     onThemeChange: (theme: AdminTheme) => void
-}
-
-const currentUser: AdminUser = {
-    id: 1,
-    fullName: 'Nome Sobrenome',
-    email: 'nome.sobrenome@gmail.com',
-    role: 'admin',
-    createdAt: '2026-01-15',
 }
 
 const navigationItems: Array<{ label: string; path: string; icon: AdminIconName }> = [
@@ -30,6 +23,9 @@ const navigationItems: Array<{ label: string; path: string; icon: AdminIconName 
 function AdminSidebar({ theme, onThemeChange }: AdminSidebarProps) {
     const [menuOpen, setMenuOpen] = useState(false)
     const [settingsOpen, setSettingsOpen] = useState(false)
+    const { user, logout } = useAuth(); const navigate = useNavigate()
+    const currentUser: AdminUser = { id: user!.id, fullName: user!.nome_completo, email: user!.email, role: user!.cargo as 'admin' | 'rh', createdAt: '' }
+    const doLogout = async () => { await logout(); navigate('/', { replace: true }) }
 
     useEffect(() => {
         const closeOnEscape = (event: KeyboardEvent) => {
@@ -106,12 +102,12 @@ function AdminSidebar({ theme, onThemeChange }: AdminSidebarProps) {
                         <span>{currentUser.email}</span>
                     </div>
 
-                    <Link className="admin-sidebar__logout" to="/login" onClick={() => setMenuOpen(false)}>
+                    <button className="admin-sidebar__logout" type="button" onClick={doLogout}>
                         <span className="admin-sidebar__icon" data-icon="logout" aria-hidden="true">
                             <AdminIcon name="logout" />
                         </span>
                         <span>Logout</span>
-                    </Link>
+                    </button>
                 </footer>
             </aside>
 
