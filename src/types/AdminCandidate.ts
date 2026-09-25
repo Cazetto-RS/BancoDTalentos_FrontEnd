@@ -47,7 +47,7 @@ export interface AdminCandidate {
         favorite: boolean
         salaryExpectation: number
         availability: 'manhã' | 'tarde' | 'noite' | 'integral'
-        contractPreference: 'CLT' | 'PJ'
+        contractPreference: 'CLT' | 'PJ' | 'Estágio'
         workModelPreference: 'remoto' | 'hibrido' | 'presencial'
         createdAt: string
     }

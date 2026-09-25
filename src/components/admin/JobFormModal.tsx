@@ -11,7 +11,7 @@ interface JobFormModalProps {
     job?: AdminJob
     nextId?: number
     onClose: () => void
-    onSave: (job: AdminJob) => void
+    onSave: (job: AdminJob) => Promise<void> | void
 }
 
 const emptyJob = (id: number): AdminJob => ({
@@ -34,6 +34,8 @@ const emptyJob = (id: number): AdminJob => ({
 function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalProps) {
     const [form, setForm] = useState<AdminJob>(() => job ? { ...job, skills: [...job.skills] } : emptyJob(nextId))
     const [skillsText, setSkillsText] = useState(() => job?.skills.join(', ') ?? '')
+    const [saving, setSaving] = useState(false)
+    const [saveError, setSaveError] = useState('')
     const dialogRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -56,13 +58,22 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
         }
     }, [onClose])
 
-    const submit = (event: FormEvent<HTMLFormElement>) => {
+    const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        onSave({
-            ...form,
-            shareUrl: form.shareUrl || createJobShareUrl(form.id),
-            skills: skillsText.split(',').map((skill) => skill.trim()).filter(Boolean),
-        })
+        if (saving) return
+        setSaving(true)
+        setSaveError('')
+        try {
+            await onSave({
+                ...form,
+                shareUrl: form.shareUrl || createJobShareUrl(form.id),
+                skills: skillsText.split(',').map((skill) => skill.trim()).filter(Boolean),
+            })
+        } catch (reason) {
+            setSaveError(reason instanceof Error ? reason.message : 'Não foi possível salvar a vaga.')
+        } finally {
+            setSaving(false)
+        }
     }
 
     return createPortal(
@@ -176,8 +187,9 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
                     </div>
 
                     <footer className="admin-job-form__actions">
-                        <button className="admin-job-button admin-job-button--secondary" type="button" onClick={onClose}>Cancelar</button>
-                        <button className="admin-job-button admin-job-button--primary" type="submit">{mode === 'create' ? 'Criar vaga' : 'Salvar alterações'}</button>
+                        {saveError && <p className="admin-job-form__error" role="alert">{saveError}</p>}
+                        <button className="admin-job-button admin-job-button--secondary" type="button" onClick={onClose} disabled={saving}>Cancelar</button>
+                        <button className="admin-job-button admin-job-button--primary" type="submit" disabled={saving}>{saving ? 'Salvando...' : mode === 'create' ? 'Criar vaga' : 'Salvar alterações'}</button>
                     </footer>
                 </form>
             </div>

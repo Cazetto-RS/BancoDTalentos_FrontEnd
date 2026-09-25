@@ -42,10 +42,10 @@ const steps = [
     },
 ]
 
-const Field = ({ label, name, type = 'text', placeholder, required = false }: { label: string; name: string; type?: string; placeholder: string; required?: boolean }) => (
+const Field = ({ label, name, type = 'text', placeholder, required = false, defaultValue }: { label: string; name: string; type?: string; placeholder: string; required?: boolean; defaultValue?: string }) => (
     <label className="registration-field">
         <span>{label}</span>
-        <input name={name} type={type} placeholder={placeholder} required={required} />
+        <input name={name} type={type} placeholder={placeholder} required={required} defaultValue={defaultValue} />
     </label>
 )
 
@@ -59,7 +59,8 @@ function RegistrationPage() {
     const [limitModalOpen, setLimitModalOpen] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState('')
-    const values = useRef<Record<string, string>>({})
+    const [values, setValues] = useState<Record<string, string>>({})
+    const savedStages = useRef({ registered: false, loggedIn: false, profile: false, culture: false, experiences: false, education: false })
 
     const repeatableItemName = step === 3 ? 'experiências' : step === 4 ? 'formações' : 'competências'
 
@@ -105,9 +106,12 @@ function RegistrationPage() {
         setSubmitError('')
 
         const currentValues = new FormData(event.currentTarget)
+        const submittedValues: Record<string, string> = {}
         currentValues.forEach((value, key) => {
-            if (typeof value === 'string') values.current[key] = value
+            if (typeof value === 'string') submittedValues[key] = value
         })
+        const allValues = { ...values, ...submittedValues }
+        setValues(allValues)
 
         if (step !== steps.length) {
             setStep((current) => current + 1)
@@ -116,13 +120,19 @@ function RegistrationPage() {
 
         setSubmitting(true)
         try {
-            const data = values.current
-            await api('/usuarios/registrar', {
-                method: 'POST',
-                body: JSON.stringify({ nome_completo: data.nome_completo, email: data.email, senha: data.senha }),
-            })
-            await login(data.email, data.senha)
-            await api('/candidatos/perfil-base', {
+            const data = allValues
+            if (!savedStages.current.registered) {
+                await api('/usuarios/registrar', {
+                    method: 'POST',
+                    body: JSON.stringify({ nome_completo: data.nome_completo, email: data.email, senha: data.senha }),
+                })
+                savedStages.current.registered = true
+            }
+            if (!savedStages.current.loggedIn) {
+                await login(data.email, data.senha)
+                savedStages.current.loggedIn = true
+            }
+            if (!savedStages.current.profile) await api('/candidatos/perfil-base', {
                 method: 'POST',
                 body: JSON.stringify({
                     telefone: data.telefone || null,
@@ -133,7 +143,8 @@ function RegistrationPage() {
                     cargo_desejado: data.cargo_desejado || null,
                 }),
             })
-            await api('/candidatos/cultura', {
+            savedStages.current.profile = true
+            if (!savedStages.current.culture) await api('/candidatos/cultura', {
                 method: 'POST',
                 body: JSON.stringify({
                     motivacao: data.motivacao || null,
@@ -141,6 +152,34 @@ function RegistrationPage() {
                     descricao_valores: data.descricao_valores || null,
                 }),
             })
+            savedStages.current.culture = true
+            const experiencias = Array.from({ length: experienceCount }, (_, index) => ({
+                empresa: data[`empresa-${index}`],
+                cargo: data[`experiencia-cargo-${index}`],
+                descricao: data[`experiencia-descricao-${index}`] || null,
+                data_inicio: data[`experiencia-inicio-${index}`],
+                data_fim: data[`experiencia-fim-${index}`] || null,
+                atual: !data[`experiencia-fim-${index}`],
+            })).filter((item) => item.empresa && item.cargo && item.data_inicio)
+            if (experiencias.length && !savedStages.current.experiences) {
+                await api('/historico/experiencias/create', { method: 'POST', body: JSON.stringify(experiencias) })
+            }
+            savedStages.current.experiences = true
+
+            const formacoes = courseCompleted.map((completedCourse, index) => ({
+                curso: data[`curso-${index}`],
+                instituicao: data[`instituicao-${index}`],
+                semestre_atual: data[`semestre-${index}`] ? Number(data[`semestre-${index}`]) : null,
+                turno: data[`turno-${index}`] || null,
+                status: completedCourse === 'yes' ? 'concluido' : data[`course-status-${index}`] || 'cursando',
+                data_inicio: data[`formacao-inicio-${index}`] || null,
+                data_fim: data[`formacao-fim-${index}`] || null,
+                url_certificado: null,
+            })).filter((item) => item.curso && item.instituicao)
+            if (formacoes.length && !savedStages.current.education) {
+                await api('/historico/formacoes/create', { method: 'POST', body: JSON.stringify(formacoes) })
+            }
+            savedStages.current.education = true
             setCompleted(true)
         } catch (reason) {
             setSubmitError(reason instanceof Error ? reason.message : 'Não foi possível concluir o cadastro.')
@@ -197,30 +236,30 @@ function RegistrationPage() {
                 <form className="registration-form" onSubmit={nextStep}>
                     <div className="registration-fields">
                         {step === 1 && <>
-                            <Field label="Nome completo" name="nome_completo" placeholder="Digite seu nome completo" required />
-                            <Field label="CEP" name="cep" placeholder="00000-000" />
-                            <Field label="E-mail" name="email" type="email" placeholder="E-mail pessoal" required />
-                            <Field label="Data de nascimento" name="data_nascimento" type="date" placeholder="DD/MM/AAAA" />
-                            <Field label="Senha" name="senha" type="password" placeholder="Mínimo de 8 dígitos" required />
+                            <Field label="Nome completo" name="nome_completo" placeholder="Digite seu nome completo" required defaultValue={values.nome_completo} />
+                            <Field label="CEP" name="cep" placeholder="00000-000" defaultValue={values.cep} />
+                            <Field label="E-mail" name="email" type="email" placeholder="E-mail pessoal" required defaultValue={values.email} />
+                            <Field label="Data de nascimento" name="data_nascimento" type="date" placeholder="DD/MM/AAAA" defaultValue={values.data_nascimento} />
+                            <Field label="Senha" name="senha" type="password" placeholder="Mínimo de 8 dígitos" required defaultValue={values.senha} />
                             <label className="registration-field registration-upload"><span>Foto</span><input type="file" accept="image/*" /><strong>Enviar foto pessoal</strong></label>
-                            <Field label="Telefone" name="telefone" type="tel" placeholder="+55 (00) 00000-0000" />
+                            <Field label="Telefone" name="telefone" type="tel" placeholder="+55 (00) 00000-0000" defaultValue={values.telefone} />
                         </>}
 
                         {step === 2 && <>
-                            <Field label="LinkedIn" name="linkedin_url" type="url" placeholder="https://linkedin.com/in/usuario" />
+                            <Field label="LinkedIn" name="linkedin_url" type="url" placeholder="https://linkedin.com/in/usuario" defaultValue={values.linkedin_url} />
                             <label className="registration-field registration-upload"><span>Currículo</span><input type="file" accept=".pdf" /><strong>Enviar currículo em PDF</strong></label>
-                            <Field label="Portfólio" name="portfolio_url" type="url" placeholder="https://seuportfolio.com" />
-                            <Field label="Cargo desejado" name="cargo_desejado" placeholder="Ex.: Desenvolvedor Front-end" />
+                            <Field label="Portfólio" name="portfolio_url" type="url" placeholder="https://seuportfolio.com" defaultValue={values.portfolio_url} />
+                            <Field label="Cargo desejado" name="cargo_desejado" placeholder="Ex.: Desenvolvedor Front-end" defaultValue={values.cargo_desejado} />
                         </>}
 
                         {step === 3 && <div className="registration-repeat-list">
                             {Array.from({ length: experienceCount }, (_, index) => (
                                 <div className="registration-repeat-item" key={`experience-${index}`}>
-                                    <Field label="Empresa" name={`empresa-${index}`} placeholder="Nome da empresa" />
-                                    <Field label="Data de entrada" name={`experiencia-inicio-${index}`} type="date" placeholder="DD/MM/AAAA" />
-                                    <Field label="Cargo" name={`experiencia-cargo-${index}`} placeholder="Cargo exercido" />
-                                    <Field label="Data de saída" name={`experiencia-fim-${index}`} type="date" placeholder="Deixe vazio se ainda trabalha lá" />
-                                    <label className="registration-field registration-field--wide"><span>Descrição</span><textarea placeholder="Descreva suas principais atividades" /></label>
+                                    <Field label="Empresa" name={`empresa-${index}`} placeholder="Nome da empresa" defaultValue={values[`empresa-${index}`]} />
+                                    <Field label="Data de entrada" name={`experiencia-inicio-${index}`} type="date" placeholder="DD/MM/AAAA" defaultValue={values[`experiencia-inicio-${index}`]} />
+                                    <Field label="Cargo" name={`experiencia-cargo-${index}`} placeholder="Cargo exercido" defaultValue={values[`experiencia-cargo-${index}`]} />
+                                    <Field label="Data de saída" name={`experiencia-fim-${index}`} type="date" placeholder="Deixe vazio se ainda trabalha lá" defaultValue={values[`experiencia-fim-${index}`]} />
+                                    <label className="registration-field registration-field--wide"><span>Descrição</span><textarea name={`experiencia-descricao-${index}`} placeholder="Descreva suas principais atividades" defaultValue={values[`experiencia-descricao-${index}`]} /></label>
 
                                     {experienceCount > 1 && index === experienceCount - 1 && (
                                         <button
@@ -238,9 +277,9 @@ function RegistrationPage() {
                         {step === 4 && <div className="registration-repeat-list">
                             {courseCompleted.map((completedCourse, index) => (
                                 <div className="registration-repeat-item" key={`course-${index}`}>
-                                    <Field label="Curso" name={`curso-${index}`} placeholder="Nome do curso" />
-                                    <div className="registration-date-pair"><Field label="Data de entrada" name={`formacao-inicio-${index}`} type="date" placeholder="DD/MM/AAAA" /><Field label="Data de conclusão" name={`formacao-fim-${index}`} type="date" placeholder="DD/MM/AAAA" /></div>
-                                    <Field label="Instituição" name={`instituicao-${index}`} placeholder="Nome da instituição" />
+                                    <Field label="Curso" name={`curso-${index}`} placeholder="Nome do curso" defaultValue={values[`curso-${index}`]} />
+                                    <div className="registration-date-pair"><Field label="Data de entrada" name={`formacao-inicio-${index}`} type="date" placeholder="DD/MM/AAAA" defaultValue={values[`formacao-inicio-${index}`]} /><Field label="Data de conclusão" name={`formacao-fim-${index}`} type="date" placeholder="DD/MM/AAAA" defaultValue={values[`formacao-fim-${index}`]} /></div>
+                                    <Field label="Instituição" name={`instituicao-${index}`} placeholder="Nome da instituição" defaultValue={values[`instituicao-${index}`]} />
                                     <fieldset className="registration-options">
                                         <legend>Já concluiu o curso?</legend>
                                         <label><input type="radio" name={`completed-course-${index}`} checked={completedCourse === 'yes'} onChange={() => updateCourseCompleted(index, 'yes')} /> Sim</label>
@@ -256,17 +295,17 @@ function RegistrationPage() {
                                     )}
 
                                     {completedCourse === 'no' && <>
-                                        <Field label="Semestre atual" name={`semestre-${index}`} type="number" placeholder="Digite apenas números" />
+                                        <Field label="Semestre atual" name={`semestre-${index}`} type="number" placeholder="Digite apenas números" defaultValue={values[`semestre-${index}`]} />
                                         <fieldset className="registration-options">
                                             <legend>Qual é a situação atual?</legend>
-                                            <label><input type="radio" name={`course-status-${index}`} /> Cursando</label>
-                                            <label><input type="radio" name={`course-status-${index}`} /> Trancado</label>
+                                            <label><input type="radio" name={`course-status-${index}`} value="cursando" /> Cursando</label>
+                                            <label><input type="radio" name={`course-status-${index}`} value="trancado" /> Trancado</label>
                                         </fieldset>
                                         <fieldset className="registration-options">
                                             <legend>Qual período você estuda?</legend>
-                                            <label><input type="checkbox" /> Manhã</label>
-                                            <label><input type="checkbox" /> Tarde</label>
-                                            <label><input type="checkbox" /> Noite</label>
+                                            <label><input type="radio" name={`turno-${index}`} value="manhã" /> Manhã</label>
+                                            <label><input type="radio" name={`turno-${index}`} value="tarde" /> Tarde</label>
+                                            <label><input type="radio" name={`turno-${index}`} value="noite" /> Noite</label>
                                         </fieldset>
                                     </>}
                                     {courseCompleted.length > 1 && index === courseCompleted.length - 1 && (
@@ -283,15 +322,15 @@ function RegistrationPage() {
                         </div>}
 
                         {step === 5 && <>
-                            <Field label="Motivação" name="motivacao" placeholder="O que te motiva a trabalhar conosco?" />
-                            <label className="registration-field registration-field--tall"><span>Apresentação</span><textarea name="apresentacao" placeholder="Fale um pouco sobre você" /></label>
-                            <Field label="Valores" name="descricao_valores" placeholder="Quais são os seus valores?" />
+                            <Field label="Motivação" name="motivacao" placeholder="O que te motiva a trabalhar conosco?" defaultValue={values.motivacao} />
+                            <label className="registration-field registration-field--tall"><span>Apresentação</span><textarea name="apresentacao" placeholder="Fale um pouco sobre você" defaultValue={values.apresentacao} /></label>
+                            <Field label="Valores" name="descricao_valores" placeholder="Quais são os seus valores?" defaultValue={values.descricao_valores} />
                             <label className="registration-field registration-upload"><span>Carta de indicação (opcional)</span><input type="file" accept=".pdf" /><strong>Enviar indicação em PDF</strong></label>
                         </>}
 
                         {step === 6 && <div className="registration-skills">
                             {Array.from({ length: skillCount }, (_, index) => <div className="registration-skill" key={`skill-${index}`}>
-                                <Field label="Competência" name={`competencia-${index}`} placeholder="Nome da habilidade" />
+                                <Field label="Competência" name={`competencia-${index}`} placeholder="Nome da habilidade" defaultValue={values[`competencia-${index}`]} />
                                 <label className="registration-field"><span>Nível</span><select defaultValue=""><option value="" disabled>Selecione</option><option>1 - Básico</option><option>2 - Iniciante</option><option>3 - Intermediário</option><option>4 - Avançado</option><option>5 - Especialista</option></select></label>
                                 <label className="registration-field"><span>Categoria</span><select defaultValue=""><option value="" disabled>Selecione</option><option>Hard skill</option><option>Soft skill</option></select></label>
                                 <label className="registration-field"><span>Experiência</span><select defaultValue=""><option value="" disabled>Selecione</option><option>Júnior</option><option>Pleno</option><option>Sênior</option></select></label>

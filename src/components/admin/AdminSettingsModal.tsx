@@ -44,6 +44,12 @@ function getInitials(name: string) {
     return `${parts[0]?.[0] ?? ''}${parts.at(-1)?.[0] ?? ''}`.toUpperCase()
 }
 
+function formatMemberSince(value: string) {
+    if (!value) return 'Não informado'
+    const date = new Date(value)
+    return Number.isNaN(date.getTime()) ? 'Não informado' : dateFormatter.format(date)
+}
+
 function getSavedPreferences(): AdminPreferences {
     try {
         const savedPreferences = localStorage.getItem('admin-preferences')
@@ -196,7 +202,7 @@ function AdminSettingsModal({ user, theme, onThemeChange, onClose }: AdminSettin
                                     <div><dt>Nome completo</dt><dd>{user.fullName}</dd></div>
                                     <div><dt>E-mail</dt><dd>{user.email}</dd></div>
                                     <div><dt>Tipo de acesso</dt><dd>{roleLabels[user.role]}</dd></div>
-                                    <div><dt>Membro desde</dt><dd>{dateFormatter.format(new Date(`${user.createdAt}T12:00:00`))}</dd></div>
+                                    <div><dt>Membro desde</dt><dd>{formatMemberSince(user.createdAt)}</dd></div>
                                 </dl>
                             </section>
 

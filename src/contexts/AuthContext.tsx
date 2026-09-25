@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { api } from '../services/api'
 
 export type UserRole = 'candidato' | 'rh' | 'admin'
-export interface AuthUser { id: number; nome_completo: string; email: string; cargo: UserRole }
+export interface AuthUser { id: number; nome_completo: string; email: string; cargo: UserRole; criado_em?: string }
 interface AuthContextValue {
     user: AuthUser | null; token: string | null; isAuthenticated: boolean
     login: (email: string, senha: string) => Promise<AuthUser>; logout: () => Promise<void>

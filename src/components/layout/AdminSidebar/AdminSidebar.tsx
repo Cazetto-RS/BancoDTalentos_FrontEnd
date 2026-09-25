@@ -24,7 +24,13 @@ function AdminSidebar({ theme, onThemeChange }: AdminSidebarProps) {
     const [menuOpen, setMenuOpen] = useState(false)
     const [settingsOpen, setSettingsOpen] = useState(false)
     const { user, logout } = useAuth(); const navigate = useNavigate()
-    const currentUser: AdminUser = { id: user!.id, fullName: user!.nome_completo, email: user!.email, role: user!.cargo as 'admin' | 'rh', createdAt: '' }
+    const currentUser: AdminUser = {
+        id: user!.id,
+        fullName: user!.nome_completo,
+        email: user!.email,
+        role: user!.cargo as 'admin' | 'rh',
+        createdAt: user!.criado_em || '',
+    }
     const doLogout = async () => { await logout(); navigate('/', { replace: true }) }
 
     useEffect(() => {

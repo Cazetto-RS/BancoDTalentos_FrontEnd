@@ -258,17 +258,76 @@ function getInitials(name: string) {
     return `${parts[0]?.[0] ?? ''}${parts.at(-1)?.[0] ?? ''}`.toUpperCase()
 }
 
+function mapApiCandidate(row: Record<string, any>): AdminCandidate {
+    return {
+        id: Number(row.candidatura_id),
+        userId: Number(row.usuario_id),
+        fullName: row.candidato_nome || 'Candidato',
+        email: row.candidato_email || '',
+        phone: row.telefone || 'Não informado',
+        city: row.cidade || 'Não informado',
+        state: row.estado || '',
+        birthDate: row.data_nascimento || '',
+        photoUrl: row.url_foto || undefined,
+        createdAt: row.candidato_criado_em || row.data_inscricao,
+        application: {
+            id: Number(row.candidatura_id),
+            jobId: Number(row.vaga_id),
+            jobTitle: row.vaga_titulo || 'Vaga removida',
+            area: row.area_nome || 'Não informada',
+            status: row.candidatura_status,
+            favorite: Boolean(row.favorito),
+            salaryExpectation: Number(row.pretensao_salarial || 0),
+            availability: row.disponibilidade || 'integral',
+            contractPreference: row.preferencia_contrato || 'CLT',
+            workModelPreference: row.preferencia_modelo_trabalho || 'presencial',
+            createdAt: row.data_inscricao,
+        },
+        culture: {
+            motivation: row.motivacao || 'Não informado.',
+            values: row.descricao_valores || 'Não informado.',
+            presentation: row.apresentacao || 'Não informado.',
+            recommendationUrl: row.arquivo_recomendacao || undefined,
+        },
+        skills: (row.habilidades || []).map((skill: Record<string, any>) => ({
+            name: skill.nome,
+            category: skill.categoria,
+            level: Number(skill.nivel || 1),
+            experienceLevel: skill.nivel_experiencia || 'junior',
+        })),
+        interests: row.interesses || [],
+        education: (row.formacoes || []).map((education: Record<string, any>) => ({
+            course: education.curso,
+            institution: education.instituicao,
+            currentSemester: education.semestre_atual || undefined,
+            shift: education.turno || 'noite',
+            status: education.status,
+            startDate: education.data_inicio || '',
+            endDate: education.data_fim || undefined,
+            certificateUrl: education.url_certificado || undefined,
+        })),
+        experiences: (row.experiencias || []).map((experience: Record<string, any>) => ({
+            company: experience.empresa,
+            role: experience.cargo,
+            description: experience.descricao || '',
+            startDate: experience.data_inicio || '',
+            endDate: experience.data_fim || undefined,
+            current: Boolean(experience.atual),
+        })),
+    }
+}
+
 function AdminCandidatesPage() {
-    const [candidates, setCandidates] = useState(initialCandidates)
+    // A lista começa vazia: candidatos exibidos sempre vêm da API.
+    const [candidates, setCandidates] = useState<AdminCandidate[]>(() => initialCandidates.slice(0, 0))
+    const [loadError, setLoadError] = useState('')
     useEffect(() => {
-        api<Array<Record<string, any>>>('/candidaturas').then((rows) => setCandidates(rows.map((row) => ({
-            id: row.candidato_id, userId: 0, fullName: row.candidato_nome, email: row.candidato_email,
-            phone: row.telefone || '', city: row.cidade || '', state: row.estado || '', birthDate: row.data_nascimento || '', photoUrl: row.url_foto,
-            createdAt: row.candidato_criado_em || row.data_inscricao,
-            application: { id:row.candidatura_id, jobId:row.vaga_id, jobTitle:row.vaga_titulo, area:'Tecnologia', status:row.candidatura_status, favorite:row.favorito,
-                salaryExpectation:Number(row.pretensao_salarial || 0), availability:row.disponibilidade, contractPreference:row.preferencia_contrato, workModelPreference:row.preferencia_modelo_trabalho, createdAt:row.data_inscricao },
-            culture:{ motivation:'', values:'', presentation:'' }, skills:[], interests:[], education:[], experiences:[],
-        })))).catch(() => setCandidates([]))
+        api<Array<Record<string, any>>>('/candidaturas')
+            .then((rows) => { setCandidates(rows.map(mapApiCandidate)); setLoadError('') })
+            .catch((reason) => {
+                setCandidates([])
+                setLoadError(reason instanceof Error ? reason.message : 'Não foi possível carregar os candidatos.')
+            })
     }, [])
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<'todos' | CandidateStatus>('todos')
@@ -324,20 +383,28 @@ function AdminCandidatesPage() {
         { label: 'Contratados', value: summary.hired, icon: 'check' as const },
     ]
 
-    const updateCandidate = (updatedCandidate: AdminCandidate) => {
+    const updateCandidate = async (updatedCandidate: AdminCandidate) => {
+        const previous = candidates.find((candidate) => candidate.id === updatedCandidate.id)
         setCandidates((current) => current.map((candidate) => candidate.id === updatedCandidate.id ? updatedCandidate : candidate))
+        try {
+            await api(`/candidaturas/atualizar-status/${updatedCandidate.application.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ status: updatedCandidate.application.status, favorito: updatedCandidate.application.favorite }),
+            })
+        } catch (reason) {
+            if (previous) setCandidates((current) => current.map((candidate) => candidate.id === previous.id ? previous : candidate))
+            setLoadError(reason instanceof Error ? reason.message : 'Não foi possível atualizar a candidatura.')
+        }
     }
 
     const updateStatus = (candidateId: number, status: CandidateStatus) => {
-        setCandidates((current) => current.map((candidate) => candidate.id === candidateId
-            ? { ...candidate, application: { ...candidate.application, status } }
-            : candidate))
+        const candidate = candidates.find((item) => item.id === candidateId)
+        if (candidate) void updateCandidate({ ...candidate, application: { ...candidate.application, status } })
     }
 
     const toggleFavorite = (candidateId: number) => {
-        setCandidates((current) => current.map((candidate) => candidate.id === candidateId
-            ? { ...candidate, application: { ...candidate.application, favorite: !candidate.application.favorite } }
-            : candidate))
+        const candidate = candidates.find((item) => item.id === candidateId)
+        if (candidate) void updateCandidate({ ...candidate, application: { ...candidate.application, favorite: !candidate.application.favorite } })
     }
 
     const clearFilters = () => {
@@ -359,6 +426,8 @@ function AdminCandidatesPage() {
             </header>
 
             <AdminSummaryCards items={summaryCards} ariaLabel="Resumo dos candidatos" />
+
+            {loadError && <p className="admin-candidates-error" role="alert">{loadError}</p>}
 
             <div className="admin-candidates-toolbar">
                 <label className="admin-candidates-search">

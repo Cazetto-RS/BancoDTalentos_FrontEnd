@@ -54,6 +54,16 @@
     box-shadow: var(--shadow-sm);
 }
 
+.admin-candidates-error {
+    margin: 0 0 1rem;
+    padding: .75rem 1rem;
+    border: 1px solid #f1b8b3;
+    border-radius: var(--radius-sm);
+    background: #fff4f2;
+    color: #b42318;
+    font-size: .86rem;
+}
+
 .admin-candidates-search {
     min-width: 0;
     min-height: 2.8rem;

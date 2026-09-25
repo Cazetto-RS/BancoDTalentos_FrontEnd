@@ -258,6 +258,17 @@
     background: var(--color-surface);
 }
 
+.admin-job-form__error {
+    margin: 0 auto 0 0;
+    color: #b42318;
+    font-size: .84rem;
+}
+
+.admin-job-button:disabled {
+    cursor: wait;
+    opacity: .65;
+}
+
 .admin-job-button {
     min-width: 8.5rem;
     min-height: 2.75rem;

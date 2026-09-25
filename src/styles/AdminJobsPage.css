@@ -162,6 +162,16 @@
     margin: 0 0 .85rem;
 }
 
+.admin-jobs-load-error {
+    margin: 0 0 1rem;
+    padding: .75rem 1rem;
+    border: 1px solid #f1b8b3;
+    border-radius: var(--radius-sm);
+    background: #fff4f2;
+    color: #b42318;
+    font-size: .86rem;
+}
+
 .admin-jobs-results > div > span {
     color: var(--color-primary);
     font-size: .68rem;

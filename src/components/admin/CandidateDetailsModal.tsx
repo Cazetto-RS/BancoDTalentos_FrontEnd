@@ -8,7 +8,7 @@ import '../../styles/AdminCandidateModal.css'
 
 interface CandidateDetailsModalProps {
     candidate: AdminCandidate
-    onChange: (candidate: AdminCandidate) => void
+    onChange: (candidate: AdminCandidate) => Promise<void> | void
     onClose: () => void
 }
 
@@ -31,7 +31,15 @@ function getInitials(name: string) {
 }
 
 function formatMonth(date?: string) {
-    return date ? monthFormatter.format(new Date(`${date}T12:00:00`)) : 'Atualmente'
+    if (!date) return 'Atualmente'
+    const parsed = new Date(`${date}T12:00:00`)
+    return Number.isNaN(parsed.getTime()) ? 'Não informado' : monthFormatter.format(parsed)
+}
+
+function formatDate(date?: string) {
+    if (!date) return 'Não informado'
+    const parsed = new Date(date.includes('T') ? date : `${date}T12:00:00`)
+    return Number.isNaN(parsed.getTime()) ? 'Não informado' : dateFormatter.format(parsed)
 }
 
 function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetailsModalProps) {
@@ -56,11 +64,11 @@ function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetail
     }, [onClose])
 
     const updateStatus = (status: CandidateStatus) => {
-        onChange({ ...candidate, application: { ...candidate.application, status } })
+        void onChange({ ...candidate, application: { ...candidate.application, status } })
     }
 
     const toggleFavorite = () => {
-        onChange({ ...candidate, application: { ...candidate.application, favorite: !candidate.application.favorite } })
+        void onChange({ ...candidate, application: { ...candidate.application, favorite: !candidate.application.favorite } })
     }
 
     return createPortal(
@@ -111,7 +119,7 @@ function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetail
                                     <div><span>Vaga</span><strong>{candidate.application.jobTitle}</strong></div>
                                     <div><span>Área</span><strong>{candidate.application.area}</strong></div>
                                     <div><span>Pretensão salarial</span><strong>{currencyFormatter.format(candidate.application.salaryExpectation)}</strong></div>
-                                    <div><span>Inscrição</span><strong>{dateFormatter.format(new Date(candidate.application.createdAt))}</strong></div>
+                                    <div><span>Inscrição</span><strong>{formatDate(candidate.application.createdAt)}</strong></div>
                                     <div><span>Disponibilidade</span><strong className="text-capitalize">{candidate.application.availability}</strong></div>
                                     <div><span>Preferências</span><strong>{candidate.application.contractPreference} · <span className="text-capitalize">{candidate.application.workModelPreference}</span></strong></div>
                                 </div>
@@ -126,7 +134,7 @@ function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetail
                                         <div><dt>E-mail</dt><dd>{candidate.email}</dd></div>
                                         <div><dt>Telefone</dt><dd>{candidate.phone}</dd></div>
                                         <div><dt>Localização</dt><dd>{candidate.city} - {candidate.state}</dd></div>
-                                        <div><dt>Data de nascimento</dt><dd>{dateFormatter.format(new Date(`${candidate.birthDate}T12:00:00`))}</dd></div>
+                                        <div><dt>Data de nascimento</dt><dd>{formatDate(candidate.birthDate)}</dd></div>
                                     </dl>
                                 </section>
 

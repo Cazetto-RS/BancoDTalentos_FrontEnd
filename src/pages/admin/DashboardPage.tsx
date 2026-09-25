@@ -1,42 +1,21 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Chart from 'chart.js/auto'
 import type { Plugin } from 'chart.js'
 import { useOutletContext } from 'react-router-dom'
 import type { AdminTheme } from '../../layouts/Admin/AdminLayout'
 import AdminSummaryCards from '../../components/admin/AdminSummaryCards'
+import { api } from '../../services/api'
 import '../../styles/DashboardPage.css'
 
-const summaryCards = [
-    { label: 'Vagas ativas', value: 24, icon: 'briefcase' as const },
-    { label: 'Candidatos', value: 156, icon: 'users' as const },
-    { label: 'Candidaturas', value: 89, icon: 'clipboard' as const },
-    { label: 'Contratações', value: 12, icon: 'check' as const },
+interface DashboardApplication { candidatura_id:number; candidatura_status:string; data_inscricao:string; candidato_id:number; candidato_nome:string; area_nome?:string; vaga_titulo?:string }
+interface DashboardJob { status:string }
+const STATUS_DEFINITIONS = [
+    { key: 'novo', label: 'Novos', color: '#169cf9' },
+    { key: 'em análise', label: 'Em análise', color: '#438bec' },
+    { key: 'em triagem', label: 'Em triagem', color: '#f4a20a' },
+    { key: 'contratado', label: 'Contratados', color: '#16b786' },
+    { key: 'dispensado', label: 'Dispensados', color: '#ff2685' },
 ]
-
-const candidateStatus = [
-    { label: 'Novos', value: 56, color: '#169cf9' },
-    { label: 'Em triagem', value: 20, color: '#438bec' },
-    { label: 'Em entrevista', value: 30, color: '#f4a20a' },
-    { label: 'Em negociação', value: 10, color: '#ff2685' },
-    { label: 'Contratados', value: 40, color: '#16b786' },
-]
-
-const mostRequestedAreas = [
-    { name: 'Desenvolvimento Web', value: 49 },
-    { name: 'Web Design', value: 20 },
-    { name: 'Desenvolvedor de Software', value: 15 },
-]
-
-const recentCandidates = [
-    { initials: 'NS', name: 'Nome Sobrenome', area: 'Desenvolvedor Web' },
-    { initials: 'NS', name: 'Nome Sobrenome', area: 'Desenvolvedor Web' },
-    { initials: 'NS', name: 'Nome Sobrenome', area: 'Desenvolvedor Web' },
-    { initials: 'NS', name: 'Nome Sobrenome', area: 'Desenvolvedor Web' },
-    { initials: 'NS', name: 'Nome Sobrenome', area: 'Desenvolvedor Web' },
-    { initials: 'NS', name: 'Nome Sobrenome', area: 'Desenvolvedor Web' },
-]
-
-const totalCandidates = candidateStatus.reduce((total, status) => total + status.value, 0)
 
 const centerTextPlugin: Plugin<'doughnut'> = {
     id: 'centerText',
@@ -49,7 +28,8 @@ const centerTextPlugin: Plugin<'doughnut'> = {
         ctx.font = '700 1.25rem Inter, sans-serif'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText(String(totalCandidates), (chartArea.left + chartArea.right) / 2, (chartArea.top + chartArea.bottom) / 2)
+        const total = chart.data.datasets[0]?.data.reduce((sum, value) => sum + Number(value || 0), 0) ?? 0
+        ctx.fillText(String(total), (chartArea.left + chartArea.right) / 2, (chartArea.top + chartArea.bottom) / 2)
         ctx.restore()
     },
 }
@@ -58,6 +38,30 @@ function DashboardPage() {
     const applicationsCanvasRef = useRef<HTMLCanvasElement>(null)
     const statusCanvasRef = useRef<HTMLCanvasElement>(null)
     const { theme } = useOutletContext<{ theme: AdminTheme }>()
+    const [applications, setApplications] = useState<DashboardApplication[]>([])
+    const [jobs, setJobs] = useState<DashboardJob[]>([])
+    const [loadError, setLoadError] = useState('')
+
+    useEffect(() => {
+        Promise.all([api<DashboardApplication[]>('/candidaturas'), api<DashboardJob[]>('/vagas/admin/todas')])
+            .then(([applicationRows, jobRows]) => { setApplications(applicationRows); setJobs(jobRows); setLoadError('') })
+            .catch((reason) => setLoadError(reason instanceof Error ? reason.message : 'Não foi possível carregar o painel.'))
+    }, [])
+
+    const candidateStatus = useMemo(() => STATUS_DEFINITIONS.map((status) => ({ ...status, value: applications.filter((item) => item.candidatura_status === status.key).length })), [applications])
+    const totalCandidates = new Set(applications.map((item) => item.candidato_id)).size
+    const summaryCards = [
+        { label: 'Vagas ativas', value: jobs.filter((job) => job.status === 'ativo').length, icon: 'briefcase' as const },
+        { label: 'Candidatos', value: totalCandidates, icon: 'users' as const },
+        { label: 'Candidaturas', value: applications.length, icon: 'clipboard' as const },
+        { label: 'Contratações', value: applications.filter((item) => item.candidatura_status === 'contratado').length, icon: 'check' as const },
+    ]
+    const monthlyApplications = useMemo(() => {
+        const months = Array.from({ length: 6 }, (_, offset) => { const date = new Date(); date.setMonth(date.getMonth() - (5 - offset)); return date })
+        return { labels: months.map((date) => date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase()), values: months.map((date) => applications.filter((item) => { const created = new Date(item.data_inscricao); return created.getMonth() === date.getMonth() && created.getFullYear() === date.getFullYear() }).length) }
+    }, [applications])
+    const mostRequestedAreas = Object.entries(applications.reduce<Record<string, number>>((areas, item) => { const area = item.area_nome || 'Não informada'; areas[area] = (areas[area] || 0) + 1; return areas }, {})).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name, value]) => ({ name, value }))
+    const recentCandidates = applications.slice(0, 6).map((item) => ({ name: item.candidato_nome, initials: item.candidato_nome.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase(), area: item.vaga_titulo || item.area_nome || 'Vaga não informada' }))
 
     useEffect(() => {
         if (!applicationsCanvasRef.current || !statusCanvasRef.current) return
@@ -71,10 +75,10 @@ function DashboardPage() {
         const applicationsChart = new Chart(applicationsCanvasRef.current, {
             type: 'line',
             data: {
-                labels: ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT'],
+                labels: monthlyApplications.labels,
                 datasets: [{
                     label: 'Inscrições',
-                    data: [29, 33, 36, 43, 39, 46, 49, 53, 51, 56],
+                    data: monthlyApplications.values,
                     borderColor: '#169cf9',
                     backgroundColor: 'rgba(22, 156, 249, 0.10)',
                     borderWidth: 3,
@@ -107,8 +111,7 @@ function DashboardPage() {
                     },
                     y: {
                         beginAtZero: true,
-                        max: 65,
-                        ticks: { stepSize: 13, color: mutedTextColor, font: { size: 11 } },
+                        ticks: { precision: 0, color: mutedTextColor, font: { size: 11 } },
                         grid: { color: gridColor },
                         border: { display: false },
                     },
@@ -150,7 +153,7 @@ function DashboardPage() {
             applicationsChart.destroy()
             statusChart.destroy()
         }
-    }, [theme])
+    }, [candidateStatus, monthlyApplications, theme])
 
     return (
         <section className="dashboard-page">
@@ -160,6 +163,7 @@ function DashboardPage() {
             </header>
 
             <AdminSummaryCards items={summaryCards} ariaLabel="Resumo do painel" />
+            {loadError && <p role="alert">{loadError}</p>}
 
             <div className="dashboard-charts">
                 <article className="dashboard-card dashboard-card--applications">
@@ -186,7 +190,7 @@ function DashboardPage() {
                                 <li key={status.label}>
                                     <span className="dashboard-status-list__dot" style={{ backgroundColor: status.color }} aria-hidden="true" />
                                     <strong>{status.label}</strong>
-                                    <span>{status.value} ({((status.value / totalCandidates) * 100).toFixed(1)}%)</span>
+                                    <span>{status.value} ({applications.length ? ((status.value / applications.length) * 100).toFixed(1) : '0.0'}%)</span>
                                 </li>
                             ))}
                         </ul>
@@ -203,7 +207,7 @@ function DashboardPage() {
                         {mostRequestedAreas.map((area) => (
                             <div className="dashboard-area" key={area.name}>
                                 <div><span>{area.name}</span><strong>{area.value}</strong></div>
-                                <div className="dashboard-area__track"><span style={{ width: `${(area.value / 49) * 100}%` }} /></div>
+                                <div className="dashboard-area__track"><span style={{ width: `${(area.value / Math.max(...mostRequestedAreas.map((item) => item.value), 1)) * 100}%` }} /></div>
                             </div>
                         ))}
                     </div>
@@ -220,6 +224,7 @@ function DashboardPage() {
                                 <div><strong>{candidate.name}</strong><span>{candidate.area}</span></div>
                             </div>
                         ))}
+                        {!recentCandidates.length && <p>Nenhuma inscrição encontrada.</p>}
                     </div>
                 </article>
             </div>

@@ -34,6 +34,25 @@ function getJobIcon(area: string): AdminIconName {
 const JOBS_PER_PAGE = 6
 const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({ value, label }))
 
+function mapApiJob(row: Record<string, any>): AdminJob {
+    return {
+        id: row.id,
+        title: row.titulo,
+        area: row.area_nome || 'Tecnologia',
+        description: row.descricao || '',
+        workModel: row.modelo_trabalho,
+        contractType: row.tipo_contrato,
+        salaryMin: Number(row.salario_min || 0),
+        salaryMax: Number(row.salario_max || 0),
+        status: row.status,
+        createdAt: row.criado_em ? new Date(row.criado_em).toLocaleDateString('pt-BR') : 'Agora',
+        visibility: 'Público',
+        candidates: Number(row.candidatos || 0),
+        skills: row.habilidades?.map((skill: { nome?: string }) => skill.nome).filter(Boolean) || [],
+        shareUrl: createJobShareUrl(row.id),
+    }
+}
+
 function AdminJobsPage() {
     const [jobs, setJobs] = useState<AdminJob[]>([])
     const [search, setSearch] = useState('')
@@ -44,13 +63,17 @@ function AdminJobsPage() {
     const [sharingJob, setSharingJob] = useState<AdminJob | null>(null)
     const [deletingJob, setDeletingJob] = useState<AdminJob | null>(null)
     const [creatingJob, setCreatingJob] = useState(false)
-    const loadJobs = () => api<Array<Record<string, any>>>('/vagas/admin/todas').then((rows) => setJobs(rows.map((row) => ({
-        id: row.id, title: row.titulo, area: row.area_nome || 'Tecnologia', description: row.descricao || '', workModel: row.modelo_trabalho,
-        contractType: row.tipo_contrato, salaryMin: Number(row.salario_min || 0), salaryMax: Number(row.salario_max || 0), status: row.status,
-        createdAt: new Date(row.criado_em).toLocaleDateString('pt-BR'), visibility: 'Público', candidates: Number(row.candidatos || 0),
-        skills: row.habilidades?.map((h: { nome:string }) => h.nome) || [], shareUrl: createJobShareUrl(row.id),
-    }))))
-    useEffect(() => { loadJobs().catch(() => setJobs([])) }, [])
+    const [loadError, setLoadError] = useState('')
+    const loadJobs = () => api<Array<Record<string, any>>>('/vagas/admin/todas').then((rows) => {
+        setJobs(rows.map(mapApiJob))
+        setLoadError('')
+    })
+    useEffect(() => {
+        loadJobs().catch((reason) => {
+            setJobs([])
+            setLoadError(reason instanceof Error ? reason.message : 'Não foi possível carregar as vagas.')
+        })
+    }, [])
 
     const summary = useMemo(() => ({
         total: jobs.length,
@@ -93,11 +116,19 @@ function AdminJobsPage() {
 
     const payload = (job: AdminJob) => ({ titulo:job.title, descricao:job.description, modelo_trabalho:job.workModel, tipo_contrato:job.contractType, salario_min:job.salaryMin, salario_max:job.salaryMax, status:job.status })
     const saveEditedJob = async (job: AdminJob) => {
-        await api(`/vagas/update/${job.id}`, { method:'PUT', body:JSON.stringify(payload(job)) }); await loadJobs(); setCurrentPage(1); setEditingJob(null)
+        const updated = await api<Record<string, any>>(`/vagas/update/${job.id}`, { method:'PUT', body:JSON.stringify(payload(job)) })
+        setJobs((current) => current.map((item) => item.id === job.id ? mapApiJob({ ...updated, candidatos: item.candidates }) : item))
+        setCurrentPage(1)
+        setEditingJob(null)
+        loadJobs().catch(() => setLoadError('A vaga foi atualizada, mas a listagem não pôde ser recarregada.'))
     }
 
     const createJob = async (job: AdminJob) => {
-        await api('/vagas/create', { method:'POST', body:JSON.stringify(payload(job)) }); await loadJobs(); setCurrentPage(1); setCreatingJob(false)
+        const created = await api<Record<string, any>>('/vagas/create', { method:'POST', body:JSON.stringify(payload(job)) })
+        setJobs((current) => [mapApiJob(created), ...current.filter((item) => item.id !== created.id)])
+        setCurrentPage(1)
+        setCreatingJob(false)
+        loadJobs().catch(() => setLoadError('A vaga foi criada, mas a listagem não pôde ser atualizada.'))
     }
 
     const updateStatus = async (jobId: number, status: JobStatus) => {
@@ -160,6 +191,8 @@ function AdminJobsPage() {
                 </div>
                 <p><strong>{filteredJobs.length}</strong> de {jobs.length} vagas exibidas</p>
             </div>
+
+            {loadError && <p className="admin-jobs-load-error" role="alert">{loadError}</p>}
 
             {filteredJobs.length ? (
                 <div className="admin-jobs-table" aria-live="polite">
