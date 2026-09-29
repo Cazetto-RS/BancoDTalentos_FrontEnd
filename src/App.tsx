@@ -26,7 +26,7 @@ export default function App() {
         <Route path="/vagas-abertas" element={page('Vagas abertas', <Jobs />)} />
         <Route path="/cadastro" element={page('Criar conta', <Register />)} />
         <Route path="/login" element={page('Entrar', <Login />)} />
-        <Route element={<ProtectedRoute roles={['candidato']} />}><Route path="/perfil" element={page('Meu perfil', <Profile />)} /></Route>
+        <Route element={<ProtectedRoute roles={['candidato']} />}><Route path="/perfil" element={page('Meu perfil', <Profile />)} /><Route path="/perfil/editar" element={page('Editar perfil', <Register />)} /></Route>
       </Route>
       <Route element={<ProtectedRoute roles={['rh', 'admin']} />}>
         <Route path="/admin" element={<AdminLayout />}>

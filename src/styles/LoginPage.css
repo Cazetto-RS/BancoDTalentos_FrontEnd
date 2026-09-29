@@ -50,6 +50,11 @@
     gap: .45rem;
 }
 
+.login-field svg {
+    width: 1.2rem;
+    fill: var(--color-text-muted);
+}
+
 .login-field > span {
     font-size: .84rem;
     font-weight: 600;
@@ -115,6 +120,7 @@
 .login-submit:hover {
     background: var(--color-primary-hover);
 }
+.password-field{position:relative}.password-field input{padding-right:3rem}.password-field button{position:absolute;top:50%;right:.45rem;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;font-size:1.05rem}
 
 .login-submit:disabled {
     cursor: wait;

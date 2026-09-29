@@ -7,11 +7,13 @@ import JobCategoryIcon from '../../components/jobs/JobCategoryIcon'
 import { getJobCategoryTheme } from '../../constants/jobCategories'
 import type { JobModalData } from '../../types/Job'
 import { api } from '../../services/api'
+import { useSearchParams } from 'react-router-dom'
 
-interface ApiJob { id:number; titulo:string; descricao?:string; modelo_trabalho?:string; tipo_contrato?:string; salario_min?:number; salario_max?:number; habilidades:Array<{nome:string}> }
+interface ApiJob { id:number; titulo:string; descricao?:string; modelo_trabalho?:string; tipo_contrato?:string; salario_min?:number; salario_max?:number; habilidades:Array<{nome:string}>; icone?:string; cor?:string; area_nome?:string }
+const iconCategory = (icon?:string): JobModalData['category'] => icon === 'design' ? 'design' : icon === 'data' ? 'dados' : icon === 'mobile' ? 'mobile' : 'desenvolvimento'
 const money = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' })
 const fromApi = (job: ApiJob): JobModalData => ({
-    id: job.id, title: job.titulo, category: 'desenvolvimento', description: job.descricao,
+    id: job.id, title: job.titulo, category: iconCategory(job.icone), color:job.cor, description: job.descricao, area:job.area_nome,
     salary: job.salario_min != null && job.salario_max != null ? `${money.format(job.salario_min)} - ${money.format(job.salario_max)}` : 'A combinar',
     details: `${job.tipo_contrato || 'Contrato a combinar'} • ${job.modelo_trabalho || 'Modelo a combinar'}`,
     skills: job.habilidades?.map((item) => item.nome) || [],
@@ -22,9 +24,10 @@ const MOBILE_PAGE_SIZE = 6
 const MOBILE_BREAKPOINT = '(max-width: 600px)'
 
 function JobsPage() {
+    const [searchParams] = useSearchParams()
     const [selectedJob, setSelectedJob] = useState<JobModalData | null>(null)
     const [jobs, setJobs] = useState<JobModalData[]>([])
-    const [search, setSearch] = useState('')
+    const [search, setSearch] = useState(() => searchParams.get('busca') || '')
     const [loadError, setLoadError] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(() => window.matchMedia(MOBILE_BREAKPOINT).matches ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE)
@@ -33,13 +36,13 @@ function JobsPage() {
     useEffect(() => {
         api<ApiJob[]>('/vagas').then((data) => {
             const mapped = data.map(fromApi); setJobs(mapped); setCurrentPage(1); setLoadError('')
-            const requested = Number(new URLSearchParams(location.search).get('vaga'))
+            const requested = Number(searchParams.get('vaga'))
             if (requested) setSelectedJob(mapped.find((job) => job.id === requested) || null)
         }).catch((reason) => {
             setJobs([])
             setLoadError(reason instanceof Error ? reason.message : 'Não foi possível carregar as vagas.')
         })
-    }, [])
+    }, [searchParams])
 
     useEffect(() => {
         const mediaQuery = window.matchMedia(MOBILE_BREAKPOINT)
@@ -54,7 +57,7 @@ function JobsPage() {
 
 
     const normalizedSearch = search.trim().toLocaleLowerCase('pt-BR')
-    const filteredJobs = jobs.filter((job) => !normalizedSearch || [job.title, job.details, ...job.skills]
+    const filteredJobs = jobs.filter((job) => !normalizedSearch || [job.title, job.area || '', job.details, ...job.skills]
         .some((value) => value.toLocaleLowerCase('pt-BR').includes(normalizedSearch)))
     const totalPages = Math.ceil(filteredJobs.length / pageSize)
     const firstJobIndex = (currentPage - 1) * pageSize
@@ -96,8 +99,8 @@ function JobsPage() {
                     {visibleJobs.map((job, index) => {
                         const theme = getJobCategoryTheme(job.category)
                         const categoryStyle = {
-                            '--job-accent': theme.color,
-                            '--job-accent-soft': theme.softColor,
+                            '--job-accent': job.color || theme.color,
+                            '--job-accent-soft': job.color ? `${job.color}20` : theme.softColor,
                         } as CSSProperties
 
                         return (

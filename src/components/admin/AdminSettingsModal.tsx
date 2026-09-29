@@ -4,6 +4,8 @@ import type { AdminTheme } from '../../layouts/Admin/AdminLayout'
 import type { AdminUser } from '../../types/AdminUser'
 import AdminIcon from './AdminIcon'
 import '../../styles/AdminSettingsModal.css'
+import AdminUsersPage from '../../pages/admin/AdminUsersPage'
+import { api } from '../../services/api'
 
 interface AdminSettingsModalProps {
     user: AdminUser
@@ -19,7 +21,7 @@ interface AdminPreferences {
     weeklySummary: boolean
 }
 
-type SettingsTab = 'preferences' | 'profile'
+type SettingsTab = 'preferences' | 'profile' | 'team'
 
 const defaultPreferences: AdminPreferences = {
     newCandidateAlerts: true,
@@ -63,6 +65,8 @@ function AdminSettingsModal({ user, theme, onThemeChange, onClose }: AdminSettin
     const dialogRef = useRef<HTMLDivElement>(null)
     const [activeTab, setActiveTab] = useState<SettingsTab>('preferences')
     const [preferences, setPreferences] = useState<AdminPreferences>(getSavedPreferences)
+    const [password,setPassword]=useState(''); const [confirmPassword,setConfirmPassword]=useState(''); const [showPassword,setShowPassword]=useState(false); const [passwordMessage,setPasswordMessage]=useState(''); const [passwordSaving,setPasswordSaving]=useState(false)
+    const changePassword=async(event:React.FormEvent)=>{event.preventDefault();setPasswordMessage('');if(password.length<8)return setPasswordMessage('A senha precisa ter pelo menos 8 caracteres.');if(password!==confirmPassword)return setPasswordMessage('As senhas não coincidem.');setPasswordSaving(true);try{await api(`/usuarios/atualizar/${user.id}`,{method:'PUT',body:JSON.stringify({senha:password})});setPassword('');setConfirmPassword('');setPasswordMessage('Senha alterada com sucesso.')}catch(reason){setPasswordMessage(reason instanceof Error?reason.message:'Não foi possível alterar a senha.')}finally{setPasswordSaving(false)}}
 
     useEffect(() => {
         const scrollContainer = document.querySelector<HTMLElement>('.admin-layout__content')
@@ -81,7 +85,8 @@ function AdminSettingsModal({ user, theme, onThemeChange, onClose }: AdminSettin
         }
     }, [onClose])
 
-    const togglePreference = (preference: keyof AdminPreferences) => {
+    const togglePreference = async (preference: keyof AdminPreferences) => {
+        if ('Notification' in window && Notification.permission === 'default') await Notification.requestPermission()
         setPreferences((current) => {
             const updatedPreferences = { ...current, [preference]: !current[preference] }
             localStorage.setItem('admin-preferences', JSON.stringify(updatedPreferences))
@@ -117,6 +122,7 @@ function AdminSettingsModal({ user, theme, onThemeChange, onClose }: AdminSettin
                         <AdminIcon name="profile" aria-hidden="true" />
                         Meu perfil
                     </button>
+                    {user.role === 'admin' && <button className={activeTab === 'team' ? 'is-active' : ''} type="button" onClick={() => setActiveTab('team')}><AdminIcon name="users" aria-hidden="true" />Equipe</button>}
                 </nav>
 
                 <div className="admin-settings-modal__content">
@@ -157,25 +163,25 @@ function AdminSettingsModal({ user, theme, onThemeChange, onClose }: AdminSettin
                                     <div className="admin-settings-modal__preference">
                                         <span className="admin-settings-modal__preference-icon" aria-hidden="true"><AdminIcon name="bell" /></span>
                                         <div><strong>Novos candidatos</strong><span>Avisar quando uma nova candidatura chegar</span></div>
-                                        <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.newCandidateAlerts} onClick={() => togglePreference('newCandidateAlerts')}><span /></button>
+                                        <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.newCandidateAlerts} onClick={() => void togglePreference('newCandidateAlerts')}><span /></button>
                                     </div>
 
                                     <div className="admin-settings-modal__preference">
                                         <span className="admin-settings-modal__preference-icon" aria-hidden="true"><AdminIcon name="briefcase" /></span>
                                         <div><strong>Alertas de vagas</strong><span>Receber avisos sobre vagas pausadas ou próximas do fechamento</span></div>
-                                        <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.vacancyAlerts} onClick={() => togglePreference('vacancyAlerts')}><span /></button>
+                                        <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.vacancyAlerts} onClick={() => void togglePreference('vacancyAlerts')}><span /></button>
                                     </div>
 
                                     <div className="admin-settings-modal__preference">
                                         <span className="admin-settings-modal__preference-icon" aria-hidden="true"><AdminIcon name="check" /></span>
                                         <div><strong>Atualizações de status</strong><span>Avisar quando candidatos avançarem no processo</span></div>
-                                        <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.statusUpdates} onClick={() => togglePreference('statusUpdates')}><span /></button>
+                                        <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.statusUpdates} onClick={() => void togglePreference('statusUpdates')}><span /></button>
                                     </div>
 
                                     <div className="admin-settings-modal__preference">
                                         <span className="admin-settings-modal__preference-icon" aria-hidden="true"><AdminIcon name="clipboard" /></span>
                                         <div><strong>Resumo semanal</strong><span>Receber um resumo das vagas e candidaturas da semana</span></div>
-                                        <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.weeklySummary} onClick={() => togglePreference('weeklySummary')}><span /></button>
+                                        <button className="admin-settings-switch" type="button" role="switch" aria-checked={preferences.weeklySummary} onClick={() => void togglePreference('weeklySummary')}><span /></button>
                                     </div>
                                 </div>
                             </section>
@@ -214,8 +220,10 @@ function AdminSettingsModal({ user, theme, onThemeChange, onClose }: AdminSettin
                                     <p>{user.role === 'admin' ? 'Permissão para gerenciar vagas, candidatos e configurações do painel.' : 'Permissão para acompanhar vagas, candidatos e processos seletivos.'}</p>
                                 </div>
                             </section>
+                            {user.role === 'admin' && <section className="admin-settings-modal__section"><div className="admin-settings-modal__section-title"><div><span>SEGURANÇA</span><h3>Alterar senha</h3></div></div><form className="admin-settings-password" onSubmit={changePassword}><label>Nova senha<div><input type={showPassword?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Ocultar senha':'Mostrar senha'}>{showPassword?'🙈':'👁'}</button></div></label><label>Confirmar senha<input type={showPassword?'text':'password'} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} minLength={8} required/></label>{passwordMessage&&<p role="status">{passwordMessage}</p>}<button type="submit" disabled={passwordSaving}>{passwordSaving?'Alterando...':'Alterar senha'}</button></form></section>}
                         </div>
                     )}
+                    {activeTab === 'team' && user.role === 'admin' && <div className="admin-settings-modal__panel"><AdminUsersPage embedded /></div>}
                 </div>
 
                 <footer className="admin-settings-modal__footer">

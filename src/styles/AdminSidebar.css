@@ -69,6 +69,11 @@
     color: #fff;
 }
 
+.admin-sidebar__logout {
+    background-color: transparent;
+    border: 0px;
+}
+
 .admin-sidebar__link.is-active {
     background: rgb(22 156 249 / 14%);
     color: var(--color-primary);

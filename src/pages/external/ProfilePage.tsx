@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import '../../styles/ProfilePage.css'
 import profileIcon from '../../assets/svgs/Profile.svg'
 import JobApplicationModal from '../../components/jobs/JobApplicationModal'
@@ -6,6 +7,7 @@ import JobCategoryIcon from '../../components/jobs/JobCategoryIcon'
 import type { JobModalData } from '../../types/Job'
 import { useAuth } from '../../contexts/AuthContext'
 import { api } from '../../services/api'
+import ConfirmModal from '../../components/common/ConfirmModal'
 
 const currentApplication: JobModalData = {
     title: 'Desenvolvedor Web Sênior',
@@ -24,6 +26,7 @@ const formatDate = (value?: string) => {
 
 function ProfilePage() {
     const { user } = useAuth()
+    const navigate = useNavigate()
     const [showJobDetails, setShowJobDetails] = useState(false)
     const [profile, setProfile] = useState<Record<string, any>>({})
     const [culture, setCulture] = useState<Record<string, any>>({})
@@ -32,6 +35,9 @@ function ProfilePage() {
     const [profileEducation, setProfileEducation] = useState<Array<Record<string, any>>>([])
     const [interests, setInterests] = useState<Array<Record<string, any>>>([])
     const [applications, setApplications] = useState<Array<Record<string, any>>>([])
+    const [editingApplication, setEditingApplication] = useState<Record<string, any> | null>(null)
+    const [cancelingApplication, setCancelingApplication] = useState<Record<string, any> | null>(null)
+    const [applicationError, setApplicationError] = useState('')
     const [loadError, setLoadError] = useState('')
 
     useEffect(() => {
@@ -90,7 +96,7 @@ function ProfilePage() {
 
                     <div className="profile-hero__actions">
                         {profile.curriculo_url && <a className="profile-button profile-button--ghost" href={profile.curriculo_url} target="_blank" rel="noreferrer">Ver currículo</a>}
-                        <button className="profile-button profile-button--primary" type="button" title="Edição de perfil ainda indisponível" disabled>Editar perfil</button>
+                        <button className="profile-button profile-button--primary" type="button" onClick={() => navigate('/perfil/editar')}>Editar perfil</button>
                     </div>
                 </div>
             </section>
@@ -121,7 +127,7 @@ function ProfilePage() {
                             <div><dt>E-mail</dt><dd>{user?.email || 'Não informado'}</dd></div>
                             <div><dt>Telefone</dt><dd>{profile.telefone || 'Não informado'}</dd></div>
                             <div><dt>Data de nascimento</dt><dd>{formatDate(profile.data_nascimento)}</dd></div>
-                            <div><dt>Localização</dt><dd>{[profile.cidade, profile.estado].filter(Boolean).join(' - ') || 'Não informada'}</dd></div>
+                            <div><dt>Endereço</dt><dd>{[profile.logradouro, profile.numero_rua, profile.bairro, profile.cidade, profile.estado].filter(Boolean).join(' - ') || 'Não informado'}</dd></div>
                         </dl>
                     </section>
 
@@ -225,20 +231,21 @@ function ProfilePage() {
                         </article>
                     </section>
 
-                    {latestApplication && applicationJob && <section className="profile-card profile-application">
+                    {applications.length > 0 && <section className="profile-card profile-application">
                         <div className="profile-card__heading profile-card__heading--row">
                             <div><span>CANDIDATURA</span><h2>Processo seletivo atual</h2></div>
-                            <span className="profile-job__status">{latestApplication.status}</span>
                         </div>
-                        <div className="profile-job">
+                        {applications.map((application) => <div className="profile-job" key={application.id}>
                             <div className="profile-job__icon" aria-hidden="true"><JobCategoryIcon category="desenvolvimento" /></div>
                             <div className="profile-job__content">
-                                <h3>{latestApplication.vaga_titulo}</h3>
-                                <p>{latestApplication.vaga_contrato || 'Contrato a combinar'} <span>•</span> {latestApplication.vaga_modelo || 'Modelo a combinar'}</p>
-                                <strong>{applicationJob.salary}</strong>
+                                <h3>{application.vaga_titulo}</h3>
+                                <p>{application.vaga_contrato || 'Contrato a combinar'} <span>•</span> {application.vaga_modelo || 'Modelo a combinar'}</p>
+                                <strong>{application.pretensao_salarial ? Number(application.pretensao_salarial).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : 'Pretensão não informada'}</strong>
                             </div>
-                            <button className="profile-job__button" type="button" onClick={() => setShowJobDetails(true)}>Ver vaga</button>
-                        </div>
+                            <span className="profile-job__status">{application.status}</span>
+                            {!['contratado','dispensado'].includes(application.status) && <div className="profile-application__actions"><button className="profile-job__button" type="button" onClick={() => setEditingApplication({...application})}>Alterar</button><button className="profile-job__button is-danger" type="button" onClick={() => setCancelingApplication(application)}>Cancelar inscrição</button></div>}
+                        </div>)}
+                        {applicationError && <p className="profile-load-error" role="alert">{applicationError}</p>}
                     </section>}
                 </div>
             </div>
@@ -246,6 +253,8 @@ function ProfilePage() {
             {showJobDetails && (
                 <JobApplicationModal job={applicationJob || currentApplication} mode="details" onClose={() => setShowJobDetails(false)} />
             )}
+            {editingApplication && <div className="profile-application-modal" role="presentation" onMouseDown={(e)=>{if(e.target===e.currentTarget)setEditingApplication(null)}}><form role="dialog" aria-modal="true" onSubmit={async(e)=>{e.preventDefault();setApplicationError('');try{const saved=await api<Record<string,any>>(`/candidaturas/minhas-candidaturas/${editingApplication.id}`,{method:'PUT',body:JSON.stringify({pretensao_salarial:editingApplication.pretensao_salarial?Number(editingApplication.pretensao_salarial):null,disponibilidade:editingApplication.disponibilidade||null,preferencia_contrato:editingApplication.preferencia_contrato||null,preferencia_modelo_trabalho:editingApplication.preferencia_modelo_trabalho||null})});setApplications(current=>current.map(item=>item.id===saved.id?{...item,...saved}:item));setEditingApplication(null)}catch(reason){setApplicationError(reason instanceof Error?reason.message:'Não foi possível atualizar a candidatura.')}}}><h2>Alterar candidatura</h2><label>Pretensão salarial<input type="number" min="0" value={editingApplication.pretensao_salarial||''} onChange={e=>setEditingApplication({...editingApplication,pretensao_salarial:e.target.value})}/></label><label>Disponibilidade<select value={editingApplication.disponibilidade||''} onChange={e=>setEditingApplication({...editingApplication,disponibilidade:e.target.value})}><option value="">Não informar</option><option value="manhã">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option><option value="integral">Integral</option></select></label><label>Contrato<select value={editingApplication.preferencia_contrato||''} onChange={e=>setEditingApplication({...editingApplication,preferencia_contrato:e.target.value})}><option value="">Não informar</option><option>CLT</option><option>PJ</option><option>Estágio</option></select></label><label>Modelo<select value={editingApplication.preferencia_modelo_trabalho||''} onChange={e=>setEditingApplication({...editingApplication,preferencia_modelo_trabalho:e.target.value})}><option value="">Não informar</option><option value="remoto">Remoto</option><option value="hibrido">Híbrido</option><option value="presencial">Presencial</option></select></label><div><button type="button" onClick={()=>setEditingApplication(null)}>Voltar</button><button type="submit">Salvar</button></div></form></div>}
+            <ConfirmModal isOpen={Boolean(cancelingApplication)} title="Cancelar inscrição?" message={`Você deixará de participar da vaga “${cancelingApplication?.vaga_titulo || ''}”.`} confirmText="Cancelar inscrição" onClose={()=>setCancelingApplication(null)} onConfirm={async()=>{if(!cancelingApplication)return;try{await api(`/candidaturas/minhas-candidaturas/${cancelingApplication.id}`,{method:'DELETE'});setApplications(current=>current.filter(item=>item.id!==cancelingApplication.id));setCancelingApplication(null)}catch(reason){setApplicationError(reason instanceof Error?reason.message:'Não foi possível cancelar a inscrição.')}}}/>
         </main>
     )
 }

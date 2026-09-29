@@ -3,6 +3,7 @@ import logoImg from '../../../assets/logo.png'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../contexts/AuthContext'
+import NotificationCenter from '../../common/NotificationCenter'
 
 function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false)
@@ -39,6 +40,7 @@ function Navbar() {
                 </ul>
 
                 <div className="navbar__actions">
+                    <NotificationCenter />
                     <Link className="navbar__profile__vazado" to={isAuthenticated ? accountPath : '/cadastro'}>
                         <span className="navbar__profile-text">{isAuthenticated ? 'Minha conta' : 'Registrar-se'}</span>
 

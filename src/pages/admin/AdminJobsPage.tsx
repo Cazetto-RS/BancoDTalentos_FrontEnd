@@ -46,10 +46,12 @@ function mapApiJob(row: Record<string, any>): AdminJob {
         salaryMax: Number(row.salario_max || 0),
         status: row.status,
         createdAt: row.criado_em ? new Date(row.criado_em).toLocaleDateString('pt-BR') : 'Agora',
-        visibility: 'Público',
+        visibility: row.visibilidade === 'privada' ? 'Privado' : 'Público',
         candidates: Number(row.candidatos || 0),
         skills: row.habilidades?.map((skill: { nome?: string }) => skill.nome).filter(Boolean) || [],
         shareUrl: createJobShareUrl(row.id),
+        icon: row.icone || 'code',
+        color: row.cor || '#169CF9',
     }
 }
 
@@ -63,6 +65,9 @@ function AdminJobsPage() {
     const [sharingJob, setSharingJob] = useState<AdminJob | null>(null)
     const [deletingJob, setDeletingJob] = useState<AdminJob | null>(null)
     const [creatingJob, setCreatingJob] = useState(false)
+    const [applicantsJob, setApplicantsJob] = useState<AdminJob | null>(null)
+    const [applicants, setApplicants] = useState<Array<Record<string, any>>>([])
+    const [applicantsLoading, setApplicantsLoading] = useState(false)
     const [loadError, setLoadError] = useState('')
     const loadJobs = () => api<Array<Record<string, any>>>('/vagas/admin/todas').then((rows) => {
         setJobs(rows.map(mapApiJob))
@@ -114,7 +119,7 @@ function AdminJobsPage() {
         { label: 'Vagas fechadas', value: summary.closed, icon: 'clipboard' as const },
     ]
 
-    const payload = (job: AdminJob) => ({ titulo:job.title, descricao:job.description, modelo_trabalho:job.workModel, tipo_contrato:job.contractType, salario_min:job.salaryMin, salario_max:job.salaryMax, status:job.status })
+    const payload = (job: AdminJob) => ({ titulo:job.title, descricao:job.description, modelo_trabalho:job.workModel, tipo_contrato:job.contractType, salario_min:job.salaryMin, salario_max:job.salaryMax, status:job.status, icone:job.icon, cor:job.color, visibilidade:job.visibility === 'Privado' ? 'privada' : 'publica' })
     const saveEditedJob = async (job: AdminJob) => {
         const updated = await api<Record<string, any>>(`/vagas/update/${job.id}`, { method:'PUT', body:JSON.stringify(payload(job)) })
         setJobs((current) => current.map((item) => item.id === job.id ? mapApiJob({ ...updated, candidatos: item.candidates }) : item))
@@ -138,6 +143,12 @@ function AdminJobsPage() {
     const deleteJob = async () => {
         if (!deletingJob) return
         await api(`/vagas/delete/${deletingJob.id}`, { method:'DELETE' }); setJobs(current => current.filter(job => job.id !== deletingJob.id)); setCurrentPage(1); setDeletingJob(null)
+    }
+    const openApplicants = async (job: AdminJob) => {
+        setApplicantsJob(job); setApplicants([]); setApplicantsLoading(true)
+        try { setApplicants(await api<Array<Record<string, any>>>(`/candidaturas/vaga/${job.id}`)) }
+        catch (reason) { setLoadError(reason instanceof Error ? reason.message : 'Não foi possível carregar os inscritos.') }
+        finally { setApplicantsLoading(false) }
     }
 
     return (
@@ -209,7 +220,7 @@ function AdminJobsPage() {
                         {paginatedJobs.map((job) => (
                             <article className="admin-job-row" key={job.id}>
                                 <div className="admin-job-row__identity">
-                                    <span className="admin-job-row__icon" aria-hidden="true"><AdminIcon name={getJobIcon(job.area)} /></span>
+                                    <span className="admin-job-row__icon" style={{ backgroundColor:`${job.color}20`, color:job.color }} aria-hidden="true"><AdminIcon name={job.icon || getJobIcon(job.area)} /></span>
                                     <div>
                                         <strong>{job.title}</strong>
                                         <span>{job.area}</span>
@@ -230,10 +241,10 @@ function AdminJobsPage() {
                                     className={`admin-job-status admin-job-status--${job.status}`}
                                 />
 
-                                <div className="admin-job-row__candidates">
+                                <button className="admin-job-row__candidates admin-job-row__candidates--button" type="button" onClick={()=>void openApplicants(job)} aria-label={`Ver inscritos em ${job.title}`}>
                                     <strong>{job.candidates}</strong>
                                     <span>inscritos</span>
-                                </div>
+                                </button>
 
                                 <div className="admin-job-row__publication">
                                     <strong>{job.visibility}</strong>
@@ -287,6 +298,7 @@ function AdminJobsPage() {
             {editingJob && <JobFormModal mode="edit" job={editingJob} onClose={() => setEditingJob(null)} onSave={saveEditedJob} />}
             {creatingJob && <JobFormModal mode="create" nextId={Math.max(0, ...jobs.map((job) => job.id)) + 1} onClose={() => setCreatingJob(false)} onSave={createJob} />}
             {sharingJob && <JobShareModal job={sharingJob} onClose={() => setSharingJob(null)} />}
+            {applicantsJob && <div className="admin-applicants-modal" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setApplicantsJob(null)}}><section role="dialog" aria-modal="true" aria-labelledby="applicants-title"><header><div><span>INSCRITOS</span><h2 id="applicants-title">{applicantsJob.title}</h2></div><button type="button" onClick={()=>setApplicantsJob(null)} aria-label="Fechar">×</button></header><div className="admin-applicants-list">{applicantsLoading?<p>Carregando...</p>:applicants.map(item=><article key={item.candidatura_id}><div><strong>{item.candidato_nome}</strong><span>{item.candidato_email}</span></div><div><strong>{item.candidatura_status}</strong><span>{item.data_inscricao?new Date(item.data_inscricao).toLocaleDateString('pt-BR'):''}</span></div></article>)}{!applicantsLoading&&!applicants.length&&<p>Nenhum candidato inscrito nesta vaga.</p>}</div></section></div>}
             <ConfirmModal
                 isOpen={Boolean(deletingJob)}
                 title="Excluir vaga?"

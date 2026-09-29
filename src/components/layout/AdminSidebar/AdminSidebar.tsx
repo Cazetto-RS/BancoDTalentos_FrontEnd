@@ -13,7 +13,7 @@ interface AdminSidebarProps {
     onThemeChange: (theme: AdminTheme) => void
 }
 
-const navigationItems: Array<{ label: string; path: string; icon: AdminIconName }> = [
+const navigationItems: Array<{ label: string; path: string; icon: AdminIconName; adminOnly?: boolean }> = [
     { label: 'Dashboard', path: '/admin/dashboard', icon: 'dashboard' },
     { label: 'Vagas', path: '/admin/vagas', icon: 'briefcase' },
     { label: 'Candidatos', path: '/admin/candidatos', icon: 'users' },
@@ -71,7 +71,7 @@ function AdminSidebar({ theme, onThemeChange }: AdminSidebarProps) {
                 </Link>
 
                 <nav className="admin-sidebar__navigation" aria-label="Navegação administrativa">
-                    {navigationItems.map((item) => item.path === '/admin/configuracoes' ? (
+                    {navigationItems.filter((item) => !item.adminOnly || user?.cargo === 'admin').map((item) => item.path === '/admin/configuracoes' ? (
                         <button
                             className={`admin-sidebar__link admin-sidebar__settings${settingsOpen ? ' is-active' : ''}`}
                             type="button"

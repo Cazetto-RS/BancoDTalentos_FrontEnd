@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import AlertModal from '../../components/common/AlertModal'
 import { useAuth } from '../../contexts/AuthContext'
 import { api } from '../../services/api'
@@ -42,15 +42,17 @@ const steps = [
     },
 ]
 
-const Field = ({ label, name, type = 'text', placeholder, required = false, defaultValue }: { label: string; name: string; type?: string; placeholder: string; required?: boolean; defaultValue?: string }) => (
+const Field = ({ label, name, type = 'text', placeholder, required = false, defaultValue, onBlur }: { label: string; name: string; type?: string; placeholder: string; required?: boolean; defaultValue?: string; onBlur?: React.FocusEventHandler<HTMLInputElement> }) => (
     <label className="registration-field">
         <span>{label}</span>
-        <input name={name} type={type} placeholder={placeholder} required={required} defaultValue={defaultValue} />
+        <input name={name} type={type} placeholder={placeholder} required={required} defaultValue={defaultValue} onBlur={onBlur} />
     </label>
 )
 
 function RegistrationPage() {
-    const { login } = useAuth()
+    const { login, user, updateUser } = useAuth()
+    const location = useLocation()
+    const editMode = location.pathname === '/perfil/editar'
     const [step, setStep] = useState(1)
     const [completed, setCompleted] = useState(false)
     const [experienceCount, setExperienceCount] = useState(1)
@@ -59,10 +61,45 @@ function RegistrationPage() {
     const [limitModalOpen, setLimitModalOpen] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState('')
+    const [addressVersion, setAddressVersion] = useState(0)
     const [values, setValues] = useState<Record<string, string>>({})
+    const [showPassword,setShowPassword]=useState(false)
     const savedStages = useRef({ registered: false, loggedIn: false, profile: false, culture: false, experiences: false, education: false })
+    const existingExperiences = useRef<Array<Record<string, any>>>([])
+    const existingEducation = useRef<Array<Record<string, any>>>([])
+
+    useEffect(() => {
+        if (!editMode || !user) return
+        Promise.allSettled([
+            api<Record<string, any>>('/candidatos/meu-perfil'), api<Record<string, any>>('/candidatos/buscar-cultura'),
+            api<{ experiencias: Array<Record<string, any>> }>('/historico/experiencias'), api<{ formacoes: Array<Record<string, any>> }>('/historico/formacoes'),
+        ]).then(([profileResult, cultureResult, experiencesResult, educationResult]) => {
+            const profile = profileResult.status === 'fulfilled' ? profileResult.value : {}
+            const culture = cultureResult.status === 'fulfilled' ? cultureResult.value : {}
+            const experiences = experiencesResult.status === 'fulfilled' ? experiencesResult.value.experiencias : []
+            const education = educationResult.status === 'fulfilled' ? educationResult.value.formacoes : []
+            existingExperiences.current = experiences; existingEducation.current = education
+            setExperienceCount(Math.max(1, experiences.length)); setCourseCompleted((education.length ? education : [{}]).map((item) => item.status === 'concluido' ? 'yes' : 'no'))
+            const prefilled: Record<string, string> = { ...profile, ...culture, nome_completo:user.nome_completo, email:user.email, data_nascimento:profile.data_nascimento?.slice(0,10) || '' }
+            experiences.forEach((item, i) => { prefilled[`empresa-${i}`]=item.empresa||''; prefilled[`experiencia-cargo-${i}`]=item.cargo||''; prefilled[`experiencia-descricao-${i}`]=item.descricao||''; prefilled[`experiencia-inicio-${i}`]=item.data_inicio?.slice(0,10)||''; prefilled[`experiencia-fim-${i}`]=item.data_fim?.slice(0,10)||'' })
+            education.forEach((item, i) => { prefilled[`curso-${i}`]=item.curso||''; prefilled[`instituicao-${i}`]=item.instituicao||''; prefilled[`semestre-${i}`]=String(item.semestre_atual||''); prefilled[`turno-${i}`]=item.turno||''; prefilled[`course-status-${i}`]=item.status||''; prefilled[`formacao-inicio-${i}`]=item.data_inicio?.slice(0,10)||''; prefilled[`formacao-fim-${i}`]=item.data_fim?.slice(0,10)||'' })
+            setValues(prefilled); setAddressVersion((v)=>v+1)
+        }).catch(() => setSubmitError('Não foi possível carregar todas as informações do perfil.'))
+    }, [editMode, user])
 
     const repeatableItemName = step === 3 ? 'experiências' : step === 4 ? 'formações' : 'competências'
+
+    const lookupCep = async (rawCep: string) => {
+        const cep = rawCep.replace(/\D/g, '')
+        if (cep.length !== 8) return
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+            const address = await response.json()
+            if (!response.ok || address.erro) throw new Error()
+            setValues((current) => ({ ...current, cep, logradouro: address.logradouro || '', bairro: address.bairro || '', cidade: address.localidade || '', estado: address.uf || '' }))
+            setAddressVersion((current) => current + 1)
+        } catch { setSubmitError('CEP não encontrado. Você pode preencher o endereço manualmente.') }
+    }
 
     const addAnother = () => {
         if (step === 3) {
@@ -121,6 +158,19 @@ function RegistrationPage() {
         setSubmitting(true)
         try {
             const data = allValues
+            if (editMode) {
+                await api(`/usuarios/atualizar/${user!.id}`, { method:'PUT', body:JSON.stringify({ nome_completo:data.nome_completo, email:data.email }) })
+                updateUser({ nome_completo:data.nome_completo, email:data.email })
+                await api('/candidatos/perfil-base', { method:'POST', body:JSON.stringify({ telefone:data.telefone||null, cep:data.cep?.replace(/\D/g,'')||null, numero_rua:data.numero_rua||null, logradouro:data.logradouro||null, bairro:data.bairro||null, cidade:data.cidade||null, estado:data.estado||null, data_nascimento:data.data_nascimento||null, linkedin_url:data.linkedin_url||null, portfolio_url:data.portfolio_url||null, cargo_desejado:data.cargo_desejado||null }) })
+                await api('/candidatos/cultura', { method:'POST', body:JSON.stringify({ motivacao:data.motivacao||null, apresentacao:data.apresentacao||null, descricao_valores:data.descricao_valores||null }) })
+                const experiences = Array.from({length:experienceCount},(_,i)=>({ empresa:data[`empresa-${i}`], cargo:data[`experiencia-cargo-${i}`], descricao:data[`experiencia-descricao-${i}`]||null, data_inicio:data[`experiencia-inicio-${i}`], data_fim:data[`experiencia-fim-${i}`]||null, atual:!data[`experiencia-fim-${i}`] })).filter(item=>item.empresa&&item.cargo&&item.data_inicio)
+                await Promise.all(experiences.map((item,i)=> existingExperiences.current[i] ? api(`/historico/experiencias/editar/${existingExperiences.current[i].id}`,{method:'PUT',body:JSON.stringify(item)}) : api('/historico/experiencias/create',{method:'POST',body:JSON.stringify(item)})))
+                await Promise.all(existingExperiences.current.slice(experiences.length).map(item=>api(`/historico/experiencias/deletar/${item.id}`,{method:'DELETE'})))
+                const education = courseCompleted.map((completed,i)=>({ curso:data[`curso-${i}`], instituicao:data[`instituicao-${i}`], semestre_atual:data[`semestre-${i}`]?Number(data[`semestre-${i}`]):null, turno:data[`turno-${i}`]||null, status:completed==='yes'?'concluido':data[`course-status-${i}`]||'cursando', data_inicio:data[`formacao-inicio-${i}`]||null, data_fim:data[`formacao-fim-${i}`]||null, url_certificado:null })).filter(item=>item.curso&&item.instituicao)
+                await Promise.all(education.map((item,i)=> existingEducation.current[i] ? api(`/historico/formacoes/editar/${existingEducation.current[i].id}`,{method:'PUT',body:JSON.stringify(item)}) : api('/historico/formacoes/create',{method:'POST',body:JSON.stringify(item)})))
+                await Promise.all(existingEducation.current.slice(education.length).map(item=>api(`/historico/formacoes/deletar/${item.id}`,{method:'DELETE'})))
+                setCompleted(true); return
+            }
             if (!savedStages.current.registered) {
                 await api('/usuarios/registrar', {
                     method: 'POST',
@@ -137,6 +187,11 @@ function RegistrationPage() {
                 body: JSON.stringify({
                     telefone: data.telefone || null,
                     cep: data.cep?.replace(/\D/g, '') || null,
+                    numero_rua: data.numero_rua || null,
+                    logradouro: data.logradouro || null,
+                    bairro: data.bairro || null,
+                    cidade: data.cidade || null,
+                    estado: data.estado || null,
                     data_nascimento: data.data_nascimento || null,
                     linkedin_url: data.linkedin_url || null,
                     portfolio_url: data.portfolio_url || null,
@@ -198,8 +253,8 @@ function RegistrationPage() {
                         </svg>
 
                     </div>
-                    <h1>Cadastro concluído!</h1>
-                    <p>Seu perfil foi criado com sucesso. Agora você já pode se candidatar às vagas e encontrar novas oportunidades.</p>
+                    <h1>{editMode ? 'Perfil atualizado!' : 'Cadastro concluído!'}</h1>
+                    <p>{editMode ? 'Suas informações foram salvas com sucesso.' : 'Seu perfil foi criado com sucesso. Agora você já pode se candidatar às vagas e encontrar novas oportunidades.'}</p>
                     <div className="registration-success__actions">
                         <Link className="registration-button registration-button--secondary" to="/perfil">Ver perfil</Link>
                         <Link className="registration-button registration-button--primary" to="/vagas-abertas">Ver vagas</Link>
@@ -213,7 +268,7 @@ function RegistrationPage() {
         <main className="registration-page">
             <section className="registration-card">
                 <header className="registration-header">
-                    <div><span>CADASTRO DE TALENTOS</span><h1>Criar perfil</h1><p>Etapa {step} de {steps.length}</p></div>
+                    <div><span>{editMode ? 'EDIÇÃO DE PERFIL' : 'CADASTRO DE TALENTOS'}</span><h1>{editMode ? 'Atualizar perfil' : 'Criar perfil'}</h1><p>Etapa {step} de {steps.length}</p></div>
                 </header>
 
                 <ol className="registration-progress" aria-label="Progresso do cadastro">
@@ -237,10 +292,19 @@ function RegistrationPage() {
                     <div className="registration-fields">
                         {step === 1 && <>
                             <Field label="Nome completo" name="nome_completo" placeholder="Digite seu nome completo" required defaultValue={values.nome_completo} />
-                            <Field label="CEP" name="cep" placeholder="00000-000" defaultValue={values.cep} />
+                            <Field label="CEP" name="cep" placeholder="00000-000" defaultValue={values.cep} onBlur={(event) => void lookupCep(event.currentTarget.value)} />
+                            <Field label="Rua" name="logradouro" placeholder="Preenchida pelo CEP" defaultValue={values.logradouro} key={`street-${addressVersion}`} />
+                            <Field label="Número" name="numero_rua" placeholder="Número" defaultValue={values.numero_rua} />
+                            <Field label="Bairro" name="bairro" placeholder="Preenchido pelo CEP" defaultValue={values.bairro} key={`district-${addressVersion}`} />
+                            <Field label="Cidade" name="cidade" placeholder="Preenchida pelo CEP" defaultValue={values.cidade} key={`city-${addressVersion}`} />
+                            <Field label="Estado" name="estado" placeholder="UF" defaultValue={values.estado} key={`state-${addressVersion}`} />
                             <Field label="E-mail" name="email" type="email" placeholder="E-mail pessoal" required defaultValue={values.email} />
                             <Field label="Data de nascimento" name="data_nascimento" type="date" placeholder="DD/MM/AAAA" defaultValue={values.data_nascimento} />
-                            <Field label="Senha" name="senha" type="password" placeholder="Mínimo de 8 dígitos" required defaultValue={values.senha} />
+                            {!editMode && <label className="registration-field"><span>Senha</span><div className="registration-password"><input name="senha" type={showPassword?'text':'password'} placeholder="Mínimo de 8 dígitos" required defaultValue={values.senha}/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Ocultar senha':'Mostrar senha'}>{showPassword? <svg viewBox="0 0 535 468" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginTop: 5}}>
+                            <path d="M483.961 0C488.392 0.000105062 492.642 1.76024 495.775 4.89355C498.909 8.02702 500.669 12.2776 500.669 16.709C500.669 21.1402 498.909 25.3901 495.775 28.5234L61.9004 462.398C60.3489 463.95 58.5067 465.181 56.4795 466.021C54.4525 466.86 52.2799 467.292 50.0859 467.292C47.8917 467.292 45.7186 466.86 43.6914 466.021C41.6642 465.181 39.822 463.95 38.2705 462.398C36.719 460.847 35.4881 459.005 34.6484 456.978C33.8089 454.951 33.377 452.778 33.377 450.584C33.377 448.39 33.8088 446.217 34.6484 444.189C35.4881 442.162 36.719 440.32 38.2705 438.769L472.146 4.89355C475.279 1.76009 479.53 0 483.961 0ZM436.701 122.975C471.913 148.154 502.693 179.013 527.782 214.289C531.854 219.922 534.046 226.696 534.046 233.646C534.046 240.597 531.854 247.371 527.782 253.004C503.452 287.714 412.872 400.521 267.023 400.521C233.315 400.521 202.543 394.514 174.875 384.802L232.013 327.63C242.759 331.635 254.374 333.771 266.422 333.771C321.49 333.771 366.547 288.715 366.547 233.646C366.547 221.565 364.411 209.95 360.439 199.236L436.701 122.975ZM267.023 66.7715C298.408 66.7535 329.568 72.0681 359.172 82.4902L301.699 139.963C290.719 135.791 278.837 133.521 266.422 133.521C211.353 133.522 166.297 178.578 166.297 233.646C166.318 245.688 168.513 257.627 172.772 268.89L97.3447 344.317C49.8859 310.742 19.0141 271.16 6.26465 253.004C2.19256 247.371 8.34075e-05 240.597 0 233.646C0 226.696 2.19252 219.922 6.26465 214.289C30.595 179.579 121.175 66.7715 267.023 66.7715Z"/>
+                            </svg>:<svg viewBox="0 0 536 334" fill="none" xmlns="http://www.w3.org/2000/svg">
+                             <path d="M528.917 147.518C504.553 112.808 413.773 0 267.59 0C121.408 0 30.6279 112.808 6.26418 147.518C2.19202 153.15 0 159.924 0 166.875C0 173.826 2.19202 180.6 6.26418 186.232C30.6279 220.942 121.408 333.75 267.59 333.75C413.773 333.75 504.553 220.942 528.917 186.232C532.989 180.6 535.181 173.826 535.181 166.875C535.181 159.924 532.989 153.15 528.917 147.518ZM267.59 267C212.522 267 167.465 221.944 167.465 166.875C167.465 111.806 212.522 66.75 267.59 66.75C322.659 66.75 367.715 111.806 367.715 166.875C367.715 221.944 322.659 267 267.59 267Z"/>
+                             </svg>}</button></div></label>}
                             <label className="registration-field registration-upload"><span>Foto</span><input type="file" accept="image/*" /><strong>Enviar foto pessoal</strong></label>
                             <Field label="Telefone" name="telefone" type="tel" placeholder="+55 (00) 00000-0000" defaultValue={values.telefone} />
                         </>}
@@ -298,14 +362,14 @@ function RegistrationPage() {
                                         <Field label="Semestre atual" name={`semestre-${index}`} type="number" placeholder="Digite apenas números" defaultValue={values[`semestre-${index}`]} />
                                         <fieldset className="registration-options">
                                             <legend>Qual é a situação atual?</legend>
-                                            <label><input type="radio" name={`course-status-${index}`} value="cursando" /> Cursando</label>
-                                            <label><input type="radio" name={`course-status-${index}`} value="trancado" /> Trancado</label>
+                                            <label><input type="radio" name={`course-status-${index}`} value="cursando" defaultChecked={values[`course-status-${index}`] === 'cursando'} /> Cursando</label>
+                                            <label><input type="radio" name={`course-status-${index}`} value="trancado" defaultChecked={values[`course-status-${index}`] === 'trancado'} /> Trancado</label>
                                         </fieldset>
                                         <fieldset className="registration-options">
                                             <legend>Qual período você estuda?</legend>
-                                            <label><input type="radio" name={`turno-${index}`} value="manhã" /> Manhã</label>
-                                            <label><input type="radio" name={`turno-${index}`} value="tarde" /> Tarde</label>
-                                            <label><input type="radio" name={`turno-${index}`} value="noite" /> Noite</label>
+                                            <label><input type="radio" name={`turno-${index}`} value="manhã" defaultChecked={values[`turno-${index}`] === 'manhã'} /> Manhã</label>
+                                            <label><input type="radio" name={`turno-${index}`} value="tarde" defaultChecked={values[`turno-${index}`] === 'tarde'} /> Tarde</label>
+                                            <label><input type="radio" name={`turno-${index}`} value="noite" defaultChecked={values[`turno-${index}`] === 'noite'} /> Noite</label>
                                         </fieldset>
                                     </>}
                                     {courseCompleted.length > 1 && index === courseCompleted.length - 1 && (
@@ -351,7 +415,7 @@ function RegistrationPage() {
                         <button className="registration-button registration-button--secondary" type="button" disabled={step === 1} onClick={() => setStep((current) => current - 1)}>Voltar</button>
                         <div>
                             {(step === 3 || step === 4 || step === 6) && <button className="registration-button registration-button--secondary" type="button" onClick={addAnother}>Adicionar outro</button>}
-                            <button className="registration-button registration-button--primary" type="submit" disabled={submitting}>{submitting ? 'Enviando...' : step === steps.length ? 'Finalizar' : 'Próximo'}</button>
+                            <button className="registration-button registration-button--primary" type="submit" disabled={submitting}>{submitting ? 'Salvando...' : step === steps.length ? (editMode ? 'Salvar alterações' : 'Finalizar') : 'Próximo'}</button>
                         </div>
                     </footer>
                     {submitError && <p className="registration-error" role="alert">{submitError}</p>}

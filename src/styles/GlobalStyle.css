@@ -107,6 +107,12 @@ textarea {
   font: inherit;
 }
 
+:root[data-theme='dark'] select,
+:root[data-theme='dark'] option {
+  background-color: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
 .external-layout__content {
   position: fixed;
   inset: 4rem 0 0;

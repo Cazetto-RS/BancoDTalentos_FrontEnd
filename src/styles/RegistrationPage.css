@@ -167,6 +167,11 @@
     gap: .4rem;
 }
 
+.registration-field svg {
+    width: 1.2rem;
+    fill: var(--color-text-muted);
+}
+
 .registration-field>span,
 .registration-options legend {
     color: var(--color-text);
@@ -582,3 +587,4 @@
         top: .9rem;
     }
 }
+.registration-password{position:relative}.registration-password input{width:100%;padding-right:3rem}.registration-password button{position:absolute;right:.4rem;top:50%;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;font-size:1.05rem}

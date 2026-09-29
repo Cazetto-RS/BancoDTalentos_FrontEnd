@@ -29,7 +29,16 @@ const emptyJob = (id: number): AdminJob => ({
     candidates: 0,
     skills: [],
     shareUrl: createJobShareUrl(id),
+    icon: 'code',
+    color: '#169CF9',
 })
+
+const jobIcons: Array<{ value: AdminJob['icon']; label: string }> = [
+    { value: 'code', label: 'Código' }, { value: 'design', label: 'Design' },
+    { value: 'data', label: 'Dados' }, { value: 'mobile', label: 'Mobile' },
+    { value: 'briefcase', label: 'Corporativo' },
+]
+const jobColors = ['#169CF9', '#7C3AED', '#E11D48', '#EA580C', '#16A34A', '#0891B2', '#4F46E5', '#DB2777']
 
 function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalProps) {
     const [form, setForm] = useState<AdminJob>(() => job ? { ...job, skills: [...job.skills] } : emptyJob(nextId))
@@ -123,6 +132,13 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
                                     </select>
                                 </label>
 
+                                <fieldset className="admin-job-field admin-job-field--wide admin-job-choice"><legend>Ícone</legend><div className="admin-job-icon-options">
+                                    {jobIcons.map((item) => <button className={form.icon === item.value ? 'is-selected' : ''} type="button" key={item.value} onClick={() => setForm({ ...form, icon: item.value })}><AdminIcon name={item.value}/><span>{item.label}</span></button>)}
+                                </div></fieldset>
+                                <fieldset className="admin-job-field admin-job-field--wide admin-job-choice"><legend>Cor predominante</legend><div className="admin-job-color-options">
+                                    {jobColors.map((color) => <button className={form.color === color ? 'is-selected' : ''} type="button" key={color} onClick={() => setForm({ ...form, color })} style={{ backgroundColor: color }} aria-label={`Selecionar cor ${color}`} title={color}/>) }
+                                </div></fieldset>
+
                                 <label className="admin-job-field admin-job-field--wide">
                                     <span>Descrição</span>
                                     <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="Descreva as responsabilidades e os objetivos da vaga" required />
@@ -151,6 +167,7 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
                                     <select value={form.contractType} onChange={(event) => setForm({ ...form, contractType: event.target.value as AdminJob['contractType'] })}>
                                         <option value="CLT">CLT</option>
                                         <option value="PJ">PJ</option>
+                                        <option value="Estágio">Estágio</option>
                                     </select>
                                 </label>
 
@@ -174,7 +191,7 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
                                     <span>Visibilidade</span>
                                     <select value={form.visibility} onChange={(event) => setForm({ ...form, visibility: event.target.value as AdminJob['visibility'] })}>
                                         <option value="Público">Pública</option>
-                                        <option value="Interno">Privada</option>
+                                        <option value="Privado">Privada</option>
                                     </select>
                                     <small>
                                         {form.visibility === 'Público'

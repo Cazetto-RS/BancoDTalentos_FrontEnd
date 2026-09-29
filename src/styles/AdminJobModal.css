@@ -696,3 +696,5 @@
         border-radius: 0;
     }
 }
+.admin-job-color{display:flex;align-items:center;gap:.7rem}.admin-job-color input{width:3.2rem!important;height:2.5rem;padding:.2rem!important;cursor:pointer}.admin-job-color strong{color:var(--color-text);font-size:.8rem}
+.admin-job-choice{border:0;padding:0;margin:0}.admin-job-choice legend{margin-bottom:.55rem;font-weight:700}.admin-job-icon-options,.admin-job-color-options{display:flex;flex-wrap:wrap;gap:.65rem}.admin-job-icon-options button{display:flex;align-items:center;gap:.45rem;padding:.7rem .85rem;border:1px solid var(--color-border);border-radius:.65rem;background:var(--color-surface-muted);color:var(--color-text);cursor:pointer}.admin-job-icon-options button svg{width:1.15rem;height:1.15rem;fill:currentColor}.admin-job-icon-options button.is-selected{border-color:var(--color-primary);color:var(--color-primary);box-shadow:0 0 0 2px var(--color-focus-ring)}.admin-job-color-options button{width:2.35rem;height:2.35rem;border:3px solid var(--color-surface);border-radius:50%;box-shadow:0 0 0 1px var(--color-border);cursor:pointer}.admin-job-color-options button.is-selected{box-shadow:0 0 0 3px var(--color-text)}

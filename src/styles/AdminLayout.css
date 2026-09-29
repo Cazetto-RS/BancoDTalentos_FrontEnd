@@ -19,6 +19,18 @@
     -webkit-overflow-scrolling: touch;
 }
 
+.admin-layout__notifications {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.5rem;
+    z-index: 1000
+}
+
+.notification-center svg {
+    width: 1rem;
+    fill: var(--color-primary);
+}
+
 @media (max-width: 1200px) and (min-width: 901px) {
     .admin-layout {
         grid-template-columns: 14rem minmax(0, 1fr);
@@ -32,6 +44,11 @@
 
     .admin-layout__content {
         padding-top: 3.75rem;
+    }
+
+    .admin-layout__notifications {
+        top: .65rem;
+        right: .75rem
     }
 
 }

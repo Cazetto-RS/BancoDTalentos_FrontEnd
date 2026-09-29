@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import AdminSidebar from '../../components/layout/AdminSidebar/AdminSidebar'
+import NotificationCenter from '../../components/common/NotificationCenter'
 import '../../styles/AdminLayout.css'
 
 export type AdminTheme = 'light' | 'dark'
@@ -27,6 +28,7 @@ function AdminLayout() {
     return (
         <div className="admin-layout">
             <AdminSidebar theme={theme} onThemeChange={setTheme} />
+            <div className="admin-layout__notifications"><NotificationCenter /></div>
             <main className="admin-layout__content">
                 <Outlet context={{ theme }} />
             </main>

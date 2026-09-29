@@ -7,6 +7,7 @@ export interface AuthUser { id: number; nome_completo: string; email: string; ca
 interface AuthContextValue {
     user: AuthUser | null; token: string | null; isAuthenticated: boolean
     login: (email: string, senha: string) => Promise<AuthUser>; logout: () => Promise<void>
+    updateUser: (changes: Partial<AuthUser>) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -35,7 +36,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const logout = async () => { try { if (token) await api('/usuarios/logout', { method: 'POST' }) } finally { clear() } }
-    const value = { user, token, isAuthenticated: Boolean(user && token), login, logout }
+    const updateUser = (changes: Partial<AuthUser>) => setUser((current) => {
+        if (!current) return current
+        const updated = { ...current, ...changes }; localStorage.setItem(USER_KEY, JSON.stringify(updated)); return updated
+    })
+    const value = { user, token, isAuthenticated: Boolean(user && token), login, logout, updateUser }
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
