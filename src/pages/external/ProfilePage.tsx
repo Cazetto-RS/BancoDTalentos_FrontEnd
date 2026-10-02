@@ -8,6 +8,7 @@ import type { JobModalData } from '../../types/Job'
 import { useAuth } from '../../contexts/AuthContext'
 import { api } from '../../services/api'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import DeleteAccountModal from '../../components/common/DeleteAccountModal'
 
 const currentApplication: JobModalData = {
     title: 'Desenvolvedor Web Sênior',
@@ -38,6 +39,7 @@ function ProfilePage() {
     const [editingApplication, setEditingApplication] = useState<Record<string, any> | null>(null)
     const [cancelingApplication, setCancelingApplication] = useState<Record<string, any> | null>(null)
     const [applicationError, setApplicationError] = useState('')
+    const [deletingAccount,setDeletingAccount]=useState(false)
     const [loadError, setLoadError] = useState('')
 
     useEffect(() => {
@@ -97,6 +99,7 @@ function ProfilePage() {
                     <div className="profile-hero__actions">
                         {profile.curriculo_url && <a className="profile-button profile-button--ghost" href={profile.curriculo_url} target="_blank" rel="noreferrer">Ver currículo</a>}
                         <button className="profile-button profile-button--primary" type="button" onClick={() => navigate('/perfil/editar')}>Editar perfil</button>
+                        <button className="profile-delete-account" type="button" onClick={()=>setDeletingAccount(true)}>Excluir conta</button>
                     </div>
                 </div>
             </section>
@@ -255,6 +258,7 @@ function ProfilePage() {
             )}
             {editingApplication && <div className="profile-application-modal" role="presentation" onMouseDown={(e)=>{if(e.target===e.currentTarget)setEditingApplication(null)}}><form role="dialog" aria-modal="true" onSubmit={async(e)=>{e.preventDefault();setApplicationError('');try{const saved=await api<Record<string,any>>(`/candidaturas/minhas-candidaturas/${editingApplication.id}`,{method:'PUT',body:JSON.stringify({pretensao_salarial:editingApplication.pretensao_salarial?Number(editingApplication.pretensao_salarial):null,disponibilidade:editingApplication.disponibilidade||null,preferencia_contrato:editingApplication.preferencia_contrato||null,preferencia_modelo_trabalho:editingApplication.preferencia_modelo_trabalho||null})});setApplications(current=>current.map(item=>item.id===saved.id?{...item,...saved}:item));setEditingApplication(null)}catch(reason){setApplicationError(reason instanceof Error?reason.message:'Não foi possível atualizar a candidatura.')}}}><h2>Alterar candidatura</h2><label>Pretensão salarial<input type="number" min="0" value={editingApplication.pretensao_salarial||''} onChange={e=>setEditingApplication({...editingApplication,pretensao_salarial:e.target.value})}/></label><label>Disponibilidade<select value={editingApplication.disponibilidade||''} onChange={e=>setEditingApplication({...editingApplication,disponibilidade:e.target.value})}><option value="">Não informar</option><option value="manhã">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option><option value="integral">Integral</option></select></label><label>Contrato<select value={editingApplication.preferencia_contrato||''} onChange={e=>setEditingApplication({...editingApplication,preferencia_contrato:e.target.value})}><option value="">Não informar</option><option>CLT</option><option>PJ</option><option>Estágio</option></select></label><label>Modelo<select value={editingApplication.preferencia_modelo_trabalho||''} onChange={e=>setEditingApplication({...editingApplication,preferencia_modelo_trabalho:e.target.value})}><option value="">Não informar</option><option value="remoto">Remoto</option><option value="hibrido">Híbrido</option><option value="presencial">Presencial</option></select></label><div><button type="button" onClick={()=>setEditingApplication(null)}>Voltar</button><button type="submit">Salvar</button></div></form></div>}
             <ConfirmModal isOpen={Boolean(cancelingApplication)} title="Cancelar inscrição?" message={`Você deixará de participar da vaga “${cancelingApplication?.vaga_titulo || ''}”.`} confirmText="Cancelar inscrição" onClose={()=>setCancelingApplication(null)} onConfirm={async()=>{if(!cancelingApplication)return;try{await api(`/candidaturas/minhas-candidaturas/${cancelingApplication.id}`,{method:'DELETE'});setApplications(current=>current.filter(item=>item.id!==cancelingApplication.id));setCancelingApplication(null)}catch(reason){setApplicationError(reason instanceof Error?reason.message:'Não foi possível cancelar a inscrição.')}}}/>
+            {deletingAccount&&<DeleteAccountModal onClose={()=>setDeletingAccount(false)} onDone={()=>window.location.assign('/')}/>} 
         </main>
     )
 }

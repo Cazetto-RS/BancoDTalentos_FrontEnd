@@ -17,6 +17,7 @@ const navigationItems: Array<{ label: string; path: string; icon: AdminIconName;
     { label: 'Dashboard', path: '/admin/dashboard', icon: 'dashboard' },
     { label: 'Vagas', path: '/admin/vagas', icon: 'briefcase' },
     { label: 'Candidatos', path: '/admin/candidatos', icon: 'users' },
+    { label: 'Banco de talentos', path: '/admin/banco-talentos', icon: 'profile' },
     { label: 'Configurações', path: '/admin/configuracoes', icon: 'settings' },
 ]
 

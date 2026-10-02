@@ -3,10 +3,10 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { api } from '../services/api'
 
 export type UserRole = 'candidato' | 'rh' | 'admin'
-export interface AuthUser { id: number; nome_completo: string; email: string; cargo: UserRole; criado_em?: string }
+export interface AuthUser { id: number; nome_completo: string; email: string; cargo: UserRole; criado_em?: string; consentimento_talentos?: 'sempre'|'somente_candidatura' }
 interface AuthContextValue {
     user: AuthUser | null; token: string | null; isAuthenticated: boolean
-    login: (email: string, senha: string) => Promise<AuthUser>; logout: () => Promise<void>
+    login: (email: string, senha: string, remember?: boolean) => Promise<AuthUser>; logout: () => Promise<void>
     updateUser: (changes: Partial<AuthUser>) => void
 }
 
@@ -14,14 +14,14 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 const TOKEN_KEY = 'talentos:token'; const USER_KEY = 'talentos:user'
 
 function readUser(): AuthUser | null {
-    try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null') } catch { return null }
+    try { return JSON.parse(localStorage.getItem(USER_KEY) || sessionStorage.getItem(USER_KEY) || 'null') } catch { return null }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
+    const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY))
     const [user, setUser] = useState<AuthUser | null>(readUser)
 
-    const clear = () => { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); setToken(null); setUser(null) }
+    const clear = () => { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); sessionStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(USER_KEY); setToken(null); setUser(null) }
 
     useEffect(() => {
         const unauthorized = () => clear()
@@ -29,16 +29,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener('talentos:unauthorized', unauthorized)
     }, [])
 
-    const login = async (email: string, senha: string) => {
+    const login = async (email: string, senha: string, remember = false) => {
         const result = await api<{ token: string; usuario: AuthUser }>('/usuarios/login', { method: 'POST', body: JSON.stringify({ email, senha }) })
-        localStorage.setItem(TOKEN_KEY, result.token); localStorage.setItem(USER_KEY, JSON.stringify(result.usuario))
+        clear(); const storage=remember?localStorage:sessionStorage; storage.setItem(TOKEN_KEY,result.token);storage.setItem(USER_KEY,JSON.stringify(result.usuario))
         setToken(result.token); setUser(result.usuario); return result.usuario
     }
 
     const logout = async () => { try { if (token) await api('/usuarios/logout', { method: 'POST' }) } finally { clear() } }
     const updateUser = (changes: Partial<AuthUser>) => setUser((current) => {
         if (!current) return current
-        const updated = { ...current, ...changes }; localStorage.setItem(USER_KEY, JSON.stringify(updated)); return updated
+        const updated = { ...current, ...changes }; const storage=localStorage.getItem(TOKEN_KEY)?localStorage:sessionStorage; storage.setItem(USER_KEY, JSON.stringify(updated)); return updated
     })
     const value = { user, token, isAuthenticated: Boolean(user && token), login, logout, updateUser }
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -588,3 +588,5 @@
     }
 }
 .registration-password{position:relative}.registration-password input{width:100%;padding-right:3rem}.registration-password button{position:absolute;right:.4rem;top:50%;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;font-size:1.05rem}
+.registration-consent{display:grid;gap:1rem}.registration-consent>span{color:var(--color-primary);font-size:.75rem;font-weight:800}.registration-consent h2,.registration-consent p{margin:0}.registration-consent p{color:var(--color-text-muted);line-height:1.6}.registration-consent label{display:flex;align-items:flex-start;gap:.8rem;padding:1rem;border:1px solid var(--color-border);border-radius:.8rem;background:var(--color-surface-muted);cursor:pointer}.registration-consent label:has(input:checked){border-color:var(--color-primary);box-shadow:0 0 0 2px var(--color-focus-ring)}.registration-consent input{margin-top:.2rem;accent-color:var(--color-primary)}.registration-consent label span{display:grid;gap:.25rem}.registration-consent small{color:var(--color-text-muted)}
+.registration-fields>.registration-consent{grid-column:1/-1;width:100%}.registration-consent label{width:100%}

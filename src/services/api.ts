@@ -11,7 +11,7 @@ export class ApiError extends Error {
 }
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const token = localStorage.getItem('talentos:token')
+    const token = localStorage.getItem('talentos:token') || sessionStorage.getItem('talentos:token')
     const response = await fetch(`${API_URL}${path}`, {
         ...options,
         headers: {

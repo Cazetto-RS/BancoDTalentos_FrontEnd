@@ -40,6 +40,7 @@ const steps = [
             <path d="M13.801 38L13.0448 31.92C12.6352 31.7617 12.2495 31.5717 11.8878 31.35C11.526 31.1283 11.1712 30.8908 10.8234 30.6375L5.199 33.0125L0 23.9875L4.86816 20.2825C4.83665 20.0608 4.8209 19.8474 4.8209 19.6422V18.3597C4.8209 18.1532 4.83665 17.9392 4.86816 17.7175L0 14.0125L5.199 4.9875L10.8234 7.3625C11.17 7.10917 11.5323 6.87167 11.9104 6.65C12.2886 6.42833 12.6667 6.23833 13.0448 6.08L13.801 0H24.199L24.9552 6.08C25.3648 6.23833 25.7511 6.42833 26.1141 6.65C26.4771 6.87167 26.8313 7.10917 27.1766 7.3625L32.801 4.9875L38 14.0125L33.1318 17.7175C33.1634 17.9392 33.1791 18.1532 33.1791 18.3597V19.6403C33.1791 19.8468 33.1476 20.0608 33.0846 20.2825L37.9527 23.9875L32.7537 33.0125L27.1766 30.6375C26.83 30.8908 26.4677 31.1283 26.0896 31.35C25.7114 31.5717 25.3333 31.7617 24.9552 31.92L24.199 38H13.801ZM19.0945 25.65C20.9221 25.65 22.4818 25.0008 23.7736 23.7025C25.0655 22.4042 25.7114 20.8367 25.7114 19C25.7114 17.1633 25.0655 15.5958 23.7736 14.2975C22.4818 12.9992 20.9221 12.35 19.0945 12.35C17.2355 12.35 15.6676 12.9992 14.3908 14.2975C13.1141 15.5958 12.4764 17.1633 12.4776 19C12.4789 20.8367 13.1172 22.4042 14.3927 23.7025C15.6682 25.0008 17.2355 25.65 19.0945 25.65Z" />
         </svg>
     },
+    { label: 'Privacidade', icon: <svg width="34" height="38" viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5.1 3.4 9.8 8 11 4.6-1.2 8-5.9 8-11V5l-8-3Zm0 4a3 3 0 0 1 3 3v1h1v7H8v-7h1V9a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v1h2V9a1 1 0 0 0-1-1Z"/></svg> },
 ]
 
 const Field = ({ label, name, type = 'text', placeholder, required = false, defaultValue, onBlur }: { label: string; name: string; type?: string; placeholder: string; required?: boolean; defaultValue?: string; onBlur?: React.FocusEventHandler<HTMLInputElement> }) => (
@@ -80,7 +81,7 @@ function RegistrationPage() {
             const education = educationResult.status === 'fulfilled' ? educationResult.value.formacoes : []
             existingExperiences.current = experiences; existingEducation.current = education
             setExperienceCount(Math.max(1, experiences.length)); setCourseCompleted((education.length ? education : [{}]).map((item) => item.status === 'concluido' ? 'yes' : 'no'))
-            const prefilled: Record<string, string> = { ...profile, ...culture, nome_completo:user.nome_completo, email:user.email, data_nascimento:profile.data_nascimento?.slice(0,10) || '' }
+            const prefilled: Record<string, string> = { ...profile, ...culture, nome_completo:user.nome_completo, email:user.email, consentimento_talentos:user.consentimento_talentos||'somente_candidatura', data_nascimento:profile.data_nascimento?.slice(0,10) || '' }
             experiences.forEach((item, i) => { prefilled[`empresa-${i}`]=item.empresa||''; prefilled[`experiencia-cargo-${i}`]=item.cargo||''; prefilled[`experiencia-descricao-${i}`]=item.descricao||''; prefilled[`experiencia-inicio-${i}`]=item.data_inicio?.slice(0,10)||''; prefilled[`experiencia-fim-${i}`]=item.data_fim?.slice(0,10)||'' })
             education.forEach((item, i) => { prefilled[`curso-${i}`]=item.curso||''; prefilled[`instituicao-${i}`]=item.instituicao||''; prefilled[`semestre-${i}`]=String(item.semestre_atual||''); prefilled[`turno-${i}`]=item.turno||''; prefilled[`course-status-${i}`]=item.status||''; prefilled[`formacao-inicio-${i}`]=item.data_inicio?.slice(0,10)||''; prefilled[`formacao-fim-${i}`]=item.data_fim?.slice(0,10)||'' })
             setValues(prefilled); setAddressVersion((v)=>v+1)
@@ -169,6 +170,7 @@ function RegistrationPage() {
                 const education = courseCompleted.map((completed,i)=>({ curso:data[`curso-${i}`], instituicao:data[`instituicao-${i}`], semestre_atual:data[`semestre-${i}`]?Number(data[`semestre-${i}`]):null, turno:data[`turno-${i}`]||null, status:completed==='yes'?'concluido':data[`course-status-${i}`]||'cursando', data_inicio:data[`formacao-inicio-${i}`]||null, data_fim:data[`formacao-fim-${i}`]||null, url_certificado:null })).filter(item=>item.curso&&item.instituicao)
                 await Promise.all(education.map((item,i)=> existingEducation.current[i] ? api(`/historico/formacoes/editar/${existingEducation.current[i].id}`,{method:'PUT',body:JSON.stringify(item)}) : api('/historico/formacoes/create',{method:'POST',body:JSON.stringify(item)})))
                 await Promise.all(existingEducation.current.slice(education.length).map(item=>api(`/historico/formacoes/deletar/${item.id}`,{method:'DELETE'})))
+                await api('/usuarios/consentimento-talentos',{method:'PUT',body:JSON.stringify({consentimento_talentos:data.consentimento_talentos})});updateUser({consentimento_talentos:data.consentimento_talentos as 'sempre'|'somente_candidatura'})
                 setCompleted(true); return
             }
             if (!savedStages.current.registered) {
@@ -235,6 +237,7 @@ function RegistrationPage() {
                 await api('/historico/formacoes/create', { method: 'POST', body: JSON.stringify(formacoes) })
             }
             savedStages.current.education = true
+            await api('/usuarios/consentimento-talentos',{method:'PUT',body:JSON.stringify({consentimento_talentos:data.consentimento_talentos})});updateUser({consentimento_talentos:data.consentimento_talentos as 'sempre'|'somente_candidatura'})
             setCompleted(true)
         } catch (reason) {
             setSubmitError(reason instanceof Error ? reason.message : 'Não foi possível concluir o cadastro.')
@@ -409,6 +412,7 @@ function RegistrationPage() {
                                 )}
                             </div>)}
                         </div>}
+                        {step === 7 && <section className="registration-consent"><span>BANCO DE TALENTOS</span><h2>Como seus dados serão utilizados?</h2><p>Somos um banco de talentos: mantemos perfis profissionais autorizados para aproximar candidatos de futuras oportunidades, mesmo quando não existe uma vaga aberta no momento. Seus dados ficam disponíveis somente para a equipe responsável pelos processos seletivos.</p><p>Escolha abaixo quando seu perfil poderá fazer parte desse banco. Você poderá mudar essa preferência depois em sua conta.</p><label><input type="radio" name="consentimento_talentos" value="sempre" required defaultChecked={values.consentimento_talentos==='sempre'}/><span><strong>Autorizo o armazenamento no banco de talentos</strong><small>Meu perfil poderá ser consultado mesmo sem inscrição em uma vaga.</small></span></label><label><input type="radio" name="consentimento_talentos" value="somente_candidatura" required defaultChecked={!values.consentimento_talentos||values.consentimento_talentos==='somente_candidatura'}/><span><strong>Somente quando eu me candidatar</strong><small>Meu perfil só aparecerá no banco enquanto houver uma candidatura vinculada.</small></span></label></section>}
                     </div>
 
                     <footer className="registration-actions">

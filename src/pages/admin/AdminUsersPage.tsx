@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api } from '../../services/api'
 import '../../styles/AdminUsersPage.css'
+import DeleteAccountModal from '../../components/common/DeleteAccountModal'
 
 interface StaffUser { id:number; nome_completo:string; email:string; cargo:'admin'|'rh'|'candidato'; criado_em:string }
 
@@ -11,6 +12,7 @@ export default function AdminUsersPage({ embedded = false }: { embedded?: boolea
     const [success, setSuccess] = useState('')
     const [saving, setSaving] = useState(false)
     const [showPassword,setShowPassword]=useState(false)
+    const [deleting,setDeleting]=useState<StaffUser|null>(null)
     const load = () => api<StaffUser[]>('/usuarios').then((rows) => setUsers(rows.filter((item) => item.cargo !== 'candidato')))
     useEffect(() => { load().catch((reason) => setError(reason instanceof Error ? reason.message : 'Não foi possível carregar os usuários.')) }, [])
 
@@ -38,9 +40,9 @@ export default function AdminUsersPage({ embedded = false }: { embedded?: boolea
                 <button type="submit" disabled={saving}>{saving ? 'Criando...' : 'Criar usuário'}</button>
             </form>
             <div className="admin-users-card"><h2>Equipe cadastrada</h2><div className="admin-users-list">
-                {users.map((item) => <article key={item.id}><div><strong>{item.nome_completo}</strong><span>{item.email}</span></div><small>{item.cargo === 'admin' ? 'Administrador' : 'RH'}</small></article>)}
+                {users.map((item) => <article key={item.id}><div><strong>{item.nome_completo}</strong><span>{item.email}</span></div><small>{item.cargo === 'admin' ? 'Administrador' : 'RH'}</small><button className="admin-user-delete" type="button" onClick={()=>setDeleting(item)}>Excluir</button></article>)}
                 {!users.length && <p>Nenhum funcionário encontrado.</p>}
             </div></div>
-        </div>
+        </div>{deleting&&<DeleteAccountModal targetId={deleting.id} onClose={()=>setDeleting(null)} onDone={()=>void load()}/>} 
     </section>
 }

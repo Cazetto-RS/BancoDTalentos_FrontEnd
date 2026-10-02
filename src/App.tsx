@@ -15,6 +15,8 @@ const Dashboard = lazy(() => import('./pages/admin/DashboardPage'))
 const AdminJobs = lazy(() => import('./pages/admin/AdminJobsPage'))
 const Candidates = lazy(() => import('./pages/admin/AdminCandidatesPage'))
 const NotFound = lazy(() => import('./pages/NotFoundPage'))
+const TalentBank = lazy(() => import('./pages/admin/TalentBankPage'))
+const Notifications = lazy(() => import('./pages/NotificationsPage'))
 const page = (title: string, component: React.ReactNode) => <PageTitle title={title}>{component}</PageTitle>
 
 export default function App() {
@@ -27,6 +29,7 @@ export default function App() {
         <Route path="/cadastro" element={page('Criar conta', <Register />)} />
         <Route path="/login" element={page('Entrar', <Login />)} />
         <Route element={<ProtectedRoute roles={['candidato']} />}><Route path="/perfil" element={page('Meu perfil', <Profile />)} /><Route path="/perfil/editar" element={page('Editar perfil', <Register />)} /></Route>
+        <Route element={<ProtectedRoute roles={['candidato']} />}><Route path="/notificacoes" element={page('Notificações', <Notifications />)} /></Route>
       </Route>
       <Route element={<ProtectedRoute roles={['rh', 'admin']} />}>
         <Route path="/admin" element={<AdminLayout />}>
@@ -34,6 +37,8 @@ export default function App() {
           <Route path="dashboard" element={page('Dashboard', <Dashboard />)} />
           <Route path="vagas" element={page('Gerenciar vagas', <AdminJobs />)} />
           <Route path="candidatos" element={page('Candidatos', <Candidates />)} />
+          <Route path="banco-talentos" element={page('Banco de talentos', <TalentBank />)} />
+          <Route path="notificacoes" element={page('Notificações', <Notifications />)} />
         </Route>
       </Route>
       <Route path="*" element={page('Página não encontrada', <NotFound />)} />
