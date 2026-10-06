@@ -6,6 +6,7 @@ import AdminIcon from './AdminIcon'
 import '../../styles/AdminSettingsModal.css'
 import AdminUsersPage from '../../pages/admin/AdminUsersPage'
 import { api } from '../../services/api'
+import { PasswordVisibilityIcon } from '../common/InterfaceIcons'
 
 interface AdminSettingsModalProps {
     user: AdminUser
@@ -220,7 +221,7 @@ function AdminSettingsModal({ user, theme, onThemeChange, onClose }: AdminSettin
                                     <p>{user.role === 'admin' ? 'Permissão para gerenciar vagas, candidatos e configurações do painel.' : 'Permissão para acompanhar vagas, candidatos e processos seletivos.'}</p>
                                 </div>
                             </section>
-                            {user.role === 'admin' && <section className="admin-settings-modal__section"><div className="admin-settings-modal__section-title"><div><span>SEGURANÇA</span><h3>Alterar senha</h3></div></div><form className="admin-settings-password" onSubmit={changePassword}><label>Nova senha<div><input type={showPassword?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Ocultar senha':'Mostrar senha'}>{showPassword?'🙈':'👁'}</button></div></label><label>Confirmar senha<input type={showPassword?'text':'password'} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} minLength={8} required/></label>{passwordMessage&&<p role="status">{passwordMessage}</p>}<button type="submit" disabled={passwordSaving}>{passwordSaving?'Alterando...':'Alterar senha'}</button></form></section>}
+                            {user.role === 'admin' && <section className="admin-settings-modal__section"><div className="admin-settings-modal__section-title"><div><span>SEGURANÇA</span><h3>Alterar senha</h3></div></div><form className="admin-settings-password" onSubmit={changePassword}><label>Nova senha<div><input type={showPassword?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Ocultar senhas':'Mostrar senhas'}><PasswordVisibilityIcon visible={showPassword}/></button></div></label><label>Confirmar senha<div><input type={showPassword?'text':'password'} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} minLength={8} required/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Ocultar senhas':'Mostrar senhas'}><PasswordVisibilityIcon visible={showPassword}/></button></div></label>{passwordMessage&&<p role="status">{passwordMessage}</p>}<button type="submit" disabled={passwordSaving}>{passwordSaving?'Alterando...':'Alterar senha'}</button></form></section>}
                         </div>
                     )}
                     {activeTab === 'team' && user.role === 'admin' && <div className="admin-settings-modal__panel"><AdminUsersPage embedded /></div>}

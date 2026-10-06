@@ -43,6 +43,10 @@
     list-style: none;
 }
 
+.navbar .notification-center__bell {
+    color: #fff;
+}
+
 .navbar__links a {
     color: #d6d5da;
     font-size: 0.85rem;

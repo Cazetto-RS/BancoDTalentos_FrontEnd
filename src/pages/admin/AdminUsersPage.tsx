@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { api } from '../../services/api'
 import '../../styles/AdminUsersPage.css'
 import DeleteAccountModal from '../../components/common/DeleteAccountModal'
+import { PasswordVisibilityIcon } from '../../components/common/InterfaceIcons'
 
 interface StaffUser { id:number; nome_completo:string; email:string; cargo:'admin'|'rh'|'candidato'; criado_em:string }
 
@@ -33,7 +34,7 @@ export default function AdminUsersPage({ embedded = false }: { embedded?: boolea
                 <h2>Novo usuário</h2>
                 <label><span>Nome completo</span><input name="nome_completo" required maxLength={120}/></label>
                 <label><span>E-mail</span><input name="email" type="email" required maxLength={120}/></label>
-                <label><span>Senha temporária</span><div className="admin-password-field"><input name="senha" type={showPassword?'text':'password'} required minLength={8} maxLength={72}/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Ocultar senha':'Mostrar senha'}>{showPassword?'🙈':'👁'}</button></div></label>
+                <label><span>Senha temporária</span><div className="admin-password-field"><input name="senha" type={showPassword?'text':'password'} required minLength={8} maxLength={72}/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Ocultar senha':'Mostrar senha'}><PasswordVisibilityIcon visible={showPassword}/></button></div></label>
                 <label><span>Tipo de acesso</span><select name="cargo" defaultValue="rh"><option value="rh">Recursos Humanos</option><option value="admin">Administrador</option></select></label>
                 {error && <p className="admin-users-message is-error" role="alert">{error}</p>}
                 {success && <p className="admin-users-message is-success" role="status">{success}</p>}

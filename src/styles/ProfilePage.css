@@ -288,11 +288,11 @@
 }
 
 .profile-completion__track span {
-    width: 85%;
     height: 100%;
     display: block;
     border-radius: inherit;
     background: var(--color-primary);
+    transition: width 350ms ease;
 }
 
 .profile-completion p {

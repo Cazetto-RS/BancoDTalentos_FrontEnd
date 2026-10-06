@@ -277,6 +277,66 @@
     gap: .8rem;
 }
 
+.registration-interest-options {
+    margin: 0 0 .8rem;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.registration-interest-options legend {
+    padding: 0 .35rem;
+    color: var(--color-text);
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+.registration-interest-options > p {
+    margin: 0 0 .9rem;
+    color: var(--color-text-muted);
+    font-size: .82rem;
+}
+
+.registration-interest-options > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+}
+
+.registration-interest-options label {
+    position: relative;
+    cursor: pointer;
+}
+
+.registration-interest-options input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.registration-interest-options span {
+    display: block;
+    padding: .55rem .75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-surface-muted);
+    color: var(--color-text-muted);
+    font-size: .78rem;
+    transition: .15s ease;
+}
+
+.registration-interest-options input:checked + span {
+    border-color: var(--color-primary);
+    background: rgb(22 156 249 / 10%);
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.registration-interest-options input:focus-visible + span {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 2px;
+}
+
 .registration-skill {
     display: grid;
     grid-template-columns: 1.3fr repeat(3, 1fr);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../../styles/ProfilePage.css'
 import profileIcon from '../../assets/svgs/Profile.svg'
@@ -64,6 +64,26 @@ function ProfilePage() {
     }, [])
 
     const latestApplication = applications[0]
+    const profileCompletion = useMemo(() => {
+        const checks = [
+            { done: Boolean(profile.telefone && profile.data_nascimento), hint: 'Complete seu telefone e sua data de nascimento.' },
+            { done: Boolean(profile.cidade && profile.estado && profile.logradouro), hint: 'Complete seu endereço.' },
+            { done: Boolean(profile.cargo_desejado), hint: 'Informe o cargo que você procura.' },
+            { done: Boolean(profile.linkedin_url || profile.portfolio_url), hint: 'Adicione seu LinkedIn ou portfólio.' },
+            { done: Boolean(profile.curriculo_url), hint: 'Envie seu currículo.' },
+            { done: Boolean(culture.apresentacao), hint: 'Escreva sua apresentação profissional.' },
+            { done: Boolean(culture.motivacao && culture.descricao_valores), hint: 'Complete suas informações de cultura e valores.' },
+            { done: profileExperiences.length > 0, hint: 'Adicione ao menos uma experiência profissional.' },
+            { done: profileEducation.length > 0, hint: 'Adicione sua formação acadêmica.' },
+            { done: profileSkills.length >= 3, hint: 'Adicione pelo menos três competências.' },
+            { done: interests.length > 0, hint: 'Selecione ao menos uma área de interesse.' },
+            { done: profileEducation.some((item) => item.url_certificado), hint: 'Adicione um certificado para completar seu perfil.' },
+        ]
+        const completed = checks.filter((item) => item.done).length
+        const percentage = Math.round((completed / checks.length) * 100)
+        return { percentage, hint: checks.find((item) => !item.done)?.hint || 'Seu perfil está completo e pronto para novas oportunidades.' }
+    }, [culture, interests, profile, profileEducation, profileExperiences, profileSkills])
+    const completionTitle = profileCompletion.percentage === 100 ? 'Perfil completo' : profileCompletion.percentage >= 75 ? 'Perfil quase completo' : profileCompletion.percentage >= 40 ? 'Continue preenchendo' : 'Complete seu perfil'
     const applicationJob: JobModalData | null = latestApplication ? {
         id: latestApplication.vaga_id,
         title: latestApplication.vaga_titulo,
@@ -111,14 +131,14 @@ function ProfilePage() {
                         <div className="profile-completion__top">
                             <div>
                                 <span>SEU PERFIL</span>
-                                <h2>Perfil quase completo</h2>
+                                <h2>{completionTitle}</h2>
                             </div>
-                            <strong>85%</strong>
+                            <strong>{profileCompletion.percentage}%</strong>
                         </div>
-                        <div className="profile-completion__track" role="progressbar" aria-label="Perfil completo" aria-valuenow={85} aria-valuemin={0} aria-valuemax={100}>
-                            <span />
+                        <div className="profile-completion__track" role="progressbar" aria-label="Perfil completo" aria-valuenow={profileCompletion.percentage} aria-valuemin={0} aria-valuemax={100}>
+                            <span style={{ width: `${profileCompletion.percentage}%` }} />
                         </div>
-                        <p>Adicione seus certificados para deixar o perfil ainda mais completo.</p>
+                        <p>{profileCompletion.hint}</p>
                     </section>
 
                     <section className="profile-card">
@@ -256,7 +276,7 @@ function ProfilePage() {
             {showJobDetails && (
                 <JobApplicationModal job={applicationJob || currentApplication} mode="details" onClose={() => setShowJobDetails(false)} />
             )}
-            {editingApplication && <div className="profile-application-modal" role="presentation" onMouseDown={(e)=>{if(e.target===e.currentTarget)setEditingApplication(null)}}><form role="dialog" aria-modal="true" onSubmit={async(e)=>{e.preventDefault();setApplicationError('');try{const saved=await api<Record<string,any>>(`/candidaturas/minhas-candidaturas/${editingApplication.id}`,{method:'PUT',body:JSON.stringify({pretensao_salarial:editingApplication.pretensao_salarial?Number(editingApplication.pretensao_salarial):null,disponibilidade:editingApplication.disponibilidade||null,preferencia_contrato:editingApplication.preferencia_contrato||null,preferencia_modelo_trabalho:editingApplication.preferencia_modelo_trabalho||null})});setApplications(current=>current.map(item=>item.id===saved.id?{...item,...saved}:item));setEditingApplication(null)}catch(reason){setApplicationError(reason instanceof Error?reason.message:'Não foi possível atualizar a candidatura.')}}}><h2>Alterar candidatura</h2><label>Pretensão salarial<input type="number" min="0" value={editingApplication.pretensao_salarial||''} onChange={e=>setEditingApplication({...editingApplication,pretensao_salarial:e.target.value})}/></label><label>Disponibilidade<select value={editingApplication.disponibilidade||''} onChange={e=>setEditingApplication({...editingApplication,disponibilidade:e.target.value})}><option value="">Não informar</option><option value="manhã">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option><option value="integral">Integral</option></select></label><label>Contrato<select value={editingApplication.preferencia_contrato||''} onChange={e=>setEditingApplication({...editingApplication,preferencia_contrato:e.target.value})}><option value="">Não informar</option><option>CLT</option><option>PJ</option><option>Estágio</option></select></label><label>Modelo<select value={editingApplication.preferencia_modelo_trabalho||''} onChange={e=>setEditingApplication({...editingApplication,preferencia_modelo_trabalho:e.target.value})}><option value="">Não informar</option><option value="remoto">Remoto</option><option value="hibrido">Híbrido</option><option value="presencial">Presencial</option></select></label><div><button type="button" onClick={()=>setEditingApplication(null)}>Voltar</button><button type="submit">Salvar</button></div></form></div>}
+            {editingApplication && <JobApplicationModal job={{id:editingApplication.vaga_id,title:editingApplication.vaga_titulo,category:'desenvolvimento',salary:editingApplication.pretensao_salarial?`Pretensão: ${Number(editingApplication.pretensao_salarial).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}`:'Pretensão não informada',details:`${editingApplication.vaga_contrato||'Contrato a combinar'} • ${editingApplication.vaga_modelo||'Modelo a combinar'}`,skills:[]}} mode="edit" applicationId={editingApplication.id} initialValues={editingApplication} onClose={()=>setEditingApplication(null)} onUpdated={(saved)=>{setApplications(current=>current.map(item=>item.id===editingApplication.id?{...item,...saved}:item));setEditingApplication(null)}}/>}
             <ConfirmModal isOpen={Boolean(cancelingApplication)} title="Cancelar inscrição?" message={`Você deixará de participar da vaga “${cancelingApplication?.vaga_titulo || ''}”.`} confirmText="Cancelar inscrição" onClose={()=>setCancelingApplication(null)} onConfirm={async()=>{if(!cancelingApplication)return;try{await api(`/candidaturas/minhas-candidaturas/${cancelingApplication.id}`,{method:'DELETE'});setApplications(current=>current.filter(item=>item.id!==cancelingApplication.id));setCancelingApplication(null)}catch(reason){setApplicationError(reason instanceof Error?reason.message:'Não foi possível cancelar a inscrição.')}}}/>
             {deletingAccount&&<DeleteAccountModal onClose={()=>setDeletingAccount(false)} onDone={()=>window.location.assign('/')}/>} 
         </main>

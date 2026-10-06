@@ -12,11 +12,14 @@ import { useNavigate } from 'react-router-dom'
 interface JobApplicationModalProps {
     job: JobModalData
     onClose: () => void
-    mode?: 'apply' | 'details'
+    mode?: 'apply' | 'details' | 'edit'
+    applicationId?: number
+    initialValues?: { pretensao_salarial?: number|string; disponibilidade?: string; preferencia_contrato?: string; preferencia_modelo_trabalho?: string }
+    onUpdated?: (application: Record<string, unknown>) => void
 }
 
-function JobApplicationModal({ job, onClose, mode = 'apply' }: JobApplicationModalProps) {
-    const [step, setStep] = useState(1)
+function JobApplicationModal({ job, onClose, mode = 'apply', applicationId, initialValues, onUpdated }: JobApplicationModalProps) {
+    const [step, setStep] = useState(mode === 'edit' ? 2 : 1)
     const [error, setError] = useState(''); const [loading, setLoading] = useState(false)
     const { user } = useAuth(); const navigate = useNavigate()
     const titleId = useId()
@@ -54,10 +57,17 @@ function JobApplicationModal({ job, onClose, mode = 'apply' }: JobApplicationMod
         if (user.cargo !== 'candidato') return setError('Somente candidatos podem se inscrever.')
         const form = new FormData(event.currentTarget); setLoading(true); setError('')
         try {
-            await api('/candidaturas/inscrever', { method:'POST', body:JSON.stringify({
-                vaga_id: job.id, pretensao_salarial: Number(String(form.get('salary')).replace(/[^\d,]/g,'').replace(',','.')),
+            const payload = {
+                vaga_id: job.id, pretensao_salarial: Number(form.get('salary')),
                 disponibilidade: form.get('availability'), preferencia_contrato: form.get('contract'), preferencia_modelo_trabalho: form.get('workModel'),
-            }) }); setStep(3)
+            }
+            if(mode==='edit'){
+                const { vaga_id: _vagaId, ...editable } = payload
+                void _vagaId
+                const saved=await api<Record<string,unknown>>(`/candidaturas/minhas-candidaturas/${applicationId}`,{method:'PUT',body:JSON.stringify(editable)})
+                onUpdated?.(saved);onClose();return
+            }
+            await api('/candidaturas/inscrever', { method:'POST', body:JSON.stringify(payload) }); setStep(3)
         } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível concluir a candidatura.') }
         finally { setLoading(false) }
     }
@@ -69,7 +79,7 @@ function JobApplicationModal({ job, onClose, mode = 'apply' }: JobApplicationMod
                     <div className="job-modal__icon" aria-hidden="true"><JobCategoryIcon category={job.category} /></div>
                     <div>
                         <h2 id={titleId}>{job.title}</h2>
-                        <p>{mode === 'details' ? 'Informações da vaga em que você se inscreveu' : 'Oportunidade em Tecnologia'}</p>
+                        <p>{mode === 'details' ? 'Informações da vaga em que você se inscreveu' : mode === 'edit' ? 'Atualize os dados da sua candidatura' : 'Oportunidade em Tecnologia'}</p>
                     </div>
                     <button className="job-modal__close" type="button" onClick={onClose} aria-label="Fechar modal">×</button>
                 </header>
@@ -106,27 +116,27 @@ function JobApplicationModal({ job, onClose, mode = 'apply' }: JobApplicationMod
                     </div>
                 )}
 
-                {mode === 'apply' && step === 2 && (
+                {(mode === 'apply' || mode === 'edit') && step === 2 && (
                     <form className="job-modal__body" onSubmit={handleSubmit}>
                         <label className="job-modal__field">
                             <span>Pretensão salarial</span>
-                            <input name="salary" type="text" inputMode="decimal" placeholder="R$ 0.000,00" required />
+                            <input name="salary" type="number" min="0" step="0.01" placeholder="R$ 0.000,00" defaultValue={initialValues?.pretensao_salarial||''} required />
                         </label>
                         <fieldset className="job-modal__field">
                             <legend>Disponibilidade de horário</legend>
-                            <select name="availability" defaultValue="" required><option value="" disabled>Selecione</option><option value="manhã">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option><option value="integral">Integral</option></select>
+                            <select name="availability" defaultValue={initialValues?.disponibilidade||''} required><option value="" disabled>Selecione</option><option value="manhã">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option><option value="integral">Integral</option></select>
                         </fieldset>
                         <label className="job-modal__field">
                             <span>Tipo de contrato desejado</span>
-                            <select name="contract" defaultValue="" required><option value="" disabled>Selecione uma opção</option><option value="CLT">CLT</option><option value="PJ">PJ</option><option value="Estágio">Estágio</option></select>
+                            <select name="contract" defaultValue={initialValues?.preferencia_contrato||''} required><option value="" disabled>Selecione uma opção</option><option value="CLT">CLT</option><option value="PJ">PJ</option><option value="Estágio">Estágio</option></select>
                         </label>
                         <label className="job-modal__field">
                             <span>Modelo de trabalho desejado</span>
-                            <select name="workModel" defaultValue="" required><option value="" disabled>Selecione uma opção</option><option value="hibrido">Híbrido</option><option value="remoto">Remoto</option><option value="presencial">Presencial</option></select>
+                            <select name="workModel" defaultValue={initialValues?.preferencia_modelo_trabalho||''} required><option value="" disabled>Selecione uma opção</option><option value="hibrido">Híbrido</option><option value="remoto">Remoto</option><option value="presencial">Presencial</option></select>
                         </label>
                         <footer className="job-modal__actions">
-                            <button className="job-modal__secondary" type="button" onClick={() => setStep(1)}>Voltar</button>
-                            <button className="job-modal__primary" type="submit" disabled={loading}>{loading ? 'Enviando...' : 'Confirmar candidatura'}</button>
+                            <button className="job-modal__secondary" type="button" onClick={mode==='edit'?onClose:()=>setStep(1)}>Voltar</button>
+                            <button className="job-modal__primary" type="submit" disabled={loading}>{loading ? 'Salvando...' : mode==='edit'?'Salvar alterações':'Confirmar candidatura'}</button>
                         </footer>
                         {error && <p role="alert">{error}</p>}
                     </form>

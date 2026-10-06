@@ -10,6 +10,7 @@ interface CandidateDetailsModalProps {
     candidate: AdminCandidate
     onChange: (candidate: AdminCandidate) => Promise<void> | void
     onClose: () => void
+    talentBankMode?: boolean
 }
 
 type CandidateTab = 'perfil' | 'trajetoria' | 'cultura'
@@ -42,7 +43,7 @@ function formatDate(date?: string) {
     return Number.isNaN(parsed.getTime()) ? 'Não informado' : dateFormatter.format(parsed)
 }
 
-function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetailsModalProps) {
+function CandidateDetailsModal({ candidate, onChange, onClose, talentBankMode = false }: CandidateDetailsModalProps) {
     const dialogRef = useRef<HTMLDivElement>(null)
     const [activeTab, setActiveTab] = useState<CandidateTab>('perfil')
 
@@ -80,16 +81,16 @@ function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetail
                     <div className="admin-candidate-modal__identity">
                         <span className="admin-candidate-modal__avatar" aria-hidden="true">{getInitials(candidate.fullName)}</span>
                         <div>
-                            <span>PERFIL DO CANDIDATO</span>
+                            <span>{talentBankMode ? 'BANCO DE TALENTOS' : 'PERFIL DO CANDIDATO'}</span>
                             <h2 id="admin-candidate-modal-title">{candidate.fullName}</h2>
                             <p>{candidate.application.jobTitle}</p>
                         </div>
                     </div>
 
                     <div className="admin-candidate-modal__header-actions">
-                        <button className={candidate.application.favorite ? 'is-favorite' : ''} type="button" onClick={toggleFavorite} aria-label={candidate.application.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} title="Favoritar candidato">
+                        {!talentBankMode && <button className={candidate.application.favorite ? 'is-favorite' : ''} type="button" onClick={toggleFavorite} aria-label={candidate.application.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} title="Favoritar candidato">
                             <AdminIcon name="star" aria-hidden="true" />
-                        </button>
+                        </button>}
                         <button type="button" onClick={onClose} aria-label="Fechar modal">×</button>
                     </div>
                 </header>
@@ -103,7 +104,7 @@ function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetail
                 <div className="admin-candidate-modal__content">
                     {activeTab === 'perfil' && (
                         <div className="admin-candidate-modal__panel">
-                            <section className="admin-candidate-modal__application">
+                            {!talentBankMode && <section className="admin-candidate-modal__application">
                                 <div className="admin-candidate-modal__section-heading">
                                     <div><span>CANDIDATURA</span><h3>Etapa do processo</h3></div>
                                     <AdminStatusSelect
@@ -123,7 +124,7 @@ function CandidateDetailsModal({ candidate, onChange, onClose }: CandidateDetail
                                     <div><span>Disponibilidade</span><strong className="text-capitalize">{candidate.application.availability}</strong></div>
                                     <div><span>Preferências</span><strong>{candidate.application.contractPreference} · <span className="text-capitalize">{candidate.application.workModelPreference}</span></strong></div>
                                 </div>
-                            </section>
+                            </section>}
 
                             <div className="admin-candidate-modal__columns">
                                 <section className="admin-candidate-modal__card">

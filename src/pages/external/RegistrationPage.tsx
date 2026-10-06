@@ -7,6 +7,8 @@ import { api } from '../../services/api'
 import '../../styles/RegistrationPage.css'
 
 const MAX_REPEATABLE_ITEMS = 5
+const PREDEFINED_AREAS = ['Desenvolvimento Web','Desenvolvimento Mobile','Dados e BI','Design e UX','Marketing Digital','Recursos Humanos','Gestão de Projetos','Infraestrutura e Cloud','Segurança da Informação','Qualidade de Software','Atendimento e Sucesso do Cliente','Financeiro','Comercial','Inteligência Artificial','Produto']
+const PREDEFINED_SKILLS = ['JavaScript','TypeScript','React','Node.js','Java','Spring Boot','Python','SQL','Power BI','Figma','UX Research','React Native','Docker','AWS','Git','Testes automatizados','Excel avançado','SEO','Google Ads','Scrum','Comunicação','Trabalho em equipe','Organização','Liderança','Criatividade','Pensamento analítico','Resolução de problemas','Proatividade','Empatia','Adaptabilidade']
 
 const steps = [
     {
@@ -59,6 +61,7 @@ function RegistrationPage() {
     const [experienceCount, setExperienceCount] = useState(1)
     const [courseCompleted, setCourseCompleted] = useState<Array<'yes' | 'no' | null>>([null])
     const [skillCount, setSkillCount] = useState(3)
+    const [selectedAreas,setSelectedAreas]=useState<string[]>([])
     const [limitModalOpen, setLimitModalOpen] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState('')
@@ -68,22 +71,29 @@ function RegistrationPage() {
     const savedStages = useRef({ registered: false, loggedIn: false, profile: false, culture: false, experiences: false, education: false })
     const existingExperiences = useRef<Array<Record<string, any>>>([])
     const existingEducation = useRef<Array<Record<string, any>>>([])
+    const existingSkills = useRef<Array<Record<string, any>>>([])
+    const existingInterests = useRef<Array<Record<string, any>>>([])
 
     useEffect(() => {
         if (!editMode || !user) return
         Promise.allSettled([
             api<Record<string, any>>('/candidatos/meu-perfil'), api<Record<string, any>>('/candidatos/buscar-cultura'),
             api<{ experiencias: Array<Record<string, any>> }>('/historico/experiencias'), api<{ formacoes: Array<Record<string, any>> }>('/historico/formacoes'),
-        ]).then(([profileResult, cultureResult, experiencesResult, educationResult]) => {
+            api<Array<Record<string, any>>>('/habilidades-candidatos/buscar'),api<Array<Record<string, any>>>('/interesses-candidato'),
+        ]).then(([profileResult, cultureResult, experiencesResult, educationResult,skillsResult,interestsResult]) => {
             const profile = profileResult.status === 'fulfilled' ? profileResult.value : {}
             const culture = cultureResult.status === 'fulfilled' ? cultureResult.value : {}
             const experiences = experiencesResult.status === 'fulfilled' ? experiencesResult.value.experiencias : []
             const education = educationResult.status === 'fulfilled' ? educationResult.value.formacoes : []
-            existingExperiences.current = experiences; existingEducation.current = education
+            const skills=skillsResult.status==='fulfilled'?skillsResult.value:[]
+            const interests=interestsResult.status==='fulfilled'?interestsResult.value:[]
+            existingExperiences.current = experiences; existingEducation.current = education;existingSkills.current=skills;existingInterests.current=interests
             setExperienceCount(Math.max(1, experiences.length)); setCourseCompleted((education.length ? education : [{}]).map((item) => item.status === 'concluido' ? 'yes' : 'no'))
+            setSkillCount(Math.max(3,skills.length));setSelectedAreas(interests.map(item=>item.nome))
             const prefilled: Record<string, string> = { ...profile, ...culture, nome_completo:user.nome_completo, email:user.email, consentimento_talentos:user.consentimento_talentos||'somente_candidatura', data_nascimento:profile.data_nascimento?.slice(0,10) || '' }
             experiences.forEach((item, i) => { prefilled[`empresa-${i}`]=item.empresa||''; prefilled[`experiencia-cargo-${i}`]=item.cargo||''; prefilled[`experiencia-descricao-${i}`]=item.descricao||''; prefilled[`experiencia-inicio-${i}`]=item.data_inicio?.slice(0,10)||''; prefilled[`experiencia-fim-${i}`]=item.data_fim?.slice(0,10)||'' })
-            education.forEach((item, i) => { prefilled[`curso-${i}`]=item.curso||''; prefilled[`instituicao-${i}`]=item.instituicao||''; prefilled[`semestre-${i}`]=String(item.semestre_atual||''); prefilled[`turno-${i}`]=item.turno||''; prefilled[`course-status-${i}`]=item.status||''; prefilled[`formacao-inicio-${i}`]=item.data_inicio?.slice(0,10)||''; prefilled[`formacao-fim-${i}`]=item.data_fim?.slice(0,10)||'' })
+            education.forEach((item, i) => { prefilled[`curso-${i}`]=item.curso||''; prefilled[`instituicao-${i}`]=item.instituicao||''; prefilled[`semestre-${i}`]=String(item.semestre_atual||''); prefilled[`turno-${i}`]=item.turno||''; prefilled[`course-status-${i}`]=item.status||''; prefilled[`formacao-inicio-${i}`]=item.data_inicio?.slice(0,10)||''; prefilled[`formacao-fim-${i}`]=item.data_fim?.slice(0,10)||'';prefilled[`certificado-${i}`]=item.url_certificado||'' })
+            skills.forEach((item,i)=>{prefilled[`competencia-${i}`]=item.nome||'';prefilled[`nivel-${i}`]=String(item.nivel||'');prefilled[`experiencia-${i}`]=item.nivel_experiencia||''})
             setValues(prefilled); setAddressVersion((v)=>v+1)
         }).catch(() => setSubmitError('Não foi possível carregar todas as informações do perfil.'))
     }, [editMode, user])
@@ -139,6 +149,21 @@ function RegistrationPage() {
         setCourseCompleted((current) => current.map((item, itemIndex) => itemIndex === index ? value : item))
     }
 
+    const saveCatalogData=async(data:Record<string,string>)=>{
+        const [skillsCatalog,areasCatalog]=await Promise.all([api<Array<Record<string,any>>>('/habilidades'),api<Array<Record<string,any>>>('/areas-interesse')])
+        const selectedSkillNames=Array.from({length:skillCount},(_,i)=>data[`competencia-${i}`]).filter(Boolean)
+        const uniqueSkillNames=[...new Set(selectedSkillNames)]
+        const habilidades=uniqueSkillNames.map(nome=>{const i=selectedSkillNames.indexOf(nome);const catalog=skillsCatalog.find(item=>item.nome===nome);return catalog?{habilidade_id:Number(catalog.id),nivel:Number(data[`nivel-${i}`]),nivel_experiencia:data[`experiencia-${i}`]}:null}).filter(Boolean)
+        const areas_ids=selectedAreas.map(nome=>areasCatalog.find(item=>item.nome===nome)?.id).filter(Boolean).map(Number)
+        await api('/habilidades-candidatos/vincular',{method:'POST',body:JSON.stringify({habilidades})})
+        await api('/interesses-candidato/vincular',{method:'POST',body:JSON.stringify({areas_ids})})
+        if(editMode){
+            const selectedSkillIds=new Set(habilidades.map((item:any)=>item.habilidade_id));const selectedAreaIds=new Set(areas_ids)
+            await Promise.all(existingSkills.current.filter(item=>!selectedSkillIds.has(Number(item.habilidade_id))).map(item=>api(`/habilidades-candidatos/desvincular/${item.habilidade_id}`,{method:'DELETE'})))
+            await Promise.all(existingInterests.current.filter(item=>!selectedAreaIds.has(Number(item.interesse_id))).map(item=>api(`/interesses-candidato/desvincular/${item.interesse_id}`,{method:'DELETE'})))
+        }
+    }
+
     const nextStep = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
         setSubmitError('')
@@ -151,6 +176,7 @@ function RegistrationPage() {
         const allValues = { ...values, ...submittedValues }
         setValues(allValues)
 
+        if(step===6&&selectedAreas.length===0){setSubmitError('Selecione ao menos uma área de interesse.');return}
         if (step !== steps.length) {
             setStep((current) => current + 1)
             return
@@ -162,14 +188,15 @@ function RegistrationPage() {
             if (editMode) {
                 await api(`/usuarios/atualizar/${user!.id}`, { method:'PUT', body:JSON.stringify({ nome_completo:data.nome_completo, email:data.email }) })
                 updateUser({ nome_completo:data.nome_completo, email:data.email })
-                await api('/candidatos/perfil-base', { method:'POST', body:JSON.stringify({ telefone:data.telefone||null, cep:data.cep?.replace(/\D/g,'')||null, numero_rua:data.numero_rua||null, logradouro:data.logradouro||null, bairro:data.bairro||null, cidade:data.cidade||null, estado:data.estado||null, data_nascimento:data.data_nascimento||null, linkedin_url:data.linkedin_url||null, portfolio_url:data.portfolio_url||null, cargo_desejado:data.cargo_desejado||null }) })
-                await api('/candidatos/cultura', { method:'POST', body:JSON.stringify({ motivacao:data.motivacao||null, apresentacao:data.apresentacao||null, descricao_valores:data.descricao_valores||null }) })
+                await api('/candidatos/perfil-base', { method:'POST', body:JSON.stringify({ telefone:data.telefone||null, cep:data.cep?.replace(/\D/g,'')||null, numero_rua:data.numero_rua||null, logradouro:data.logradouro||null, bairro:data.bairro||null, cidade:data.cidade||null, estado:data.estado||null, data_nascimento:data.data_nascimento||null, url_foto:data.url_foto||null,linkedin_url:data.linkedin_url||null, portfolio_url:data.portfolio_url||null,curriculo_url:data.curriculo_url||null, cargo_desejado:data.cargo_desejado||null }) })
+                await api('/candidatos/cultura', { method:'POST', body:JSON.stringify({ motivacao:data.motivacao||null, apresentacao:data.apresentacao||null, descricao_valores:data.descricao_valores||null,arquivo_recomendacao:data.arquivo_recomendacao||null }) })
                 const experiences = Array.from({length:experienceCount},(_,i)=>({ empresa:data[`empresa-${i}`], cargo:data[`experiencia-cargo-${i}`], descricao:data[`experiencia-descricao-${i}`]||null, data_inicio:data[`experiencia-inicio-${i}`], data_fim:data[`experiencia-fim-${i}`]||null, atual:!data[`experiencia-fim-${i}`] })).filter(item=>item.empresa&&item.cargo&&item.data_inicio)
                 await Promise.all(experiences.map((item,i)=> existingExperiences.current[i] ? api(`/historico/experiencias/editar/${existingExperiences.current[i].id}`,{method:'PUT',body:JSON.stringify(item)}) : api('/historico/experiencias/create',{method:'POST',body:JSON.stringify(item)})))
                 await Promise.all(existingExperiences.current.slice(experiences.length).map(item=>api(`/historico/experiencias/deletar/${item.id}`,{method:'DELETE'})))
-                const education = courseCompleted.map((completed,i)=>({ curso:data[`curso-${i}`], instituicao:data[`instituicao-${i}`], semestre_atual:data[`semestre-${i}`]?Number(data[`semestre-${i}`]):null, turno:data[`turno-${i}`]||null, status:completed==='yes'?'concluido':data[`course-status-${i}`]||'cursando', data_inicio:data[`formacao-inicio-${i}`]||null, data_fim:data[`formacao-fim-${i}`]||null, url_certificado:null })).filter(item=>item.curso&&item.instituicao)
+                const education = courseCompleted.map((completed,i)=>({ curso:data[`curso-${i}`], instituicao:data[`instituicao-${i}`], semestre_atual:data[`semestre-${i}`]?Number(data[`semestre-${i}`]):null, turno:data[`turno-${i}`]||null, status:completed==='yes'?'concluido':data[`course-status-${i}`]||'cursando', data_inicio:data[`formacao-inicio-${i}`]||null, data_fim:data[`formacao-fim-${i}`]||null, url_certificado:data[`certificado-${i}`]||null })).filter(item=>item.curso&&item.instituicao)
                 await Promise.all(education.map((item,i)=> existingEducation.current[i] ? api(`/historico/formacoes/editar/${existingEducation.current[i].id}`,{method:'PUT',body:JSON.stringify(item)}) : api('/historico/formacoes/create',{method:'POST',body:JSON.stringify(item)})))
                 await Promise.all(existingEducation.current.slice(education.length).map(item=>api(`/historico/formacoes/deletar/${item.id}`,{method:'DELETE'})))
+                await saveCatalogData(data)
                 await api('/usuarios/consentimento-talentos',{method:'PUT',body:JSON.stringify({consentimento_talentos:data.consentimento_talentos})});updateUser({consentimento_talentos:data.consentimento_talentos as 'sempre'|'somente_candidatura'})
                 setCompleted(true); return
             }
@@ -195,8 +222,10 @@ function RegistrationPage() {
                     cidade: data.cidade || null,
                     estado: data.estado || null,
                     data_nascimento: data.data_nascimento || null,
+                    url_foto:data.url_foto||null,
                     linkedin_url: data.linkedin_url || null,
                     portfolio_url: data.portfolio_url || null,
+                    curriculo_url:data.curriculo_url||null,
                     cargo_desejado: data.cargo_desejado || null,
                 }),
             })
@@ -207,6 +236,7 @@ function RegistrationPage() {
                     motivacao: data.motivacao || null,
                     apresentacao: data.apresentacao || null,
                     descricao_valores: data.descricao_valores || null,
+                    arquivo_recomendacao:data.arquivo_recomendacao||null,
                 }),
             })
             savedStages.current.culture = true
@@ -231,12 +261,13 @@ function RegistrationPage() {
                 status: completedCourse === 'yes' ? 'concluido' : data[`course-status-${index}`] || 'cursando',
                 data_inicio: data[`formacao-inicio-${index}`] || null,
                 data_fim: data[`formacao-fim-${index}`] || null,
-                url_certificado: null,
+                url_certificado: data[`certificado-${index}`] || null,
             })).filter((item) => item.curso && item.instituicao)
             if (formacoes.length && !savedStages.current.education) {
                 await api('/historico/formacoes/create', { method: 'POST', body: JSON.stringify(formacoes) })
             }
             savedStages.current.education = true
+            await saveCatalogData(data)
             await api('/usuarios/consentimento-talentos',{method:'PUT',body:JSON.stringify({consentimento_talentos:data.consentimento_talentos})});updateUser({consentimento_talentos:data.consentimento_talentos as 'sempre'|'somente_candidatura'})
             setCompleted(true)
         } catch (reason) {
@@ -275,7 +306,7 @@ function RegistrationPage() {
                 </header>
 
                 <ol className="registration-progress" aria-label="Progresso do cadastro">
-                    {steps.map((item, index) => {
+                    {steps.slice(0, 6).map((item, index) => {
                         const position = index + 1
                         const status = position < step ? 'is-complete' : position === step ? 'is-current' : ''
                         return (
@@ -308,13 +339,13 @@ function RegistrationPage() {
                             </svg>:<svg viewBox="0 0 536 334" fill="none" xmlns="http://www.w3.org/2000/svg">
                              <path d="M528.917 147.518C504.553 112.808 413.773 0 267.59 0C121.408 0 30.6279 112.808 6.26418 147.518C2.19202 153.15 0 159.924 0 166.875C0 173.826 2.19202 180.6 6.26418 186.232C30.6279 220.942 121.408 333.75 267.59 333.75C413.773 333.75 504.553 220.942 528.917 186.232C532.989 180.6 535.181 173.826 535.181 166.875C535.181 159.924 532.989 153.15 528.917 147.518ZM267.59 267C212.522 267 167.465 221.944 167.465 166.875C167.465 111.806 212.522 66.75 267.59 66.75C322.659 66.75 367.715 111.806 367.715 166.875C367.715 221.944 322.659 267 267.59 267Z"/>
                              </svg>}</button></div></label>}
-                            <label className="registration-field registration-upload"><span>Foto</span><input type="file" accept="image/*" /><strong>Enviar foto pessoal</strong></label>
+                            <Field label="URL da foto" name="url_foto" type="url" placeholder="https://exemplo.com/minha-foto.jpg" defaultValue={values.url_foto}/>
                             <Field label="Telefone" name="telefone" type="tel" placeholder="+55 (00) 00000-0000" defaultValue={values.telefone} />
                         </>}
 
                         {step === 2 && <>
                             <Field label="LinkedIn" name="linkedin_url" type="url" placeholder="https://linkedin.com/in/usuario" defaultValue={values.linkedin_url} />
-                            <label className="registration-field registration-upload"><span>Currículo</span><input type="file" accept=".pdf" /><strong>Enviar currículo em PDF</strong></label>
+                            <Field label="URL do currículo" name="curriculo_url" type="url" placeholder="https://exemplo.com/curriculo.pdf" defaultValue={values.curriculo_url}/>
                             <Field label="Portfólio" name="portfolio_url" type="url" placeholder="https://seuportfolio.com" defaultValue={values.portfolio_url} />
                             <Field label="Cargo desejado" name="cargo_desejado" placeholder="Ex.: Desenvolvedor Front-end" defaultValue={values.cargo_desejado} />
                         </>}
@@ -354,11 +385,7 @@ function RegistrationPage() {
                                     </fieldset>
 
                                     {completedCourse === 'yes' && (
-                                        <label className="registration-field registration-upload">
-                                            <span>Certificado</span>
-                                            <input type="file" accept=".pdf" />
-                                            <strong>Enviar documento em PDF</strong>
-                                        </label>
+                                        <Field label="URL do certificado" name={`certificado-${index}`} type="url" placeholder="https://exemplo.com/certificado.pdf" defaultValue={values[`certificado-${index}`]}/>
                                     )}
 
                                     {completedCourse === 'no' && <>
@@ -392,15 +419,15 @@ function RegistrationPage() {
                             <Field label="Motivação" name="motivacao" placeholder="O que te motiva a trabalhar conosco?" defaultValue={values.motivacao} />
                             <label className="registration-field registration-field--tall"><span>Apresentação</span><textarea name="apresentacao" placeholder="Fale um pouco sobre você" defaultValue={values.apresentacao} /></label>
                             <Field label="Valores" name="descricao_valores" placeholder="Quais são os seus valores?" defaultValue={values.descricao_valores} />
-                            <label className="registration-field registration-upload"><span>Carta de indicação (opcional)</span><input type="file" accept=".pdf" /><strong>Enviar indicação em PDF</strong></label>
+                            <Field label="URL da carta de indicação (opcional)" name="arquivo_recomendacao" type="url" placeholder="https://exemplo.com/recomendacao.pdf" defaultValue={values.arquivo_recomendacao}/>
                         </>}
 
                         {step === 6 && <div className="registration-skills">
+                            <fieldset className="registration-interest-options"><legend>Áreas de interesse</legend><p>Selecione uma ou mais áreas para receber oportunidades compatíveis.</p><div>{PREDEFINED_AREAS.map(area=><label key={area}><input type="checkbox" checked={selectedAreas.includes(area)} onChange={event=>setSelectedAreas(current=>event.target.checked?[...current,area]:current.filter(item=>item!==area))}/><span>{area}</span></label>)}</div></fieldset>
                             {Array.from({ length: skillCount }, (_, index) => <div className="registration-skill" key={`skill-${index}`}>
-                                <Field label="Competência" name={`competencia-${index}`} placeholder="Nome da habilidade" defaultValue={values[`competencia-${index}`]} />
-                                <label className="registration-field"><span>Nível</span><select defaultValue=""><option value="" disabled>Selecione</option><option>1 - Básico</option><option>2 - Iniciante</option><option>3 - Intermediário</option><option>4 - Avançado</option><option>5 - Especialista</option></select></label>
-                                <label className="registration-field"><span>Categoria</span><select defaultValue=""><option value="" disabled>Selecione</option><option>Hard skill</option><option>Soft skill</option></select></label>
-                                <label className="registration-field"><span>Experiência</span><select defaultValue=""><option value="" disabled>Selecione</option><option>Júnior</option><option>Pleno</option><option>Sênior</option></select></label>
+                                <label className="registration-field"><span>Competência</span><select name={`competencia-${index}`} defaultValue={values[`competencia-${index}`]||''} required><option value="" disabled>Selecione uma competência</option>{PREDEFINED_SKILLS.map(skill=><option value={skill} key={skill}>{skill}</option>)}</select></label>
+                                <label className="registration-field"><span>Nível</span><select name={`nivel-${index}`} defaultValue={values[`nivel-${index}`]||''} required><option value="" disabled>Selecione</option><option value="1">1 - Básico</option><option value="2">2 - Iniciante</option><option value="3">3 - Intermediário</option><option value="4">4 - Avançado</option><option value="5">5 - Especialista</option></select></label>
+                                <label className="registration-field"><span>Experiência</span><select name={`experiencia-${index}`} defaultValue={values[`experiencia-${index}`]||''} required><option value="" disabled>Selecione</option><option value="junior">Júnior</option><option value="pleno">Pleno</option><option value="senior">Sênior</option><option value="especialista">Especialista</option></select></label>
                                 {skillCount > 3 && index === skillCount - 1 && (
                                     <button
                                         className="registration-remove-button"
