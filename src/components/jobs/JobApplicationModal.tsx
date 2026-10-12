@@ -26,9 +26,10 @@ function JobApplicationModal({ job, onClose, mode = 'apply', applicationId, init
     const dialogRef = useRef<HTMLDivElement>(null)
     const [contract = 'Contrato a combinar', workModel = 'Modelo a combinar'] = job.details.split(' • ')
     const theme = getJobCategoryTheme(job.category)
+    const accentColor = job.color || theme.color
     const categoryStyle = {
-        '--job-accent': theme.color,
-        '--job-accent-soft': theme.softColor,
+        '--job-accent': accentColor,
+        '--job-accent-soft': job.color ? `${job.color}20` : theme.softColor,
     } as CSSProperties
 
     useEffect(() => {

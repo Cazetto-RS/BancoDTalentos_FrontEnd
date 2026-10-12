@@ -37,6 +37,7 @@ export interface AdminCandidate {
     state: string
     birthDate: string
     photoUrl?: string
+    resumeUrl?: string
     createdAt: string
     application: {
         id: number

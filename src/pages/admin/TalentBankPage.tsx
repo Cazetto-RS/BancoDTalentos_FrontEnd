@@ -3,11 +3,11 @@ import AdminIcon from '../../components/admin/AdminIcon'
 import AdminSummaryCards from '../../components/admin/AdminSummaryCards'
 import CandidateDetailsModal from '../../components/admin/CandidateDetailsModal'
 import type { AdminCandidate, CandidateEducation, CandidateExperience, CandidateSkill } from '../../types/AdminCandidate'
-import { api } from '../../services/api'
+import { api, resolveUploadedUrl } from '../../services/api'
 import '../../styles/AdminCandidatesPage.css'
 import '../../styles/TalentBankPage.css'
 
-interface Talent {id:number;nome_completo:string;email:string;telefone?:string;cidade?:string;estado?:string;data_nascimento?:string;cargo_desejado?:string;consentimento_talentos:string;possui_candidatura:boolean;apresentacao?:string;motivacao?:string;descricao_valores?:string;arquivo_recomendacao?:string;criado_em?:string;experiencias?:Array<Record<string,unknown>>;formacoes?:Array<Record<string,unknown>>;habilidades?:Array<Record<string,unknown>>;interesses?:string[]}
+interface Talent {id:number;nome_completo:string;email:string;telefone?:string;cidade?:string;estado?:string;data_nascimento?:string;cargo_desejado?:string;consentimento_talentos:string;possui_candidatura:boolean;apresentacao?:string;motivacao?:string;descricao_valores?:string;arquivo_recomendacao?:string;url_foto?:string;curriculo_url?:string;criado_em?:string;experiencias?:Array<Record<string,unknown>>;formacoes?:Array<Record<string,unknown>>;habilidades?:Array<Record<string,unknown>>;interesses?:string[]}
 
 const PAGE_SIZE=6
 const dateFormatter=new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short',year:'numeric'})
@@ -21,12 +21,18 @@ function mapTalent(item:Talent):AdminCandidate{
  const experiences:CandidateExperience[]=(item.experiencias||[]).map(row=>({company:text(row.empresa,'Não informada'),role:text(row.cargo,'Não informado'),description:text(row.descricao),startDate:text(row.data_inicio),endDate:text(row.data_fim)||undefined,current:boolean(row.atual)}))
  const education:CandidateEducation[]=(item.formacoes||[]).map(row=>({course:text(row.curso,'Não informado'),institution:text(row.instituicao,'Não informada'),currentSemester:number(row.semestre_atual)||undefined,shift:(['manhã','tarde','noite'].includes(text(row.turno))?text(row.turno):'noite') as CandidateEducation['shift'],status:(['cursando','concluido','trancado'].includes(text(row.status))?text(row.status):'cursando') as CandidateEducation['status'],startDate:text(row.data_inicio),endDate:text(row.data_fim)||undefined,certificateUrl:text(row.url_certificado)||undefined}))
  const skills:CandidateSkill[]=(item.habilidades||[]).map(row=>({name:text(row.nome,'Competência'),category:text(row.categoria)==='soft'?'soft':'hard',level:Math.max(1,Math.min(5,number(row.nivel,1))),experienceLevel:(['junior','pleno','senior','especialista'].includes(text(row.nivel_experiencia))?text(row.nivel_experiencia):'junior') as CandidateSkill['experienceLevel']}))
- return{id:item.id,userId:item.id,fullName:item.nome_completo,email:item.email,phone:item.telefone||'Não informado',city:item.cidade||'Não informada',state:item.estado||'',birthDate:item.data_nascimento||'',createdAt:item.criado_em||'',application:{id:item.id,jobId:0,jobTitle:item.cargo_desejado||'Objetivo profissional não informado',area:'Banco de talentos',status:'novo',favorite:false,salaryExpectation:0,availability:'integral',contractPreference:'CLT',workModelPreference:'presencial',createdAt:item.criado_em||new Date().toISOString()},culture:{motivation:item.motivacao||'Não informado.',values:item.descricao_valores||'Não informado.',presentation:item.apresentacao||'Não informado.',recommendationUrl:item.arquivo_recomendacao||undefined},skills,interests:item.interesses||[],education,experiences}
+ return{id:item.id,userId:item.id,fullName:item.nome_completo,email:item.email,phone:item.telefone||'Não informado',city:item.cidade||'Não informada',state:item.estado||'',birthDate:item.data_nascimento||'',photoUrl:item.url_foto||undefined,resumeUrl:item.curriculo_url||undefined,createdAt:item.criado_em||'',application:{id:item.id,jobId:0,jobTitle:item.cargo_desejado||'Objetivo profissional não informado',area:'Banco de talentos',status:'novo',favorite:false,salaryExpectation:0,availability:'integral',contractPreference:'CLT',workModelPreference:'presencial',createdAt:item.criado_em||new Date().toISOString()},culture:{motivation:item.motivacao||'Não informado.',values:item.descricao_valores||'Não informado.',presentation:item.apresentacao||'Não informado.',recommendationUrl:item.arquivo_recomendacao||undefined},skills,interests:item.interesses||[],education,experiences}
+}
+
+async function hydrateTalentFiles(item:Talent):Promise<Talent>{
+ const safe=async(value?:string)=>{try{return await resolveUploadedUrl(value)}catch{return undefined}}
+ const[photo,resume,recommendation,forms]=await Promise.all([safe(item.url_foto),safe(item.curriculo_url),safe(item.arquivo_recomendacao),Promise.all((item.formacoes||[]).map(async row=>({...row,url_certificado:await safe(text(row.url_certificado))})))])
+ return{...item,url_foto:photo,curriculo_url:resume,arquivo_recomendacao:recommendation,formacoes:forms}
 }
 
 export default function TalentBankPage(){
  const[items,setItems]=useState<Talent[]>([]),[search,setSearch]=useState(''),[error,setError]=useState(''),[page,setPage]=useState(1),[selected,setSelected]=useState<AdminCandidate|null>(null)
- useEffect(()=>{api<Talent[]>('/usuarios/admin/banco-talentos').then(setItems).catch(reason=>setError(reason instanceof Error?reason.message:'Não foi possível carregar o banco de talentos.'))},[])
+ useEffect(()=>{api<Talent[]>('/usuarios/admin/banco-talentos').then(async rows=>setItems(await Promise.all(rows.map(hydrateTalentFiles)))).catch(reason=>setError(reason instanceof Error?reason.message:'Não foi possível carregar o banco de talentos.'))},[])
  const filtered=useMemo(()=>{const query=search.trim().toLocaleLowerCase('pt-BR');return items.filter(item=>!query||[item.nome_completo,item.email,item.cargo_desejado||'',item.cidade||'',...(item.interesses||[])].some(value=>value.toLocaleLowerCase('pt-BR').includes(query)))},[items,search])
  const totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)),safePage=Math.min(page,totalPages),visible=filtered.slice((safePage-1)*PAGE_SIZE,safePage*PAGE_SIZE)
  const summary=[{label:'Perfis disponíveis',value:items.length,icon:'users' as const},{label:'Disponíveis sempre',value:items.filter(item=>item.consentimento_talentos==='sempre').length,icon:'check' as const},{label:'Com candidatura',value:items.filter(item=>item.possui_candidatura).length,icon:'clipboard' as const}]

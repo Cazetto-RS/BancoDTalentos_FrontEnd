@@ -3,7 +3,8 @@ import type { FormEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import AlertModal from '../../components/common/AlertModal'
 import { useAuth } from '../../contexts/AuthContext'
-import { api } from '../../services/api'
+import { api, uploadFile } from '../../services/api'
+import type { UploadType } from '../../services/api'
 import '../../styles/RegistrationPage.css'
 
 const MAX_REPEATABLE_ITEMS = 5
@@ -52,6 +53,17 @@ const Field = ({ label, name, type = 'text', placeholder, required = false, defa
     </label>
 )
 
+const UploadField = ({ label, accept, file, currentValue, maxMb, onSelect }: { label:string; accept:string; file?:File; currentValue?:string; maxMb:number; onSelect:(file?:File)=>void }) => (
+    <div className="registration-field">
+        <span>{label}</span>
+        <label className="registration-upload">
+            <input type="file" accept={accept} onChange={(event)=>onSelect(event.target.files?.[0])}/>
+            <strong>{file ? 'Trocar arquivo' : currentValue ? 'Substituir arquivo' : 'Selecionar arquivo'}</strong>
+        </label>
+        <small className="registration-upload__status">{file ? file.name : currentValue ? 'Arquivo já enviado' : `Até ${maxMb} MB`}</small>
+    </div>
+)
+
 function RegistrationPage() {
     const { login, user, updateUser } = useAuth()
     const location = useLocation()
@@ -68,6 +80,9 @@ function RegistrationPage() {
     const [addressVersion, setAddressVersion] = useState(0)
     const [values, setValues] = useState<Record<string, string>>({})
     const [showPassword,setShowPassword]=useState(false)
+    const [selectedFiles,setSelectedFiles]=useState<Record<string,File|undefined>>({})
+    const [savingStage,setSavingStage]=useState('')
+    const uploadedPaths=useRef<Record<string,string>>({})
     const savedStages = useRef({ registered: false, loggedIn: false, profile: false, culture: false, experiences: false, education: false })
     const existingExperiences = useRef<Array<Record<string, any>>>([])
     const existingEducation = useRef<Array<Record<string, any>>>([])
@@ -99,6 +114,31 @@ function RegistrationPage() {
     }, [editMode, user])
 
     const repeatableItemName = step === 3 ? 'experiências' : step === 4 ? 'formações' : 'competências'
+
+    const selectFile=(key:string,file:File|undefined,maxMb:number)=>{
+        if(file&&file.size>maxMb*1024*1024){setSubmitError(`O arquivo excede o limite de ${maxMb} MB.`);return}
+        setSubmitError('');setSelectedFiles(current=>({...current,[key]:file}))
+    }
+
+    const sendFile=async(key:string,type:UploadType,file:File|undefined,previous?:string)=>{
+        if(!file)return previous||''
+        if(uploadedPaths.current[key])return uploadedPaths.current[key]
+        const uploaded=await uploadFile(type,file,previous)
+        uploadedPaths.current[key]=uploaded.caminho
+        return uploaded.caminho
+    }
+
+    const uploadSelectedFiles=async(data:Record<string,string>)=>{
+        setSavingStage('Enviando arquivos...')
+        data.url_foto=await sendFile('url_foto','foto',selectedFiles.url_foto,data.url_foto)
+        data.curriculo_url=await sendFile('curriculo_url','curriculo',selectedFiles.curriculo_url,data.curriculo_url)
+        data.arquivo_recomendacao=await sendFile('arquivo_recomendacao','recomendacao',selectedFiles.arquivo_recomendacao,data.arquivo_recomendacao)
+        for(let index=0;index<courseCompleted.length;index+=1){
+            const key=`certificado-${index}`
+            data[key]=await sendFile(key,'certificado',selectedFiles[key],data[key])
+        }
+        setValues(current=>({...current,...data}))
+    }
 
     const lookupCep = async (rawCep: string) => {
         const cep = rawCep.replace(/\D/g, '')
@@ -186,6 +226,8 @@ function RegistrationPage() {
         try {
             const data = allValues
             if (editMode) {
+                await uploadSelectedFiles(data)
+                setSavingStage('Salvando perfil...')
                 await api(`/usuarios/atualizar/${user!.id}`, { method:'PUT', body:JSON.stringify({ nome_completo:data.nome_completo, email:data.email }) })
                 updateUser({ nome_completo:data.nome_completo, email:data.email })
                 await api('/candidatos/perfil-base', { method:'POST', body:JSON.stringify({ telefone:data.telefone||null, cep:data.cep?.replace(/\D/g,'')||null, numero_rua:data.numero_rua||null, logradouro:data.logradouro||null, bairro:data.bairro||null, cidade:data.cidade||null, estado:data.estado||null, data_nascimento:data.data_nascimento||null, url_foto:data.url_foto||null,linkedin_url:data.linkedin_url||null, portfolio_url:data.portfolio_url||null,curriculo_url:data.curriculo_url||null, cargo_desejado:data.cargo_desejado||null }) })
@@ -211,6 +253,8 @@ function RegistrationPage() {
                 await login(data.email, data.senha)
                 savedStages.current.loggedIn = true
             }
+            await uploadSelectedFiles(data)
+            setSavingStage('Salvando perfil...')
             if (!savedStages.current.profile) await api('/candidatos/perfil-base', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -339,13 +383,13 @@ function RegistrationPage() {
                             </svg>:<svg viewBox="0 0 536 334" fill="none" xmlns="http://www.w3.org/2000/svg">
                              <path d="M528.917 147.518C504.553 112.808 413.773 0 267.59 0C121.408 0 30.6279 112.808 6.26418 147.518C2.19202 153.15 0 159.924 0 166.875C0 173.826 2.19202 180.6 6.26418 186.232C30.6279 220.942 121.408 333.75 267.59 333.75C413.773 333.75 504.553 220.942 528.917 186.232C532.989 180.6 535.181 173.826 535.181 166.875C535.181 159.924 532.989 153.15 528.917 147.518ZM267.59 267C212.522 267 167.465 221.944 167.465 166.875C167.465 111.806 212.522 66.75 267.59 66.75C322.659 66.75 367.715 111.806 367.715 166.875C367.715 221.944 322.659 267 267.59 267Z"/>
                              </svg>}</button></div></label>}
-                            <Field label="URL da foto" name="url_foto" type="url" placeholder="https://exemplo.com/minha-foto.jpg" defaultValue={values.url_foto}/>
+                            <UploadField label="Foto de perfil" accept="image/jpeg,image/png,image/webp" file={selectedFiles.url_foto} currentValue={values.url_foto} maxMb={3} onSelect={file=>selectFile('url_foto',file,3)}/>
                             <Field label="Telefone" name="telefone" type="tel" placeholder="+55 (00) 00000-0000" defaultValue={values.telefone} />
                         </>}
 
                         {step === 2 && <>
                             <Field label="LinkedIn" name="linkedin_url" type="url" placeholder="https://linkedin.com/in/usuario" defaultValue={values.linkedin_url} />
-                            <Field label="URL do currículo" name="curriculo_url" type="url" placeholder="https://exemplo.com/curriculo.pdf" defaultValue={values.curriculo_url}/>
+                            <UploadField label="Currículo" accept="application/pdf,.docx" file={selectedFiles.curriculo_url} currentValue={values.curriculo_url} maxMb={5} onSelect={file=>selectFile('curriculo_url',file,5)}/>
                             <Field label="Portfólio" name="portfolio_url" type="url" placeholder="https://seuportfolio.com" defaultValue={values.portfolio_url} />
                             <Field label="Cargo desejado" name="cargo_desejado" placeholder="Ex.: Desenvolvedor Front-end" defaultValue={values.cargo_desejado} />
                         </>}
@@ -385,7 +429,7 @@ function RegistrationPage() {
                                     </fieldset>
 
                                     {completedCourse === 'yes' && (
-                                        <Field label="URL do certificado" name={`certificado-${index}`} type="url" placeholder="https://exemplo.com/certificado.pdf" defaultValue={values[`certificado-${index}`]}/>
+                                        <UploadField label="Certificado" accept="application/pdf,image/jpeg,image/png,image/webp" file={selectedFiles[`certificado-${index}`]} currentValue={values[`certificado-${index}`]} maxMb={5} onSelect={file=>selectFile(`certificado-${index}`,file,5)}/>
                                     )}
 
                                     {completedCourse === 'no' && <>
@@ -419,7 +463,7 @@ function RegistrationPage() {
                             <Field label="Motivação" name="motivacao" placeholder="O que te motiva a trabalhar conosco?" defaultValue={values.motivacao} />
                             <label className="registration-field registration-field--tall"><span>Apresentação</span><textarea name="apresentacao" placeholder="Fale um pouco sobre você" defaultValue={values.apresentacao} /></label>
                             <Field label="Valores" name="descricao_valores" placeholder="Quais são os seus valores?" defaultValue={values.descricao_valores} />
-                            <Field label="URL da carta de indicação (opcional)" name="arquivo_recomendacao" type="url" placeholder="https://exemplo.com/recomendacao.pdf" defaultValue={values.arquivo_recomendacao}/>
+                            <UploadField label="Carta de indicação (opcional)" accept="application/pdf,.docx" file={selectedFiles.arquivo_recomendacao} currentValue={values.arquivo_recomendacao} maxMb={5} onSelect={file=>selectFile('arquivo_recomendacao',file,5)}/>
                         </>}
 
                         {step === 6 && <div className="registration-skills">
@@ -446,7 +490,7 @@ function RegistrationPage() {
                         <button className="registration-button registration-button--secondary" type="button" disabled={step === 1} onClick={() => setStep((current) => current - 1)}>Voltar</button>
                         <div>
                             {(step === 3 || step === 4 || step === 6) && <button className="registration-button registration-button--secondary" type="button" onClick={addAnother}>Adicionar outro</button>}
-                            <button className="registration-button registration-button--primary" type="submit" disabled={submitting}>{submitting ? 'Salvando...' : step === steps.length ? (editMode ? 'Salvar alterações' : 'Finalizar') : 'Próximo'}</button>
+                            <button className="registration-button registration-button--primary" type="submit" disabled={submitting}>{submitting ? (savingStage||'Salvando...') : step === steps.length ? (editMode ? 'Salvar alterações' : 'Finalizar') : 'Próximo'}</button>
                         </div>
                     </footer>
                     {submitError && <p className="registration-error" role="alert">{submitError}</p>}

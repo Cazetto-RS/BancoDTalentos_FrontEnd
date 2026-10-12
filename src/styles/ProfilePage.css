@@ -72,6 +72,30 @@
     filter: invert(15%) sepia(7%) saturate(849%) hue-rotate(202deg) brightness(92%);
 }
 
+.profile-avatar--photo {
+    padding: 0;
+    overflow: hidden;
+}
+
+.profile-avatar--photo img {
+    object-fit: cover;
+    border-radius: inherit;
+    filter: none;
+}
+
+.profile-certificate-link {
+    display: inline-block;
+    margin-top: .55rem;
+    color: var(--color-primary);
+    font-size: .78rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.profile-certificate-link:hover {
+    text-decoration: underline;
+}
+
 .profile-photo__edit {
     position: absolute;
     right: .15rem;

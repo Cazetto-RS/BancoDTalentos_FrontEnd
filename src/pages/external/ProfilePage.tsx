@@ -6,7 +6,7 @@ import JobApplicationModal from '../../components/jobs/JobApplicationModal'
 import JobCategoryIcon from '../../components/jobs/JobCategoryIcon'
 import type { JobModalData } from '../../types/Job'
 import { useAuth } from '../../contexts/AuthContext'
-import { api } from '../../services/api'
+import { api, resolveUploadedUrl } from '../../services/api'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import DeleteAccountModal from '../../components/common/DeleteAccountModal'
 
@@ -41,6 +41,10 @@ function ProfilePage() {
     const [applicationError, setApplicationError] = useState('')
     const [deletingAccount,setDeletingAccount]=useState(false)
     const [loadError, setLoadError] = useState('')
+    const [photoUrl,setPhotoUrl]=useState<string>()
+    const [resumeUrl,setResumeUrl]=useState<string>()
+    const [recommendationUrl,setRecommendationUrl]=useState<string>()
+    const [certificateUrls,setCertificateUrls]=useState<Record<number,string>>({})
 
     useEffect(() => {
         Promise.allSettled([
@@ -52,10 +56,21 @@ function ProfilePage() {
             api<Array<Record<string, any>>>('/interesses-candidato'),
             api<Array<Record<string, any>>>('/candidaturas/minhas-candidaturas'),
         ]).then(([profileResult, cultureResult, experiencesResult, educationResult, skillsResult, interestsResult, applicationsResult]) => {
-            if (profileResult.status === 'fulfilled') setProfile(profileResult.value)
-            if (cultureResult.status === 'fulfilled') setCulture(cultureResult.value)
+            if (profileResult.status === 'fulfilled') {
+                setProfile(profileResult.value)
+                void resolveUploadedUrl(profileResult.value.url_foto).then(setPhotoUrl).catch(()=>setPhotoUrl(undefined))
+                void resolveUploadedUrl(profileResult.value.curriculo_url).then(setResumeUrl).catch(()=>setResumeUrl(undefined))
+            }
+            if (cultureResult.status === 'fulfilled') {
+                setCulture(cultureResult.value)
+                void resolveUploadedUrl(cultureResult.value.arquivo_recomendacao).then(setRecommendationUrl).catch(()=>setRecommendationUrl(undefined))
+            }
             if (experiencesResult.status === 'fulfilled') setProfileExperiences(experiencesResult.value.experiencias)
-            if (educationResult.status === 'fulfilled') setProfileEducation(educationResult.value.formacoes)
+            if (educationResult.status === 'fulfilled') {
+                const education=educationResult.value.formacoes
+                setProfileEducation(education)
+                void Promise.all(education.map(async(item)=>[Number(item.id),await resolveUploadedUrl(item.url_certificado)] as const)).then(entries=>setCertificateUrls(Object.fromEntries(entries.filter((entry):entry is readonly [number,string]=>Boolean(entry[1]))))).catch(()=>setCertificateUrls({}))
+            }
             if (skillsResult.status === 'fulfilled') setProfileSkills(skillsResult.value)
             if (interestsResult.status === 'fulfilled') setInterests(interestsResult.value)
             if (applicationsResult.status === 'fulfilled') setApplications(applicationsResult.value)
@@ -99,8 +114,8 @@ function ProfilePage() {
 
                 <div className="profile-container profile-hero__content">
                     <div className="profile-photo">
-                        <div className="profile-avatar">
-                            <img src={profile.url_foto || profileIcon} alt={`Foto de perfil de ${user?.nome_completo || 'candidato'}`} />
+                        <div className={`profile-avatar ${photoUrl?'profile-avatar--photo':''}`}>
+                            <img src={photoUrl || (!profile.url_foto?.startsWith('storage:') ? profile.url_foto : undefined) || profileIcon} alt={`Foto de perfil de ${user?.nome_completo || 'candidato'}`} />
                         </div>
                         <button className="profile-photo__edit" type="button" aria-label="Alteração de foto ainda indisponível" title="Alteração de foto ainda indisponível" disabled>+</button>
                     </div>
@@ -117,7 +132,6 @@ function ProfilePage() {
                     </div>
 
                     <div className="profile-hero__actions">
-                        {profile.curriculo_url && <a className="profile-button profile-button--ghost" href={profile.curriculo_url} target="_blank" rel="noreferrer">Ver currículo</a>}
                         <button className="profile-button profile-button--primary" type="button" onClick={() => navigate('/perfil/editar')}>Editar perfil</button>
                         <button className="profile-delete-account" type="button" onClick={()=>setDeletingAccount(true)}>Excluir conta</button>
                     </div>
@@ -174,7 +188,6 @@ function ProfilePage() {
                         <div className="profile-links">
                             {profile.linkedin_url && <a className="profile-link profile-link--linkedin" href={profile.linkedin_url} target="_blank" rel="noreferrer"><span>LinkedIn</span><strong>↗</strong></a>}
                             {profile.portfolio_url && <a className="profile-link profile-link--portfolio" href={profile.portfolio_url} target="_blank" rel="noreferrer"><span>Portfólio</span><strong>↗</strong></a>}
-                            {profile.curriculo_url && <a className="profile-link profile-link--resume" href={profile.curriculo_url} target="_blank" rel="noreferrer"><span>Currículo</span><strong>↓</strong></a>}
                         </div>
                     </section>
                 </aside>
@@ -248,11 +261,21 @@ function ProfilePage() {
                                         <small>{formatDate(item.data_inicio)} — {formatDate(item.data_fim)}</small>
                                         <h3>{item.curso}</h3>
                                         <p>{item.instituicao}</p>
+                                        {certificateUrls[Number(item.id)]&&<a className="profile-certificate-link" href={certificateUrls[Number(item.id)]} target="_blank" rel="noreferrer">Ver certificado</a>}
                                     </div>
                                 ))}
                             </div>
                         </article>
                     </section>
+
+                    {(resumeUrl||recommendationUrl||Object.keys(certificateUrls).length>0)&&<section className="profile-card profile-documents">
+                        <div className="profile-card__heading"><span>DOCUMENTOS</span><h2>Arquivos enviados</h2></div>
+                        <div className="profile-links">
+                            {resumeUrl&&<a className="profile-link profile-link--resume" href={resumeUrl} target="_blank" rel="noreferrer"><span>Currículo</span><strong>↗</strong></a>}
+                            {recommendationUrl&&<a className="profile-link profile-link--resume" href={recommendationUrl} target="_blank" rel="noreferrer"><span>Carta de recomendação</span><strong>↗</strong></a>}
+                            {Object.entries(certificateUrls).map(([id,url])=><a className="profile-link profile-link--resume" href={url} target="_blank" rel="noreferrer" key={id}><span>Certificado</span><strong>↗</strong></a>)}
+                        </div>
+                    </section>}
 
                     {applications.length > 0 && <section className="profile-card profile-application">
                         <div className="profile-card__heading profile-card__heading--row">

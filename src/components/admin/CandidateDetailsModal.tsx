@@ -79,7 +79,7 @@ function CandidateDetailsModal({ candidate, onChange, onClose, talentBankMode = 
             <div className="admin-candidate-modal" role="dialog" aria-modal="true" aria-labelledby="admin-candidate-modal-title" tabIndex={-1} ref={dialogRef}>
                 <header className="admin-candidate-modal__header">
                     <div className="admin-candidate-modal__identity">
-                        <span className="admin-candidate-modal__avatar" aria-hidden="true">{getInitials(candidate.fullName)}</span>
+                        <span className={`admin-candidate-modal__avatar ${candidate.photoUrl?'has-photo':''}`} aria-hidden="true">{candidate.photoUrl?<img src={candidate.photoUrl} alt=""/>:getInitials(candidate.fullName)}</span>
                         <div>
                             <span>{talentBankMode ? 'BANCO DE TALENTOS' : 'PERFIL DO CANDIDATO'}</span>
                             <h2 id="admin-candidate-modal-title">{candidate.fullName}</h2>
@@ -246,13 +246,23 @@ function CandidateDetailsModal({ candidate, onChange, onClose, talentBankMode = 
                                 <div className="admin-candidate-modal__section-heading">
                                     <div><span>DOCUMENTOS</span><h3>Arquivos enviados</h3></div>
                                 </div>
-                                {candidate.culture.recommendationUrl ? (
+                                <div className="admin-candidate-modal__document-list">
+                                {candidate.resumeUrl && (
+                                    <a href={candidate.resumeUrl} target="_blank" rel="noreferrer">
+                                        <span aria-hidden="true"><AdminIcon name="document" /></span>
+                                        <div><strong>Currículo</strong><small>Documento profissional</small></div>
+                                        <AdminIcon name="external" aria-hidden="true" />
+                                    </a>
+                                )}
+                                {candidate.culture.recommendationUrl && (
                                     <a href={candidate.culture.recommendationUrl} target="_blank" rel="noreferrer">
                                         <span aria-hidden="true"><AdminIcon name="document" /></span>
                                         <div><strong>Carta de recomendação</strong><small>Documento em PDF</small></div>
                                         <AdminIcon name="external" aria-hidden="true" />
                                     </a>
-                                ) : <p className="admin-candidate-modal__empty-section">Nenhum documento de recomendação foi enviado.</p>}
+                                )}
+                                {!candidate.resumeUrl&&!candidate.culture.recommendationUrl&&<p className="admin-candidate-modal__empty-section">Nenhum documento foi enviado.</p>}
+                                </div>
                             </section>
                         </div>
                     )}

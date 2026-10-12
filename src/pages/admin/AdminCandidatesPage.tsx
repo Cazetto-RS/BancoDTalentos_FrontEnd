@@ -4,7 +4,7 @@ import AdminStatusSelect from '../../components/admin/AdminStatusSelect'
 import AdminSummaryCards from '../../components/admin/AdminSummaryCards'
 import CandidateDetailsModal from '../../components/admin/CandidateDetailsModal'
 import type { AdminCandidate, CandidateStatus } from '../../types/AdminCandidate'
-import { api } from '../../services/api'
+import { api, resolveUploadedUrl } from '../../services/api'
 import { candidateStatusLabels } from '../../types/AdminCandidate'
 import '../../styles/AdminCandidatesPage.css'
 
@@ -269,6 +269,7 @@ function mapApiCandidate(row: Record<string, any>): AdminCandidate {
         state: row.estado || '',
         birthDate: row.data_nascimento || '',
         photoUrl: row.url_foto || undefined,
+        resumeUrl: row.curriculo_url || undefined,
         createdAt: row.candidato_criado_em || row.data_inscricao,
         application: {
             id: Number(row.candidatura_id),
@@ -317,13 +318,22 @@ function mapApiCandidate(row: Record<string, any>): AdminCandidate {
     }
 }
 
+async function hydrateCandidateFiles(row:Record<string,any>){
+    const safe=async(value?:string)=>{try{return await resolveUploadedUrl(value)}catch{return undefined}}
+    const [photo,resume,recommendation,forms]=await Promise.all([
+        safe(row.url_foto),safe(row.curriculo_url),safe(row.arquivo_recomendacao),
+        Promise.all((row.formacoes||[]).map(async(form:Record<string,any>)=>({...form,url_certificado:await safe(form.url_certificado)})))
+    ])
+    return {...row,url_foto:photo,curriculo_url:resume,arquivo_recomendacao:recommendation,formacoes:forms}
+}
+
 function AdminCandidatesPage() {
     // A lista começa vazia: candidatos exibidos sempre vêm da API.
     const [candidates, setCandidates] = useState<AdminCandidate[]>(() => initialCandidates.slice(0, 0))
     const [loadError, setLoadError] = useState('')
     useEffect(() => {
         api<Array<Record<string, any>>>('/candidaturas')
-            .then((rows) => { setCandidates(rows.map(mapApiCandidate)); setLoadError('') })
+            .then(async(rows) => { const hydrated=await Promise.all(rows.map(hydrateCandidateFiles));setCandidates(hydrated.map(mapApiCandidate)); setLoadError('') })
             .catch((reason) => {
                 setCandidates([])
                 setLoadError(reason instanceof Error ? reason.message : 'Não foi possível carregar os candidatos.')
