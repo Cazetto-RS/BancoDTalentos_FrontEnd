@@ -69,7 +69,7 @@
 
 .admin-job-modal__identity > div > span,
 .admin-job-form__section-heading > div > span {
-    color: var(--color-primary);
+    color: var(--color-action);
     font-size: .7rem;
     font-weight: 800;
     letter-spacing: .1em;
@@ -172,7 +172,7 @@
     place-items: center;
     border-radius: var(--radius-md);
     background: rgb(22 156 249 / 11%);
-    color: var(--color-primary);
+    color: var(--color-action);
 }
 
 .admin-job-form__section-icon svg {
@@ -238,7 +238,7 @@
 .admin-job-field input:focus,
 .admin-job-field select:focus,
 .admin-job-field textarea:focus {
-    border-color: var(--color-primary);
+    border-color: var(--color-action);
     background: var(--color-surface);
     box-shadow: 0 0 0 3px var(--color-focus-ring);
 }
@@ -287,12 +287,12 @@
 
 .admin-job-button--primary {
     border: 1px solid var(--color-primary);
-    background: var(--color-primary);
-    color: #fff;
+    background: var(--color-action);
+    color: var(--color-on-primary);
 }
 
 .admin-job-button--primary:hover {
-    background: var(--color-primary-hover);
+    background: var(--color-action-hover);
 }
 
 .admin-job-button--secondary {
@@ -304,7 +304,7 @@
 .admin-job-button--secondary:hover {
     border-color: rgb(22 156 249 / 28%);
     background: rgb(22 156 249 / 7%);
-    color: var(--color-primary);
+    color: var(--color-action);
 }
 
 .admin-job-modal__close:focus-visible,
@@ -366,7 +366,7 @@
 
 .admin-job-share-modal__header span,
 .admin-job-share-modal__job small {
-    color: var(--color-primary);
+    color: var(--color-action);
     font-size: .68rem;
     font-weight: 800;
     letter-spacing: .1em;
@@ -404,7 +404,7 @@
     place-items: center;
     border-radius: var(--radius-md);
     background: rgb(22 156 249 / 12%);
-    color: var(--color-primary);
+    color: var(--color-action);
 }
 
 .admin-job-share-modal__job svg {
@@ -507,8 +507,8 @@
     padding: .55rem .85rem;
     border: 0;
     border-radius: var(--radius-sm);
-    background: var(--color-primary);
-    color: #fff;
+    background: var(--color-action);
+    color: var(--color-on-primary);
     font: inherit;
     font-size: .8rem;
     font-weight: 700;
@@ -517,7 +517,7 @@
 }
 
 .admin-job-share-modal__link-control button:hover {
-    background: var(--color-primary-hover);
+    background: var(--color-action-hover);
     transform: translateY(-1px);
 }
 
@@ -543,7 +543,7 @@
     border: 1px solid var(--color-primary);
     border-radius: var(--radius-sm);
     background: transparent;
-    color: var(--color-primary);
+    color: var(--color-action);
     font-size: .82rem;
     font-weight: 700;
     text-decoration: none;
@@ -551,8 +551,8 @@
 }
 
 .admin-job-share-modal__open:hover {
-    background: var(--color-primary);
-    color: #fff;
+    background: var(--color-action);
+    color: var(--color-on-primary);
     transform: translateY(-1px);
 }
 

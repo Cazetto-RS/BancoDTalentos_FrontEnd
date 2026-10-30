@@ -1,7 +1,7 @@
 .sobre {
     width: 100%;
     overflow-x: hidden;
-    color: #292832;
+    color: var(--color-text);
 }
 
 
@@ -20,7 +20,7 @@
 ========================= */
 
 .sobre__hero {
-    background: #e8e1e5;
+    background: var(--color-background);
     padding: 3rem 0 0.1rem;
 }
 
@@ -29,9 +29,9 @@
 
     font-size: clamp(2.7rem, 5vw, 4.4rem);
     line-height: 1;
-    font-weight: 900;
+    font-weight: 800;
 
-    color: #292832;
+    color: var(--color-text);
 }
 
 .sobre__title span {
@@ -43,7 +43,7 @@
 
     margin: 0 0 1.3rem;
 
-    color: #6d6970;
+    color: var(--color-text-muted);
 
     font-size: 1rem;
     line-height: 1.55;
@@ -51,14 +51,14 @@
 
 .sobre__image-section {
     padding: 0 0 2.2rem;
-    background: #e8e1e5;
+    background: var(--color-background);
 }
 
 .sobre__image-wrapper {
     position: relative;
     margin: 0;
     overflow: hidden;
-    border-radius: 0.8rem;
+    border-radius: var(--radius-lg);
 }
 
 .sobre__image {
@@ -91,7 +91,7 @@
 ========================= */
 
 .sobre__info {
-    background: #e8e1e5;
+    background: var(--color-background);
     padding: 2rem 0 2rem;
 }
 
@@ -104,8 +104,8 @@
 .sobre__info-item {
     min-width: 0;
     padding: 1.5rem 1.6rem;
-    border-radius: 0.8rem;
-    background: #ffffff;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
 }
 
 .sobre__label {
@@ -120,7 +120,7 @@
 }
 
 .sobre__label--blue {
-    color: #159bea;
+    color: var(--color-action);
 }
 
 .sobre__label--pink {
@@ -133,13 +133,13 @@
     font-size: 1.55rem;
     line-height: 1.2;
 
-    color: #292832;
+    color: var(--color-text);
 }
 
 .sobre__info-item p {
     margin: 0;
 
-    color: #706d73;
+    color: var(--color-text-muted);
 
     font-size: 1.1rem;
     line-height: 1.55;
@@ -153,7 +153,7 @@
 .sobre__pillars {
     padding: 3.2rem 0 3rem;
 
-    background: #e8e1e5;
+    background: var(--color-background);
 }
 
 .sobre__pillars-title {
@@ -162,7 +162,7 @@
     font-size: 1.65rem;
     line-height: 1.15;
 
-    color: #292832;
+    color: var(--color-text);
 }
 
 .sobre__pillars-grid {
@@ -179,9 +179,9 @@
 
     padding: 1.3rem 1.6rem;
 
-    background: #ffffff;
+    background: var(--color-surface);
 
-    border-radius: 0.8rem;
+    border-radius: var(--radius-lg);
 }
 
 .sobre__card-icon {
@@ -207,7 +207,7 @@
 .sobre__card h3 {
     margin: 0 0 0.7rem;
 
-    color: #292832;
+    color: var(--color-text);
 
     font-size: 1.15rem;
     line-height: 1.2;
@@ -216,7 +216,7 @@
 .sobre__card p {
     margin: 0;
 
-    color: #706d73;
+    color: var(--color-text-muted);
 
     font-size: 1rem;
     line-height: 1.5;
@@ -438,3 +438,12 @@
         font-size: 1.3rem;
     }
 }
+
+.sobre__info-item, .sobre__card { border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); }
+.sobre__info-item { padding: 2rem; }
+.sobre__info-item p, .sobre__card p { font-size: .98rem; line-height: 1.8; }
+.sobre__image-wrapper { box-shadow: var(--shadow-md); }
+.sobre__image-section { padding-top: 1rem; }
+.sobre__label { margin-bottom: .75rem; letter-spacing: .08em; font-size: .75rem; }
+.sobre__title { line-height: 1.1; }
+@media (max-width: 600px) { .sobre__info-item { padding: 1.5rem; } .sobre__image-caption { position: static; border-radius: 0; background: #292832; font-size: .75rem; } }

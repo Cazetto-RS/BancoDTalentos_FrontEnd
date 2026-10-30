@@ -11,6 +11,7 @@ const Jobs = lazy(() => import('./pages/external/JobsPage'))
 const Profile = lazy(() => import('./pages/external/ProfilePage'))
 const Register = lazy(() => import('./pages/external/RegistrationPage'))
 const Login = lazy(() => import('./pages/external/LoginPage'))
+const ForgotPassword = lazy(() => import('./pages/external/ForgotPasswordPage'))
 const Dashboard = lazy(() => import('./pages/admin/DashboardPage'))
 const AdminJobs = lazy(() => import('./pages/admin/AdminJobsPage'))
 const Candidates = lazy(() => import('./pages/admin/AdminCandidatesPage'))
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/vagas-abertas" element={page('Vagas abertas', <Jobs />)} />
         <Route path="/cadastro" element={page('Criar conta', <Register />)} />
         <Route path="/login" element={page('Entrar', <Login />)} />
+        <Route path="/esqueci-senha" element={page('Recuperar senha', <ForgotPassword />)} />
         <Route element={<ProtectedRoute roles={['candidato']} />}><Route path="/perfil" element={page('Meu perfil', <Profile />)} /><Route path="/perfil/editar" element={page('Editar perfil', <Register />)} /></Route>
         <Route element={<ProtectedRoute roles={['candidato']} />}><Route path="/notificacoes" element={page('Notificações', <Notifications />)} /></Route>
       </Route>

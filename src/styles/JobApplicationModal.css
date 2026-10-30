@@ -94,7 +94,7 @@
 }
 
 .job-modal__progress .is-active {
-    background: var(--color-primary);
+    background: var(--color-action);
 }
 
 .job-modal__body {
@@ -152,7 +152,7 @@
     width: 100%;
     min-height: 2.8rem;
     padding: .65rem .8rem;
-    border: 1px solid transparent;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     background: var(--color-surface-muted);
     color: var(--color-text);
@@ -178,7 +178,7 @@
     padding: .25rem .6rem;
     border-radius: var(--radius-full);
     background: #e6f3fb;
-    color: var(--color-primary);
+    color: var(--color-action);
     font-size: .72rem;
     font-weight: 600;
 }
@@ -207,8 +207,8 @@
 
 .job-modal__primary {
     border: 1px solid var(--color-primary);
-    background: var(--color-primary);
-    color: #fff;
+    background: var(--color-action);
+    color: var(--color-on-primary);
 }
 
 .job-modal__primary:hover {
@@ -218,7 +218,7 @@
 .job-modal__secondary {
     border: 1px solid var(--color-primary);
     background: transparent;
-    color: var(--color-primary);
+    color: var(--color-action);
 }
 
 .job-modal__success {
@@ -254,7 +254,7 @@
 }
 
 .job-modal__success strong {
-    color: var(--color-primary);
+    color: var(--color-action);
     font-weight: 400;
 }
 

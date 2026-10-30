@@ -7,6 +7,7 @@ export interface AuthUser { id: number; nome_completo: string; email: string; ca
 interface AuthContextValue {
     user: AuthUser | null; token: string | null; isAuthenticated: boolean
     login: (email: string, senha: string, remember?: boolean) => Promise<AuthUser>; logout: () => Promise<void>
+    acceptSession: (result: { token: string; usuario: AuthUser }, remember?: boolean) => AuthUser
     updateUser: (changes: Partial<AuthUser>) => void
 }
 
@@ -29,10 +30,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener('talentos:unauthorized', unauthorized)
     }, [])
 
-    const login = async (email: string, senha: string, remember = false) => {
-        const result = await api<{ token: string; usuario: AuthUser }>('/usuarios/login', { method: 'POST', body: JSON.stringify({ email, senha }) })
+    const acceptSession = (result: { token: string; usuario: AuthUser }, remember = false) => {
         clear(); const storage=remember?localStorage:sessionStorage; storage.setItem(TOKEN_KEY,result.token);storage.setItem(USER_KEY,JSON.stringify(result.usuario))
         setToken(result.token); setUser(result.usuario); return result.usuario
+    }
+    const login = async (email: string, senha: string, remember = false) => {
+        const result = await api<{ token: string; usuario: AuthUser }>('/usuarios/login', { method: 'POST', body: JSON.stringify({ email, senha, remember }) })
+        return acceptSession(result, remember)
     }
 
     const logout = async () => { try { if (token) await api('/usuarios/logout', { method: 'POST' }) } finally { clear() } }
@@ -40,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!current) return current
         const updated = { ...current, ...changes }; const storage=localStorage.getItem(TOKEN_KEY)?localStorage:sessionStorage; storage.setItem(USER_KEY, JSON.stringify(updated)); return updated
     })
-    const value = { user, token, isAuthenticated: Boolean(user && token), login, logout, updateUser }
+    const value = { user, token, isAuthenticated: Boolean(user && token), login, logout, acceptSession, updateUser }
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

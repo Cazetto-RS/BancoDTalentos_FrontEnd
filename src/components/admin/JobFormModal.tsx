@@ -10,6 +10,8 @@ interface JobFormModalProps {
     mode: 'create' | 'edit'
     job?: AdminJob
     nextId?: number
+    areaOptions?: string[]
+    skillOptions?: string[]
     onClose: () => void
     onSave: (job: AdminJob) => Promise<void> | void
 }
@@ -40,7 +42,7 @@ const jobIcons: Array<{ value: AdminJob['icon']; label: string }> = [
 ]
 const jobColors = ['#169CF9', '#7C3AED', '#E11D48', '#EA580C', '#16A34A', '#0891B2', '#4F46E5', '#DB2777']
 
-function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalProps) {
+function JobFormModal({ mode, job, nextId = 1, areaOptions = [], skillOptions = [], onClose, onSave }: JobFormModalProps) {
     const [form, setForm] = useState<AdminJob>(() => job ? { ...job, skills: [...job.skills] } : emptyJob(nextId))
     const [skillsText, setSkillsText] = useState(() => job?.skills.join(', ') ?? '')
     const [saving, setSaving] = useState(false)
@@ -120,7 +122,10 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
 
                                 <label className="admin-job-field">
                                     <span>Área</span>
-                                    <input value={form.area} onChange={(event) => setForm({ ...form, area: event.target.value })} placeholder="Ex.: Desenvolvimento Web" required />
+                                    <select value={form.area} onChange={(event) => setForm({ ...form, area: event.target.value, areaId: undefined })} required>
+                                        <option value="" disabled>Selecione uma área</option>
+                                        {areaOptions.map(area=><option value={area} key={area}>{area}</option>)}
+                                    </select>
                                 </label>
 
                                 <label className="admin-job-field">
@@ -184,7 +189,7 @@ function JobFormModal({ mode, job, nextId = 1, onClose, onSave }: JobFormModalPr
                                 <label className="admin-job-field admin-job-field--wide">
                                     <span>Habilidades desejadas</span>
                                     <input value={skillsText} onChange={(event) => setSkillsText(event.target.value)} placeholder="React, TypeScript, SQL..." />
-                                    <small>Separe cada habilidade por vírgula.</small>
+                                    <small>Separe por vírgula. Use competências cadastradas: {skillOptions.slice(0,8).join(', ')}{skillOptions.length>8?'…':''}</small>
                                 </label>
 
                                 <label className="admin-job-field admin-job-field--wide">

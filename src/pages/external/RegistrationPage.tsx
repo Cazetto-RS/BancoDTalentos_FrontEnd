@@ -1,3 +1,4 @@
+import { PasswordVisibilityIcon } from '../../components/common/InterfaceIcons'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
@@ -48,7 +49,7 @@ const steps = [
 
 const Field = ({ label, name, type = 'text', placeholder, required = false, defaultValue, onBlur }: { label: string; name: string; type?: string; placeholder: string; required?: boolean; defaultValue?: string; onBlur?: React.FocusEventHandler<HTMLInputElement> }) => (
     <label className="registration-field">
-        <span>{label}</span>
+        <span>{label}{required && <span className="registration-required" aria-hidden="true"> *</span>}</span>
         <input name={name} type={type} placeholder={placeholder} required={required} defaultValue={defaultValue} onBlur={onBlur} />
     </label>
 )
@@ -57,7 +58,7 @@ const UploadField = ({ label, accept, file, currentValue, maxMb, onSelect }: { l
     <div className="registration-field">
         <span>{label}</span>
         <label className="registration-upload">
-            <input type="file" accept={accept} onChange={(event)=>onSelect(event.target.files?.[0])}/>
+            <input type="file" aria-label={label} accept={accept} onChange={(event)=>onSelect(event.target.files?.[0])}/>
             <strong>{file ? 'Trocar arquivo' : currentValue ? 'Substituir arquivo' : 'Selecionar arquivo'}</strong>
         </label>
         <small className="registration-upload__status">{file ? file.name : currentValue ? 'Arquivo já enviado' : `Até ${maxMb} MB`}</small>
@@ -65,10 +66,19 @@ const UploadField = ({ label, accept, file, currentValue, maxMb, onSelect }: { l
 )
 
 function RegistrationPage() {
-    const { login, user, updateUser } = useAuth()
+    const { login, acceptSession, user, updateUser } = useAuth()
     const location = useLocation()
     const editMode = location.pathname === '/perfil/editar'
     const [step, setStep] = useState(1)
+    const headerRef = useRef<HTMLHeadingElement>(null)
+    const previousStep = useRef(1)
+    useEffect(() => {
+        if (previousStep.current !== step) {
+            previousStep.current = step
+            headerRef.current?.focus({ preventScroll: true })
+            headerRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' })
+        }
+    }, [step])
     const [completed, setCompleted] = useState(false)
     const [experienceCount, setExperienceCount] = useState(1)
     const [courseCompleted, setCourseCompleted] = useState<Array<'yes' | 'no' | null>>([null])
@@ -82,12 +92,21 @@ function RegistrationPage() {
     const [showPassword,setShowPassword]=useState(false)
     const [selectedFiles,setSelectedFiles]=useState<Record<string,File|undefined>>({})
     const [savingStage,setSavingStage]=useState('')
+    const [awaitingVerification,setAwaitingVerification]=useState(false)
+    const [verificationCode,setVerificationCode]=useState('')
+    const [resendSeconds,setResendSeconds]=useState(0)
     const uploadedPaths=useRef<Record<string,string>>({})
     const savedStages = useRef({ registered: false, loggedIn: false, profile: false, culture: false, experiences: false, education: false })
     const existingExperiences = useRef<Array<Record<string, any>>>([])
     const existingEducation = useRef<Array<Record<string, any>>>([])
     const existingSkills = useRef<Array<Record<string, any>>>([])
     const existingInterests = useRef<Array<Record<string, any>>>([])
+
+    useEffect(()=>{
+        if(resendSeconds<=0)return
+        const timer=window.setInterval(()=>setResendSeconds(value=>Math.max(0,value-1)),1000)
+        return()=>window.clearInterval(timer)
+    },[resendSeconds])
 
     useEffect(() => {
         if (!editMode || !user) return
@@ -130,13 +149,14 @@ function RegistrationPage() {
 
     const uploadSelectedFiles=async(data:Record<string,string>)=>{
         setSavingStage('Enviando arquivos...')
-        data.url_foto=await sendFile('url_foto','foto',selectedFiles.url_foto,data.url_foto)
-        data.curriculo_url=await sendFile('curriculo_url','curriculo',selectedFiles.curriculo_url,data.curriculo_url)
-        data.arquivo_recomendacao=await sendFile('arquivo_recomendacao','recomendacao',selectedFiles.arquivo_recomendacao,data.arquivo_recomendacao)
-        for(let index=0;index<courseCompleted.length;index+=1){
-            const key=`certificado-${index}`
-            data[key]=await sendFile(key,'certificado',selectedFiles[key],data[key])
-        }
+        const [foto,curriculo,recomendacao,...certificados]=await Promise.all([
+            sendFile('url_foto','foto',selectedFiles.url_foto,data.url_foto),
+            sendFile('curriculo_url','curriculo',selectedFiles.curriculo_url,data.curriculo_url),
+            sendFile('arquivo_recomendacao','recomendacao',selectedFiles.arquivo_recomendacao,data.arquivo_recomendacao),
+            ...courseCompleted.map((_,index)=>{const key=`certificado-${index}`;return sendFile(key,'certificado',selectedFiles[key],data[key])})
+        ])
+        data.url_foto=foto;data.curriculo_url=curriculo;data.arquivo_recomendacao=recomendacao
+        certificados.forEach((caminho,index)=>{data[`certificado-${index}`]=caminho})
         setValues(current=>({...current,...data}))
     }
 
@@ -195,13 +215,86 @@ function RegistrationPage() {
         const uniqueSkillNames=[...new Set(selectedSkillNames)]
         const habilidades=uniqueSkillNames.map(nome=>{const i=selectedSkillNames.indexOf(nome);const catalog=skillsCatalog.find(item=>item.nome===nome);return catalog?{habilidade_id:Number(catalog.id),nivel:Number(data[`nivel-${i}`]),nivel_experiencia:data[`experiencia-${i}`]}:null}).filter(Boolean)
         const areas_ids=selectedAreas.map(nome=>areasCatalog.find(item=>item.nome===nome)?.id).filter(Boolean).map(Number)
-        await api('/habilidades-candidatos/vincular',{method:'POST',body:JSON.stringify({habilidades})})
-        await api('/interesses-candidato/vincular',{method:'POST',body:JSON.stringify({areas_ids})})
+        await Promise.all([
+            api('/habilidades-candidatos/vincular',{method:'POST',body:JSON.stringify({habilidades})}),
+            api('/interesses-candidato/vincular',{method:'POST',body:JSON.stringify({areas_ids})})
+        ])
         if(editMode){
             const selectedSkillIds=new Set(habilidades.map((item:any)=>item.habilidade_id));const selectedAreaIds=new Set(areas_ids)
             await Promise.all(existingSkills.current.filter(item=>!selectedSkillIds.has(Number(item.habilidade_id))).map(item=>api(`/habilidades-candidatos/desvincular/${item.habilidade_id}`,{method:'DELETE'})))
             await Promise.all(existingInterests.current.filter(item=>!selectedAreaIds.has(Number(item.interesse_id))).map(item=>api(`/interesses-candidato/desvincular/${item.interesse_id}`,{method:'DELETE'})))
         }
+    }
+
+    const completeNewRegistration=async(data:Record<string,string>)=>{
+        if (!savedStages.current.loggedIn) {
+            await login(data.email, data.senha)
+            savedStages.current.loggedIn = true
+        }
+        await uploadSelectedFiles(data)
+        setSavingStage('Salvando perfil...')
+        const tarefas:Array<Promise<unknown>>=[]
+        if (!savedStages.current.profile) tarefas.push(api('/candidatos/perfil-base', {
+            method:'POST', body:JSON.stringify({
+                telefone:data.telefone||null, cep:data.cep?.replace(/\D/g,'')||null,
+                numero_rua:data.numero_rua||null, logradouro:data.logradouro||null,
+                bairro:data.bairro||null, cidade:data.cidade||null, estado:data.estado||null,
+                data_nascimento:data.data_nascimento||null, url_foto:data.url_foto||null,
+                linkedin_url:data.linkedin_url||null, portfolio_url:data.portfolio_url||null,
+                curriculo_url:data.curriculo_url||null, cargo_desejado:data.cargo_desejado||null
+            })
+        }))
+        if (!savedStages.current.culture) tarefas.push(api('/candidatos/cultura', {
+            method:'POST', body:JSON.stringify({
+                motivacao:data.motivacao||null, apresentacao:data.apresentacao||null,
+                descricao_valores:data.descricao_valores||null,
+                arquivo_recomendacao:data.arquivo_recomendacao||null
+            })
+        }))
+        const experiencias=Array.from({length:experienceCount},(_,index)=>({
+            empresa:data[`empresa-${index}`], cargo:data[`experiencia-cargo-${index}`],
+            descricao:data[`experiencia-descricao-${index}`]||null,
+            data_inicio:data[`experiencia-inicio-${index}`],
+            data_fim:data[`experiencia-fim-${index}`]||null,
+            atual:!data[`experiencia-fim-${index}`]
+        })).filter(item=>item.empresa&&item.cargo&&item.data_inicio)
+        if(experiencias.length&&!savedStages.current.experiences)tarefas.push(api('/historico/experiencias/create',{method:'POST',body:JSON.stringify(experiencias)}))
+        const formacoes=courseCompleted.map((completedCourse,index)=>({
+            curso:data[`curso-${index}`], instituicao:data[`instituicao-${index}`],
+            semestre_atual:data[`semestre-${index}`]?Number(data[`semestre-${index}`]):null,
+            turno:data[`turno-${index}`]||null,
+            status:completedCourse==='yes'?'concluido':data[`course-status-${index}`]||'cursando',
+            data_inicio:data[`formacao-inicio-${index}`]||null,
+            data_fim:data[`formacao-fim-${index}`]||null,
+            url_certificado:data[`certificado-${index}`]||null
+        })).filter(item=>item.curso&&item.instituicao)
+        if(formacoes.length&&!savedStages.current.education)tarefas.push(api('/historico/formacoes/create',{method:'POST',body:JSON.stringify(formacoes)}))
+        tarefas.push(saveCatalogData(data))
+        tarefas.push(api('/usuarios/consentimento-talentos',{method:'PUT',body:JSON.stringify({consentimento_talentos:data.consentimento_talentos})}))
+        await Promise.all(tarefas)
+        savedStages.current.profile=true;savedStages.current.culture=true;savedStages.current.experiences=true;savedStages.current.education=true
+        updateUser({consentimento_talentos:data.consentimento_talentos as 'sempre'|'somente_candidatura'})
+        setCompleted(true)
+    }
+
+    const confirmEmail=async(event:FormEvent<HTMLFormElement>)=>{
+        event.preventDefault();setSubmitError('')
+        if(!/^\d{6}$/.test(verificationCode)){setSubmitError('Digite os 6 números do código.');return}
+        setSubmitting(true);setSavingStage('Confirmando e-mail...')
+        try{
+            const autenticacao=await api<{token:string;usuario:{id:number;nome_completo:string;email:string;cargo:'candidato';criado_em?:string}}>('/usuarios/verificar-email',{method:'POST',body:JSON.stringify({email:values.email,codigo:verificationCode})})
+            acceptSession(autenticacao)
+            savedStages.current.loggedIn=true
+            await completeNewRegistration(values)
+        }catch(reason){setSubmitError(reason instanceof Error?reason.message:'Não foi possível confirmar o código.')}
+        finally{setSubmitting(false);setSavingStage('')}
+    }
+
+    const resendCode=async()=>{
+        if(resendSeconds>0)return
+        setSubmitError('')
+        try{await api('/usuarios/reenviar-codigo',{method:'POST',body:JSON.stringify({email:values.email})});setResendSeconds(60)}
+        catch(reason){setSubmitError(reason instanceof Error?reason.message:'Não foi possível reenviar o código.')}
     }
 
     const nextStep = async (event: FormEvent<HTMLFormElement>) => {
@@ -248,77 +341,30 @@ function RegistrationPage() {
                     body: JSON.stringify({ nome_completo: data.nome_completo, email: data.email, senha: data.senha }),
                 })
                 savedStages.current.registered = true
+                setAwaitingVerification(true)
+                setResendSeconds(60)
+                return
             }
-            if (!savedStages.current.loggedIn) {
-                await login(data.email, data.senha)
-                savedStages.current.loggedIn = true
-            }
-            await uploadSelectedFiles(data)
-            setSavingStage('Salvando perfil...')
-            if (!savedStages.current.profile) await api('/candidatos/perfil-base', {
-                method: 'POST',
-                body: JSON.stringify({
-                    telefone: data.telefone || null,
-                    cep: data.cep?.replace(/\D/g, '') || null,
-                    numero_rua: data.numero_rua || null,
-                    logradouro: data.logradouro || null,
-                    bairro: data.bairro || null,
-                    cidade: data.cidade || null,
-                    estado: data.estado || null,
-                    data_nascimento: data.data_nascimento || null,
-                    url_foto:data.url_foto||null,
-                    linkedin_url: data.linkedin_url || null,
-                    portfolio_url: data.portfolio_url || null,
-                    curriculo_url:data.curriculo_url||null,
-                    cargo_desejado: data.cargo_desejado || null,
-                }),
-            })
-            savedStages.current.profile = true
-            if (!savedStages.current.culture) await api('/candidatos/cultura', {
-                method: 'POST',
-                body: JSON.stringify({
-                    motivacao: data.motivacao || null,
-                    apresentacao: data.apresentacao || null,
-                    descricao_valores: data.descricao_valores || null,
-                    arquivo_recomendacao:data.arquivo_recomendacao||null,
-                }),
-            })
-            savedStages.current.culture = true
-            const experiencias = Array.from({ length: experienceCount }, (_, index) => ({
-                empresa: data[`empresa-${index}`],
-                cargo: data[`experiencia-cargo-${index}`],
-                descricao: data[`experiencia-descricao-${index}`] || null,
-                data_inicio: data[`experiencia-inicio-${index}`],
-                data_fim: data[`experiencia-fim-${index}`] || null,
-                atual: !data[`experiencia-fim-${index}`],
-            })).filter((item) => item.empresa && item.cargo && item.data_inicio)
-            if (experiencias.length && !savedStages.current.experiences) {
-                await api('/historico/experiencias/create', { method: 'POST', body: JSON.stringify(experiencias) })
-            }
-            savedStages.current.experiences = true
-
-            const formacoes = courseCompleted.map((completedCourse, index) => ({
-                curso: data[`curso-${index}`],
-                instituicao: data[`instituicao-${index}`],
-                semestre_atual: data[`semestre-${index}`] ? Number(data[`semestre-${index}`]) : null,
-                turno: data[`turno-${index}`] || null,
-                status: completedCourse === 'yes' ? 'concluido' : data[`course-status-${index}`] || 'cursando',
-                data_inicio: data[`formacao-inicio-${index}`] || null,
-                data_fim: data[`formacao-fim-${index}`] || null,
-                url_certificado: data[`certificado-${index}`] || null,
-            })).filter((item) => item.curso && item.instituicao)
-            if (formacoes.length && !savedStages.current.education) {
-                await api('/historico/formacoes/create', { method: 'POST', body: JSON.stringify(formacoes) })
-            }
-            savedStages.current.education = true
-            await saveCatalogData(data)
-            await api('/usuarios/consentimento-talentos',{method:'PUT',body:JSON.stringify({consentimento_talentos:data.consentimento_talentos})});updateUser({consentimento_talentos:data.consentimento_talentos as 'sempre'|'somente_candidatura'})
-            setCompleted(true)
+            setAwaitingVerification(true)
         } catch (reason) {
             setSubmitError(reason instanceof Error ? reason.message : 'Não foi possível concluir o cadastro.')
         } finally {
             setSubmitting(false)
         }
+    }
+
+    if(awaitingVerification&&!completed){
+        return <main className="registration-page page-transition"><section className="registration-verification">
+            <span>CONFIRMAÇÃO DE E-MAIL</span><h1>Digite o código recebido</h1>
+            <p>Enviamos um código de 6 dígitos para <strong>{values.email}</strong>. Ele expira em 10 minutos.</p>
+            <form onSubmit={confirmEmail}>
+                <label><span>Código de confirmação</span><input value={verificationCode} onChange={event=>setVerificationCode(event.target.value.replace(/\D/g,'').slice(0,6))} inputMode="numeric" autoComplete="one-time-code" placeholder="000000" autoFocus required/></label>
+                {submitError&&<p className="registration-error" role="alert">{submitError}</p>}
+                <button className="registration-button registration-button--primary" type="submit" disabled={submitting}>{submitting?(savingStage||'Confirmando...'):'Confirmar e concluir cadastro'}</button>
+            </form>
+            <button className="registration-verification__resend" type="button" disabled={resendSeconds>0||submitting} onClick={()=>void resendCode()}>{resendSeconds>0?`Reenviar código em ${resendSeconds}s`:'Reenviar código'}</button>
+            <button className="registration-verification__back" type="button" disabled={submitting} onClick={()=>{savedStages.current.registered=false;setAwaitingVerification(false);setStep(1)}}>Corrigir endereço de e-mail</button>
+        </section></main>
     }
 
     if (completed) {
@@ -343,19 +389,19 @@ function RegistrationPage() {
     }
 
     return (
-        <main className="registration-page">
+        <main className="registration-page page-transition">
             <section className="registration-card">
                 <header className="registration-header">
-                    <div><span>{editMode ? 'EDIÇÃO DE PERFIL' : 'CADASTRO DE TALENTOS'}</span><h1>{editMode ? 'Atualizar perfil' : 'Criar perfil'}</h1><p>Etapa {step} de {steps.length}</p></div>
+                    <div><span>{editMode ? 'EDIÇÃO DE PERFIL' : 'CADASTRO DE TALENTOS'}</span><h1 ref={headerRef} tabIndex={-1}>{editMode ? 'Atualizar perfil' : 'Criar perfil'}</h1><p aria-live="polite">Etapa {step} de {steps.length} <span aria-hidden="true">·</span> {steps[step - 1].label}</p></div>
                 </header>
 
                 <ol className="registration-progress" aria-label="Progresso do cadastro">
-                    {steps.slice(0, 6).map((item, index) => {
+                    {steps.map((item, index) => {
                         const position = index + 1
                         const status = position < step ? 'is-complete' : position === step ? 'is-current' : ''
                         return (
                             <li className={status} aria-current={position === step ? 'step' : undefined} key={item.label}>
-                                <span className="registration-progress__icon">{position < step ?
+                                <span className="registration-progress__icon" aria-hidden="true">{position < step ?
                                     <svg viewBox="0 0 500 384" fill="none" xmlns="http://www.w3.org/2000/svg" className='svgCheck'>
                                         <path fillRule="evenodd" clipRule="evenodd" d="M18.125 191.625L76 133.792L191.75 249.458L423.25 18.125L481.125 75.9583L191.75 365.125L18.125 191.625Z" strokeWidth="36.25" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
@@ -378,11 +424,7 @@ function RegistrationPage() {
                             <Field label="Estado" name="estado" placeholder="UF" defaultValue={values.estado} key={`state-${addressVersion}`} />
                             <Field label="E-mail" name="email" type="email" placeholder="E-mail pessoal" required defaultValue={values.email} />
                             <Field label="Data de nascimento" name="data_nascimento" type="date" placeholder="DD/MM/AAAA" defaultValue={values.data_nascimento} />
-                            {!editMode && <label className="registration-field"><span>Senha</span><div className="registration-password"><input name="senha" type={showPassword?'text':'password'} placeholder="Mínimo de 8 dígitos" required defaultValue={values.senha}/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Ocultar senha':'Mostrar senha'}>{showPassword? <svg viewBox="0 0 535 468" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginTop: 5}}>
-                            <path d="M483.961 0C488.392 0.000105062 492.642 1.76024 495.775 4.89355C498.909 8.02702 500.669 12.2776 500.669 16.709C500.669 21.1402 498.909 25.3901 495.775 28.5234L61.9004 462.398C60.3489 463.95 58.5067 465.181 56.4795 466.021C54.4525 466.86 52.2799 467.292 50.0859 467.292C47.8917 467.292 45.7186 466.86 43.6914 466.021C41.6642 465.181 39.822 463.95 38.2705 462.398C36.719 460.847 35.4881 459.005 34.6484 456.978C33.8089 454.951 33.377 452.778 33.377 450.584C33.377 448.39 33.8088 446.217 34.6484 444.189C35.4881 442.162 36.719 440.32 38.2705 438.769L472.146 4.89355C475.279 1.76009 479.53 0 483.961 0ZM436.701 122.975C471.913 148.154 502.693 179.013 527.782 214.289C531.854 219.922 534.046 226.696 534.046 233.646C534.046 240.597 531.854 247.371 527.782 253.004C503.452 287.714 412.872 400.521 267.023 400.521C233.315 400.521 202.543 394.514 174.875 384.802L232.013 327.63C242.759 331.635 254.374 333.771 266.422 333.771C321.49 333.771 366.547 288.715 366.547 233.646C366.547 221.565 364.411 209.95 360.439 199.236L436.701 122.975ZM267.023 66.7715C298.408 66.7535 329.568 72.0681 359.172 82.4902L301.699 139.963C290.719 135.791 278.837 133.521 266.422 133.521C211.353 133.522 166.297 178.578 166.297 233.646C166.318 245.688 168.513 257.627 172.772 268.89L97.3447 344.317C49.8859 310.742 19.0141 271.16 6.26465 253.004C2.19256 247.371 8.34075e-05 240.597 0 233.646C0 226.696 2.19252 219.922 6.26465 214.289C30.595 179.579 121.175 66.7715 267.023 66.7715Z"/>
-                            </svg>:<svg viewBox="0 0 536 334" fill="none" xmlns="http://www.w3.org/2000/svg">
-                             <path d="M528.917 147.518C504.553 112.808 413.773 0 267.59 0C121.408 0 30.6279 112.808 6.26418 147.518C2.19202 153.15 0 159.924 0 166.875C0 173.826 2.19202 180.6 6.26418 186.232C30.6279 220.942 121.408 333.75 267.59 333.75C413.773 333.75 504.553 220.942 528.917 186.232C532.989 180.6 535.181 173.826 535.181 166.875C535.181 159.924 532.989 153.15 528.917 147.518ZM267.59 267C212.522 267 167.465 221.944 167.465 166.875C167.465 111.806 212.522 66.75 267.59 66.75C322.659 66.75 367.715 111.806 367.715 166.875C367.715 221.944 322.659 267 267.59 267Z"/>
-                             </svg>}</button></div></label>}
+                            {!editMode && <label className="registration-field"><span>Senha</span><div className="registration-password"><input name="senha" type={showPassword?'text':'password'} placeholder="Mínimo de 8 dígitos" required defaultValue={values.senha}/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Ocultar senha':'Mostrar senha'}><PasswordVisibilityIcon visible={showPassword} /></button></div></label>}
                             <UploadField label="Foto de perfil" accept="image/jpeg,image/png,image/webp" file={selectedFiles.url_foto} currentValue={values.url_foto} maxMb={3} onSelect={file=>selectFile('url_foto',file,3)}/>
                             <Field label="Telefone" name="telefone" type="tel" placeholder="+55 (00) 00000-0000" defaultValue={values.telefone} />
                         </>}

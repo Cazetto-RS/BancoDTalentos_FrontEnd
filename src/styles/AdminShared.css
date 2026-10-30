@@ -35,12 +35,12 @@
     fill: currentColor;
 }
 
-.admin-summary-card > div {
+.admin-summary-card>div {
     display: grid;
     gap: 0;
 }
 
-.admin-summary-card > div > span {
+.admin-summary-card>div>span {
     color: var(--color-text-muted);
     font-size: .83rem;
     font-weight: 400;
@@ -80,7 +80,7 @@
     box-shadow: 0 0 0 3px rgb(22 156 249 / 24%);
 }
 
-.admin-status-select > select {
+.admin-status-select>select {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -90,7 +90,7 @@
     cursor: pointer;
 }
 
-.admin-status-select > svg {
+.admin-status-select>svg {
     width: .9rem;
     height: .9rem;
     flex: 0 0 .9rem;
@@ -134,4 +134,13 @@
         justify-content: flex-start;
         gap: 1rem;
     }
+}
+
+.admin-summary-card strong {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.045em;
+}
+
+.admin-summary-card>div>span {
+    margin-bottom: .45rem;
 }

@@ -4,6 +4,12 @@ Interface React/TypeScript do Banco de Talentos da Point Media.
 
 ## Ambiente
 
+Refatoração visual de 29/10/2026, com identidade e integrações preservadas. Consulte [REFATORACAO.md](REFATORACAO.md) para alterações e validações.
+
+Ambiente validado: Node.js 24.22.1. Os testes usam o suporte nativo a TypeScript do Node.
+
+Se você já tem um `.env` configurado, mantenha-o. Copie `.env.example` apenas em uma instalação nova.
+
 ```bash
 npm ci
 cp .env.example .env
@@ -29,6 +35,7 @@ Na API, configure `CORS_ORIGINS` com o domínio exato do front.
 | `npm run dev` | Desenvolvimento |
 | `npm run build` | TypeScript e build de produção |
 | `npm run lint` | Análise estática |
+| `npm test` | Testes da busca e dos filtros de vagas |
 | `npm run preview` | Visualiza o build |
 
 ## Integração
@@ -38,7 +45,8 @@ Na API, configure `CORS_ORIGINS` com o domínio exato do front.
 - `ProtectedRoute`: bloqueia visitante e cargo incompatível.
 - Login direciona candidato para `/perfil` e RH/admin para `/admin/dashboard`.
 - Respostas 401 removem automaticamente a sessão local.
-- Cadastro cria conta, faz login e salva o perfil base.
+- Cadastro guarda os dados em uma área temporária, confirma o código recebido por e-mail e somente então cria a conta. A própria confirmação já abre a sessão, evitando uma segunda chamada de login.
+- Recuperação de senha usa código de seis dígitos e encerra as sessões antigas.
 - Vagas públicas, candidaturas, vagas administrativas e candidatos usam a API.
 
 ## Rotas
@@ -50,6 +58,7 @@ Na API, configure `CORS_ORIGINS` com o domínio exato do front.
 | `/vagas-abertas` | Público |
 | `/cadastro` | Público |
 | `/login` | Público |
+| `/esqueci-senha` | Público |
 | `/perfil` | Candidato |
 | `/admin/dashboard` | RH/Admin |
 | `/admin/vagas` | RH/Admin |
@@ -60,7 +69,7 @@ Cada rota define título no formato `Página | Banco de Talentos`. O favicon usa
 
 ## Autenticação
 
-O navegador mantém `talentos:token` e `talentos:user` no `localStorage`. Isso permite restaurar a sessão após atualização da página. A API continua sendo a autoridade: token inválido/expirado produz 401 e limpa a sessão.
+Com “Manter conectado” marcado, o navegador salva `talentos:token` e `talentos:user` no `localStorage`. Sem marcar, usa `sessionStorage` e encerra a sessão quando o navegador é fechado. A API continua sendo a autoridade: token inválido/expirado produz 401 e limpa a sessão.
 
 Proteção visual não substitui segurança do servidor; a API verifica novamente o cargo em cada endpoint privado.
 
@@ -76,4 +85,8 @@ A API contém `render.yaml`. Após publicar:
 
 ## Uploads
 
-Foto e PDFs ainda dependem de um serviço de arquivos. O front e a API já possuem os campos de URL, mas não enviam binários diretamente ao Neon.
+Foto, currículo, certificados e carta de recomendação são enviados pela API ao bucket privado configurado no Supabase Storage. Os arquivos são visualizados por URLs temporárias assinadas.
+
+## Executar no Windows
+
+Abra o terminal na pasta do projeto e execute `npm ci` e `npm run dev`. Se precisar criar um `.env` no PowerShell, use `Copy-Item .env.example .env` antes de iniciar. O servidor de desenvolvimento mostra o endereço local no terminal.

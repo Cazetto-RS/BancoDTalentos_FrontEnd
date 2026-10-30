@@ -49,7 +49,7 @@
     place-items: center;
     border-radius: var(--radius-md);
     background: rgb(22 156 249 / 16%);
-    color: var(--color-primary);
+    color: var(--color-action);
 }
 
 .admin-settings-modal__heading-icon svg {
@@ -65,7 +65,7 @@
 .admin-settings-modal__section-title > div > span,
 .admin-settings-profile__hero > div > span,
 .admin-settings-profile__access > div > span {
-    color: var(--color-primary);
+    color: var(--color-action);
     font-size: .7rem;
     font-weight: 800;
     letter-spacing: .1em;
@@ -144,11 +144,11 @@
 
 .admin-settings-modal__tabs button:hover,
 .admin-settings-modal__tabs button.is-active {
-    color: var(--color-primary);
+    color: var(--color-action);
 }
 
 .admin-settings-modal__tabs button.is-active::after {
-    background: var(--color-primary);
+    background: var(--color-action);
 }
 
 .admin-settings-modal__tabs svg {
@@ -242,7 +242,7 @@
 }
 
 .admin-settings-modal__themes > button.is-selected {
-    border-color: var(--color-primary);
+    border-color: var(--color-action);
     background: rgb(22 156 249 / 7%);
     box-shadow: 0 0 0 3px rgb(22 156 249 / 8%);
 }
@@ -268,7 +268,7 @@
 
 .admin-settings-modal__theme-preview i:nth-child(2) {
     border-radius: .15rem;
-    background: var(--color-primary);
+    background: var(--color-action);
 }
 
 .admin-settings-modal__theme-preview i:nth-child(3) {
@@ -315,8 +315,8 @@
 }
 
 .admin-settings-modal__themes > button.is-selected .admin-settings-modal__radio {
-    border-color: var(--color-primary);
-    background: var(--color-primary);
+    border-color: var(--color-action);
+    background: var(--color-action);
 }
 
 .admin-settings-modal__preferences {
@@ -349,7 +349,7 @@
     place-items: center;
     border-radius: var(--radius-md);
     background: rgb(22 156 249 / 10%);
-    color: var(--color-primary);
+    color: var(--color-action);
 }
 
 .admin-settings-modal__preference-icon svg {
@@ -396,7 +396,7 @@
 }
 
 .admin-settings-switch[aria-checked='true'] {
-    background: var(--color-primary);
+    background: var(--color-action);
 }
 
 .admin-settings-switch[aria-checked='true'] span {
@@ -532,8 +532,8 @@
     padding: .55rem 1rem;
     border: 1px solid var(--color-primary);
     border-radius: var(--radius-sm);
-    background: var(--color-primary);
-    color: #fff;
+    background: var(--color-action);
+    color: var(--color-on-primary);
     font-size: .78rem;
     font-weight: 700;
     cursor: pointer;
@@ -541,7 +541,7 @@
 }
 
 .admin-settings-modal__footer button:hover {
-    background: var(--color-primary-hover);
+    background: var(--color-action-hover);
     transform: translateY(-1px);
 }
 

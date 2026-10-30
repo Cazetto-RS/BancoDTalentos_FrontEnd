@@ -5,8 +5,10 @@ export interface ApiResponse<T> { sucesso: boolean; mensagem: string; dados: T }
 export class ApiError extends Error {
     status: number
     codigo?: string
-    constructor(message: string, status: number, codigo?: string) {
-        super(message); this.name = 'ApiError'; this.status = status; this.codigo = codigo
+    path: string
+    requestId?: string
+    constructor(message: string, status: number, path: string, codigo?: string, requestId?: string) {
+        super(message); this.name = 'ApiError'; this.status = status; this.path = path; this.codigo = codigo; this.requestId = requestId
     }
 }
 
@@ -23,8 +25,11 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     })
     const payload = await response.json().catch(() => null)
     if (!response.ok) {
-        if (response.status === 401) window.dispatchEvent(new Event('talentos:unauthorized'))
-        throw new ApiError(payload?.mensagem || 'Não foi possível concluir a operação.', response.status, payload?.codigo)
+        const requestId = response.headers.get('x-request-id') || payload?.request_id || undefined
+        console.error('[API]', { method: options.method || 'GET', path, status: response.status, codigo: payload?.codigo, requestId, payload })
+        // Uma resposta 401 de rota pública não representa uma sessão expirada.
+        if (response.status === 401 && token) window.dispatchEvent(new Event('talentos:unauthorized'))
+        throw new ApiError(payload?.mensagem || 'Não foi possível concluir a operação.', response.status, path, payload?.codigo, requestId)
     }
     return (payload?.dados ?? payload) as T
 }

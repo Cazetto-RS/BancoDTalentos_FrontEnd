@@ -1,8 +1,8 @@
 .dashboard-page {
     min-height: 100%;
-    width: min(100%, 1800px);
+    width: min(100%, 1640px);
     margin-inline: auto;
-    padding: 1.75rem;
+    padding: 2rem;
     background: var(--color-background);
     color: var(--color-text);
 }
@@ -18,7 +18,7 @@
 }
 
 .dashboard-header p {
-    margin: .25rem 0 0;
+    margin: .6rem 0 0;
     color: var(--color-text-muted);
     font-size: .95rem;
 }
@@ -269,3 +269,6 @@
         grid-column: 2;
     }
 }
+
+.dashboard-header { padding-right: 3rem; }
+@media (max-width: 900px) { .dashboard-header { padding-right: 0; } }

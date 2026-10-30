@@ -117,7 +117,7 @@ function ProfilePage() {
                         <div className={`profile-avatar ${photoUrl?'profile-avatar--photo':''}`}>
                             <img src={photoUrl || (!profile.url_foto?.startsWith('storage:') ? profile.url_foto : undefined) || profileIcon} alt={`Foto de perfil de ${user?.nome_completo || 'candidato'}`} />
                         </div>
-                        <button className="profile-photo__edit" type="button" aria-label="Alteração de foto ainda indisponível" title="Alteração de foto ainda indisponível" disabled>+</button>
+                        <button className="profile-photo__edit" type="button" aria-label="Alterar foto do perfil" title="Alterar foto" onClick={() => navigate('/perfil/editar')}>+</button>
                     </div>
 
                     <div className="profile-hero__identity">

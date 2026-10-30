@@ -4,7 +4,7 @@ import fatecTatuiImg from '../../assets/fatec-tatui.jpg'
 
 function Sobre() {
     return (
-        <main className="sobre">
+        <main className="sobre page-transition">
 
             <section className="sobre__hero">
                 <div className="sobre__container">
@@ -175,7 +175,7 @@ function Sobre() {
                         oportunidades de forma inteligente e eficiente.
                     </p>
 
-                    <a href="https://www.pointmedia.com.br/" target='_blank' className="sobre__cta-button">
+                    <a href="https://www.pointmedia.com.br/" target='_blank' rel='noopener noreferrer' className="sobre__cta-button">
                         Saiba Mais
                     </a>
 

@@ -1,12 +1,13 @@
 import '../../../styles/Navbar.css'
 import logoImg from '../../../assets/logo.png'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../contexts/AuthContext'
 import NotificationCenter from '../../common/NotificationCenter'
 
 function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false)
+    const menuButtonRef = useRef<HTMLButtonElement>(null)
     const { user, isAuthenticated, logout } = useAuth()
     const navigate = useNavigate()
     const accountPath = user?.cargo === 'candidato' ? '/perfil' : '/admin/dashboard'
@@ -19,17 +20,17 @@ function Navbar() {
 
     useEffect(() => {
         const closeOnEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') setMenuOpen(false)
+            if (event.key === 'Escape' && menuOpen) { setMenuOpen(false); menuButtonRef.current?.focus() }
         }
 
         window.addEventListener('keydown', closeOnEscape)
         return () => window.removeEventListener('keydown', closeOnEscape)
-    }, [])
+    }, [menuOpen])
 
     return (
         <header className="navbar">
             <nav className="navbar__content" aria-label="Navegação principal">
-                <Link className="navbar__brand" to="/">
+                <Link className="navbar__brand" to="/" aria-label="Banco de Talentos — início">
                     <img src={logoImg} alt="" />
                 </Link>
 
@@ -44,39 +45,22 @@ function Navbar() {
                     <Link className="navbar__profile__vazado" to={isAuthenticated ? accountPath : '/cadastro'}>
                         <span className="navbar__profile-text">{isAuthenticated ? 'Minha conta' : 'Registrar-se'}</span>
 
-
-                        <svg viewBox="0 0 445 442" className="navbar__profile-arrow" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1.09721e-05 305.566L1.09721e-05 136.434L224.747 136.434L224.747 1.33701e-05L445 221L224.747 442L224.747 305.566L1.09721e-05 305.566Z" fill='#ffffff' />
-                        </svg>
-
                     </Link>
 
                     {isAuthenticated ? <button className="navbar__profile" type="button" onClick={handleLogout}>
                         <span className="navbar__profile-text">Sair</span>
 
-
-                        <svg viewBox="0 0 445 442" className="navbar__profile-arrow" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1.09721e-05 305.566L1.09721e-05 136.434L224.747 136.434L224.747 1.33701e-05L445 221L224.747 442L224.747 305.566L1.09721e-05 305.566Z" fill='#ffffff' />
-                        </svg>
-
                     </button> : <Link className="navbar__profile" to="/login">
                         <span className="navbar__profile-text">Login</span>
 
-
-                        <svg viewBox="0 0 445 442" className="navbar__profile-arrow" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1.09721e-05 305.566L1.09721e-05 136.434L224.747 136.434L224.747 1.33701e-05L445 221L224.747 442L224.747 305.566L1.09721e-05 305.566Z" fill='#ffffff' />
-                        </svg>
-
                     </Link>}
 
-                    {/* <svg viewBox="0 0 435 435" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M217.5 217C277.423 217 326 168.423 326 108.5C326 48.5771 277.423 0 217.5 0C157.577 0 109 48.5771 109 108.5C109 168.423 157.577 217 217.5 217Z" />
-                        <path fillRule="evenodd" clipRule="evenodd" d="M217.5 245C144.909 245 0 281.371 0 353.571V435H435V353.571C435 281.371 290.091 245 217.5 245Z" />
-                    </svg> */}
+
 
 
                     <button
                         className="navbar__menu-button"
+                        ref={menuButtonRef}
                         type="button"
                         aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
                         aria-expanded={menuOpen}
@@ -95,6 +79,7 @@ function Navbar() {
                 id="navbar-mobile-menu"
                 aria-label="Navegação mobile"
                 aria-hidden={!menuOpen}
+                inert={!menuOpen}
             >
                 <NavLink className={({ isActive }) => isActive ? 'is-active' : ''} to="/" end onClick={() => setMenuOpen(false)}>Home</NavLink>
                 <NavLink className={({ isActive }) => isActive ? 'is-active' : ''} to="/sobre" onClick={() => setMenuOpen(false)}>Sobre</NavLink>

@@ -6,6 +6,7 @@ export interface AdminJob {
     id: number
     title: string
     area: string
+    areaId?: number
     description: string
     workModel: 'remoto' | 'hibrido' | 'presencial'
     contractType: 'CLT' | 'PJ' | 'Estágio'

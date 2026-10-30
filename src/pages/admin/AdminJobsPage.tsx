@@ -39,6 +39,7 @@ function mapApiJob(row: Record<string, any>): AdminJob {
         id: row.id,
         title: row.titulo,
         area: row.area_nome || 'Tecnologia',
+        areaId: row.area_interesse_id ? Number(row.area_interesse_id) : undefined,
         description: row.descricao || '',
         workModel: row.modelo_trabalho,
         contractType: row.tipo_contrato,
@@ -69,8 +70,14 @@ function AdminJobsPage() {
     const [applicants, setApplicants] = useState<Array<Record<string, any>>>([])
     const [applicantsLoading, setApplicantsLoading] = useState(false)
     const [loadError, setLoadError] = useState('')
-    const loadJobs = () => api<Array<Record<string, any>>>('/vagas/admin/todas').then((rows) => {
-        setJobs(rows.map(mapApiJob))
+    const [areasCatalog, setAreasCatalog] = useState<Array<{id:number;nome:string}>>([])
+    const [skillsCatalog, setSkillsCatalog] = useState<Array<{id:number;nome:string}>>([])
+    const loadJobs = () => Promise.all([
+        api<Array<Record<string, any>>>('/vagas/admin/todas'),
+        api<Array<{id:number;nome:string}>>('/areas-interesse'),
+        api<Array<{id:number;nome:string}>>('/habilidades'),
+    ]).then(([rows, areas, skills]) => {
+        setJobs(rows.map(mapApiJob)); setAreasCatalog(areas); setSkillsCatalog(skills)
         setLoadError('')
     })
     useEffect(() => {
@@ -119,7 +126,14 @@ function AdminJobsPage() {
         { label: 'Vagas fechadas', value: summary.closed, icon: 'clipboard' as const },
     ]
 
-    const payload = (job: AdminJob) => ({ titulo:job.title, descricao:job.description, modelo_trabalho:job.workModel, tipo_contrato:job.contractType, salario_min:job.salaryMin, salario_max:job.salaryMax, status:job.status, icone:job.icon, cor:job.color, visibilidade:job.visibility === 'Privado' ? 'privada' : 'publica' })
+    const payload = (job: AdminJob) => {
+        const normalize=(value:string)=>value.trim().toLocaleLowerCase('pt-BR')
+        const area=areasCatalog.find(item=>item.id===job.areaId)||areasCatalog.find(item=>normalize(item.nome)===normalize(job.area))
+        if(!area) throw new Error('Selecione uma área de interesse cadastrada.')
+        const unknown=job.skills.filter(name=>!skillsCatalog.some(item=>normalize(item.nome)===normalize(name)))
+        if(unknown.length) throw new Error(`Competências não cadastradas: ${unknown.join(', ')}.`)
+        return { titulo:job.title, descricao:job.description, modelo_trabalho:job.workModel, tipo_contrato:job.contractType, salario_min:job.salaryMin, salario_max:job.salaryMax, status:job.status, area_interesse_id:area.id, habilidades:job.skills.map(name=>({habilidade_id:skillsCatalog.find(item=>normalize(item.nome)===normalize(name))!.id,obrigatoria:true})), icone:job.icon, cor:job.color, visibilidade:job.visibility === 'Privado' ? 'privada' : 'publica' }
+    }
     const saveEditedJob = async (job: AdminJob) => {
         const updated = await api<Record<string, any>>(`/vagas/update/${job.id}`, { method:'PUT', body:JSON.stringify(payload(job)) })
         setJobs((current) => current.map((item) => item.id === job.id ? mapApiJob({ ...updated, candidatos: item.candidates }) : item))
@@ -295,8 +309,8 @@ function AdminJobsPage() {
                 </nav>
             )}
 
-            {editingJob && <JobFormModal mode="edit" job={editingJob} onClose={() => setEditingJob(null)} onSave={saveEditedJob} />}
-            {creatingJob && <JobFormModal mode="create" nextId={Math.max(0, ...jobs.map((job) => job.id)) + 1} onClose={() => setCreatingJob(false)} onSave={createJob} />}
+            {editingJob && <JobFormModal mode="edit" job={editingJob} areaOptions={areasCatalog.map(item=>item.nome)} skillOptions={skillsCatalog.map(item=>item.nome)} onClose={() => setEditingJob(null)} onSave={saveEditedJob} />}
+            {creatingJob && <JobFormModal mode="create" nextId={Math.max(0, ...jobs.map((job) => job.id)) + 1} areaOptions={areasCatalog.map(item=>item.nome)} skillOptions={skillsCatalog.map(item=>item.nome)} onClose={() => setCreatingJob(false)} onSave={createJob} />}
             {sharingJob && <JobShareModal job={sharingJob} onClose={() => setSharingJob(null)} />}
             {applicantsJob && <div className="admin-applicants-modal" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setApplicantsJob(null)}}><section role="dialog" aria-modal="true" aria-labelledby="applicants-title"><header><div><span>INSCRITOS</span><h2 id="applicants-title">{applicantsJob.title}</h2></div><button type="button" onClick={()=>setApplicantsJob(null)} aria-label="Fechar">×</button></header><div className="admin-applicants-list">{applicantsLoading?<p>Carregando...</p>:applicants.map(item=><article key={item.candidatura_id}><div><strong>{item.candidato_nome}</strong><span>{item.candidato_email}</span></div><div><strong>{item.candidatura_status}</strong><span>{item.data_inscricao?new Date(item.data_inscricao).toLocaleDateString('pt-BR'):''}</span></div></article>)}{!applicantsLoading&&!applicants.length&&<p>Nenhum candidato inscrito nesta vaga.</p>}</div></section></div>}
             <ConfirmModal
