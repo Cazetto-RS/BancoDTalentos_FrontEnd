@@ -1,7 +1,7 @@
 import '../../styles/GlobalStyle.css'
 import '../../styles/externalInterface.css'
-import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+// import { useState, type FormEvent } from 'react'
+// import { useNavigate } from 'react-router-dom'
 
 function HomePage() {
     // const [search, setSearch] = useState('')
