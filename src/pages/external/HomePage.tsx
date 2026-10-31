@@ -4,14 +4,14 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 function HomePage() {
-    const [search, setSearch] = useState('')
-    const navigate = useNavigate()
+    // const [search, setSearch] = useState('')
+    // const navigate = useNavigate()
 
-    const submit = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault()
-        const value = search.trim()
-        navigate(`/vagas-abertas${value ? `?busca=${encodeURIComponent(value)}` : ''}`)
-    }
+    // const submit = (event: FormEvent<HTMLFormElement>) => {
+    //     event.preventDefault()
+    //     const value = search.trim()
+    //     navigate(`/vagas-abertas${value ? `?busca=${encodeURIComponent(value)}` : ''}`)
+    // }
     return (
         <main className='fullBody home-page page-transition'>
             <div className="align__Center">
