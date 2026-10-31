@@ -8,9 +8,10 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
     currency: 'BRL',
 })
 
-export function createJobShareUrl(jobId: number) {
-    const origin = typeof window === 'undefined' ? 'https://pointmedia.com.br' : window.location.origin
-    return `${origin}/vagas-abertas?vaga=${jobId}`
+// O endereço definitivo é gerado pela API autenticada, usando VITE_API_URL.
+// Esta função é apenas um placeholder para modelos locais antigos.
+export function createJobShareUrl(_jobId: number) {
+    return ''
 }
 
 export function getStoredJobs(): AdminJob[] {

@@ -39,12 +39,12 @@ function ProfilePage() {
     const [editingApplication, setEditingApplication] = useState<Record<string, any> | null>(null)
     const [cancelingApplication, setCancelingApplication] = useState<Record<string, any> | null>(null)
     const [applicationError, setApplicationError] = useState('')
-    const [deletingAccount,setDeletingAccount]=useState(false)
+    const [deletingAccount, setDeletingAccount] = useState(false)
     const [loadError, setLoadError] = useState('')
-    const [photoUrl,setPhotoUrl]=useState<string>()
-    const [resumeUrl,setResumeUrl]=useState<string>()
-    const [recommendationUrl,setRecommendationUrl]=useState<string>()
-    const [certificateUrls,setCertificateUrls]=useState<Record<number,string>>({})
+    const [photoUrl, setPhotoUrl] = useState<string>()
+    const [resumeUrl, setResumeUrl] = useState<string>()
+    const [recommendationUrl, setRecommendationUrl] = useState<string>()
+    const [certificateUrls, setCertificateUrls] = useState<Record<number, string>>({})
 
     useEffect(() => {
         Promise.allSettled([
@@ -58,18 +58,18 @@ function ProfilePage() {
         ]).then(([profileResult, cultureResult, experiencesResult, educationResult, skillsResult, interestsResult, applicationsResult]) => {
             if (profileResult.status === 'fulfilled') {
                 setProfile(profileResult.value)
-                void resolveUploadedUrl(profileResult.value.url_foto).then(setPhotoUrl).catch(()=>setPhotoUrl(undefined))
-                void resolveUploadedUrl(profileResult.value.curriculo_url).then(setResumeUrl).catch(()=>setResumeUrl(undefined))
+                void resolveUploadedUrl(profileResult.value.url_foto).then(setPhotoUrl).catch(() => setPhotoUrl(undefined))
+                void resolveUploadedUrl(profileResult.value.curriculo_url).then(setResumeUrl).catch(() => setResumeUrl(undefined))
             }
             if (cultureResult.status === 'fulfilled') {
                 setCulture(cultureResult.value)
-                void resolveUploadedUrl(cultureResult.value.arquivo_recomendacao).then(setRecommendationUrl).catch(()=>setRecommendationUrl(undefined))
+                void resolveUploadedUrl(cultureResult.value.arquivo_recomendacao).then(setRecommendationUrl).catch(() => setRecommendationUrl(undefined))
             }
             if (experiencesResult.status === 'fulfilled') setProfileExperiences(experiencesResult.value.experiencias)
             if (educationResult.status === 'fulfilled') {
-                const education=educationResult.value.formacoes
+                const education = educationResult.value.formacoes
                 setProfileEducation(education)
-                void Promise.all(education.map(async(item)=>[Number(item.id),await resolveUploadedUrl(item.url_certificado)] as const)).then(entries=>setCertificateUrls(Object.fromEntries(entries.filter((entry):entry is readonly [number,string]=>Boolean(entry[1]))))).catch(()=>setCertificateUrls({}))
+                void Promise.all(education.map(async (item) => [Number(item.id), await resolveUploadedUrl(item.url_certificado)] as const)).then(entries => setCertificateUrls(Object.fromEntries(entries.filter((entry): entry is readonly [number, string] => Boolean(entry[1]))))).catch(() => setCertificateUrls({}))
             }
             if (skillsResult.status === 'fulfilled') setProfileSkills(skillsResult.value)
             if (interestsResult.status === 'fulfilled') setInterests(interestsResult.value)
@@ -114,7 +114,7 @@ function ProfilePage() {
 
                 <div className="profile-container profile-hero__content">
                     <div className="profile-photo">
-                        <div className={`profile-avatar ${photoUrl?'profile-avatar--photo':''}`}>
+                        <div className={`profile-avatar ${photoUrl ? 'profile-avatar--photo' : ''}`}>
                             <img src={photoUrl || (!profile.url_foto?.startsWith('storage:') ? profile.url_foto : undefined) || profileIcon} alt={`Foto de perfil de ${user?.nome_completo || 'candidato'}`} />
                         </div>
                         <button className="profile-photo__edit" type="button" aria-label="Alterar foto do perfil" title="Alterar foto" onClick={() => navigate('/perfil/editar')}>+</button>
@@ -133,7 +133,7 @@ function ProfilePage() {
 
                     <div className="profile-hero__actions">
                         <button className="profile-button profile-button--primary" type="button" onClick={() => navigate('/perfil/editar')}>Editar perfil</button>
-                        <button className="profile-delete-account" type="button" onClick={()=>setDeletingAccount(true)}>Excluir conta</button>
+                        <button className="profile-delete-account" type="button" onClick={() => setDeletingAccount(true)}>Excluir conta</button>
                     </div>
                 </div>
             </section>
@@ -261,19 +261,19 @@ function ProfilePage() {
                                         <small>{formatDate(item.data_inicio)} — {formatDate(item.data_fim)}</small>
                                         <h3>{item.curso}</h3>
                                         <p>{item.instituicao}</p>
-                                        {certificateUrls[Number(item.id)]&&<a className="profile-certificate-link" href={certificateUrls[Number(item.id)]} target="_blank" rel="noreferrer">Ver certificado</a>}
+                                        {certificateUrls[Number(item.id)] && <a className="profile-certificate-link" href={certificateUrls[Number(item.id)]} target="_blank" rel="noreferrer">Ver certificado</a>}
                                     </div>
                                 ))}
                             </div>
                         </article>
                     </section>
 
-                    {(resumeUrl||recommendationUrl||Object.keys(certificateUrls).length>0)&&<section className="profile-card profile-documents">
+                    {(resumeUrl || recommendationUrl || Object.keys(certificateUrls).length > 0) && <section className="profile-card profile-documents">
                         <div className="profile-card__heading"><span>DOCUMENTOS</span><h2>Arquivos enviados</h2></div>
                         <div className="profile-links">
-                            {resumeUrl&&<a className="profile-link profile-link--resume" href={resumeUrl} target="_blank" rel="noreferrer"><span>Currículo</span><strong>↗</strong></a>}
-                            {recommendationUrl&&<a className="profile-link profile-link--resume" href={recommendationUrl} target="_blank" rel="noreferrer"><span>Carta de recomendação</span><strong>↗</strong></a>}
-                            {Object.entries(certificateUrls).map(([id,url])=><a className="profile-link profile-link--resume" href={url} target="_blank" rel="noreferrer" key={id}><span>Certificado</span><strong>↗</strong></a>)}
+                            {resumeUrl && <a className="profile-link profile-link--resume" href={resumeUrl} target="_blank" rel="noreferrer"><span>Currículo</span><strong>↗</strong></a>}
+                            {recommendationUrl && <a className="profile-link profile-link--resume" href={recommendationUrl} target="_blank" rel="noreferrer"><span>Carta de recomendação</span><strong>↗</strong></a>}
+                            {Object.entries(certificateUrls).map(([id, url]) => <a className="profile-link profile-link--resume" href={url} target="_blank" rel="noreferrer" key={id}><span>Certificado</span><strong>↗</strong></a>)}
                         </div>
                     </section>}
 
@@ -282,14 +282,18 @@ function ProfilePage() {
                             <div><span>CANDIDATURA</span><h2>Processo seletivo atual</h2></div>
                         </div>
                         {applications.map((application) => <div className="profile-job" key={application.id}>
-                            <div className="profile-job__icon" aria-hidden="true"><JobCategoryIcon category="desenvolvimento" /></div>
-                            <div className="profile-job__content">
-                                <h3>{application.vaga_titulo}</h3>
-                                <p>{application.vaga_contrato || 'Contrato a combinar'} <span>•</span> {application.vaga_modelo || 'Modelo a combinar'}</p>
-                                <strong>{application.pretensao_salarial ? Number(application.pretensao_salarial).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : 'Pretensão não informada'}</strong>
+                            <div className='profile-job__content_buttons'>
+                                <div className="profile-job__icon" aria-hidden="true"><JobCategoryIcon category="desenvolvimento" /></div>
+                                <div className="profile-job__content">
+                                    <h3>{application.vaga_titulo}</h3>
+                                    <p>{application.vaga_contrato || 'Contrato a combinar'} <span>•</span> {application.vaga_modelo || 'Modelo a combinar'}</p>
+                                    <strong>{application.pretensao_salarial ? Number(application.pretensao_salarial).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Pretensão não informada'}</strong>
+                                </div>
                             </div>
-                            <span className="profile-job__status">{application.status}</span>
-                            {!['contratado','dispensado'].includes(application.status) && <div className="profile-application__actions"><button className="profile-job__button" type="button" onClick={() => setEditingApplication({...application})}>Alterar</button><button className="profile-job__button is-danger" type="button" onClick={() => setCancelingApplication(application)}>Cancelar inscrição</button></div>}
+                            <div className="profile-job__content_buttons">
+                                <span className="profile-job__status">{application.status}</span>
+                                {!['contratado', 'dispensado'].includes(application.status) && <div className="profile-application__actions"><button className="profile-job__button update" type="button" onClick={() => setEditingApplication({ ...application })}>Alterar</button><button className="profile-job__button is-danger" type="button" onClick={() => setCancelingApplication(application)}>Cancelar inscrição</button></div>}
+                            </div>
                         </div>)}
                         {applicationError && <p className="profile-load-error" role="alert">{applicationError}</p>}
                     </section>}
@@ -299,9 +303,9 @@ function ProfilePage() {
             {showJobDetails && (
                 <JobApplicationModal job={applicationJob || currentApplication} mode="details" onClose={() => setShowJobDetails(false)} />
             )}
-            {editingApplication && <JobApplicationModal job={{id:editingApplication.vaga_id,title:editingApplication.vaga_titulo,category:'desenvolvimento',salary:editingApplication.pretensao_salarial?`Pretensão: ${Number(editingApplication.pretensao_salarial).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}`:'Pretensão não informada',details:`${editingApplication.vaga_contrato||'Contrato a combinar'} • ${editingApplication.vaga_modelo||'Modelo a combinar'}`,skills:[]}} mode="edit" applicationId={editingApplication.id} initialValues={editingApplication} onClose={()=>setEditingApplication(null)} onUpdated={(saved)=>{setApplications(current=>current.map(item=>item.id===editingApplication.id?{...item,...saved}:item));setEditingApplication(null)}}/>}
-            <ConfirmModal isOpen={Boolean(cancelingApplication)} title="Cancelar inscrição?" message={`Você deixará de participar da vaga “${cancelingApplication?.vaga_titulo || ''}”.`} confirmText="Cancelar inscrição" onClose={()=>setCancelingApplication(null)} onConfirm={async()=>{if(!cancelingApplication)return;try{await api(`/candidaturas/minhas-candidaturas/${cancelingApplication.id}`,{method:'DELETE'});setApplications(current=>current.filter(item=>item.id!==cancelingApplication.id));setCancelingApplication(null)}catch(reason){setApplicationError(reason instanceof Error?reason.message:'Não foi possível cancelar a inscrição.')}}}/>
-            {deletingAccount&&<DeleteAccountModal onClose={()=>setDeletingAccount(false)} onDone={()=>window.location.assign('/')}/>} 
+            {editingApplication && <JobApplicationModal job={{ id: editingApplication.vaga_id, title: editingApplication.vaga_titulo, category: 'desenvolvimento', salary: editingApplication.pretensao_salarial ? `Pretensão: ${Number(editingApplication.pretensao_salarial).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : 'Pretensão não informada', details: `${editingApplication.vaga_contrato || 'Contrato a combinar'} • ${editingApplication.vaga_modelo || 'Modelo a combinar'}`, skills: [] }} mode="edit" applicationId={editingApplication.id} initialValues={editingApplication} onClose={() => setEditingApplication(null)} onUpdated={(saved) => { setApplications(current => current.map(item => item.id === editingApplication.id ? { ...item, ...saved } : item)); setEditingApplication(null) }} />}
+            <ConfirmModal isOpen={Boolean(cancelingApplication)} title="Cancelar inscrição?" message={`Você deixará de participar da vaga “${cancelingApplication?.vaga_titulo || ''}”.`} confirmText="Cancelar inscrição" onClose={() => setCancelingApplication(null)} onConfirm={async () => { if (!cancelingApplication) return; try { await api(`/candidaturas/minhas-candidaturas/${cancelingApplication.id}`, { method: 'DELETE' }); setApplications(current => current.filter(item => item.id !== cancelingApplication.id)); setCancelingApplication(null) } catch (reason) { setApplicationError(reason instanceof Error ? reason.message : 'Não foi possível cancelar a inscrição.') } }} />
+            {deletingAccount && <DeleteAccountModal onClose={() => setDeletingAccount(false)} onDone={() => window.location.assign('/')} />}
         </main>
     )
 }

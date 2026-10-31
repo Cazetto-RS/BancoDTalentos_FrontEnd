@@ -24,7 +24,8 @@ function LoginPage() {
         const data = new FormData(event.currentTarget)
         try {
             const loggedUser = await login(String(data.get('email')), String(data.get('senha')), data.get('remember') === 'on')
-            const requestedPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
+            const from = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from
+            const requestedPath = from?.pathname?.startsWith('/') && !from.pathname.startsWith('//') ? `${from.pathname}${from.search || ''}` : undefined
             navigate(requestedPath || (loggedUser.cargo === 'candidato' ? '/perfil' : '/admin/dashboard'), { replace: true })
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : 'Não foi possível entrar.')

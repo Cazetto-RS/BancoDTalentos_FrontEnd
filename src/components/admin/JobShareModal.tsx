@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { AdminJob } from '../../types/Job'
 import AdminIcon from './AdminIcon'
+import { api, apiUrl } from '../../services/api'
 import '../../styles/AdminJobModal.css'
 
 interface JobShareModalProps {
@@ -9,20 +10,36 @@ interface JobShareModalProps {
     onClose: () => void
 }
 
-const qrPattern = [
-    '111111101010101111111', '100000101101001000001', '101110101011101011101',
-    '101110100101001011101', '101110101110101011101', '100000100011101000001',
-    '111111101010101111111', '000000001101000000000', '101111111011111010101',
-    '011010001100010111000', '110011101011101001111', '001101001110010110100',
-    '101011111001111011101', '000000001010001010100', '111111101111101011111',
-    '100000100100001000101', '101110101111101110111', '101110100010100010000',
-    '101110101101111011101', '100000101010001100101', '111111101101101011111',
-]
+// Serviço público de QR Code: o conteúdo codificado é exclusivamente a URL pública da vaga.
+// Não inclua tokens de sessão ou parâmetros privados neste endereço.
+function getQrCodeUrl(shareUrl: string) {
+    const url = new URL('https://api.qrserver.com/v1/create-qr-code/')
+    url.searchParams.set('data', shareUrl)
+    url.searchParams.set('size', '320x320')
+    url.searchParams.set('format', 'png')
+    url.searchParams.set('ecc', 'M')
+    url.searchParams.set('qzone', '4')
+    return url.toString()
+}
 
 function JobShareModal({ job, onClose }: JobShareModalProps) {
     const dialogRef = useRef<HTMLDivElement>(null)
     const copiedTimerRef = useRef<number | null>(null)
     const [copied, setCopied] = useState(false)
+    const [qrFailed, setQrFailed] = useState(false)
+    const [shareUrl, setShareUrl] = useState('')
+    const [shareError, setShareError] = useState('')
+    const [retry, setRetry] = useState(0)
+    useEffect(() => {
+        let active = true
+        setShareUrl(''); setShareError(''); setQrFailed(false)
+        api<{ path: string }>(`/vagas/admin/compartilhar/${job.id}`)
+            .then(result => { if (active) setShareUrl(new URL(result.path, apiUrl).toString()) })
+            .catch(() => { if (active) setShareError('Não foi possível gerar o link da vaga.') })
+        return () => { active = false }
+    }, [job.id, retry])
+    const qrUrl = shareUrl ? getQrCodeUrl(shareUrl) : '' 
+    const localAddress = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(new URL(shareUrl || 'http://localhost').hostname)
 
     useEffect(() => {
         const scrollContainer = document.querySelector<HTMLElement>('.admin-layout__content')
@@ -45,11 +62,11 @@ function JobShareModal({ job, onClose }: JobShareModalProps) {
         let copiedSuccessfully = false
 
         try {
-            await navigator.clipboard.writeText(job.shareUrl)
+            await navigator.clipboard.writeText(shareUrl)
             copiedSuccessfully = true
         } catch {
             const textarea = document.createElement('textarea')
-            textarea.value = job.shareUrl
+            textarea.value = shareUrl
             textarea.style.position = 'fixed'
             textarea.style.opacity = '0'
             document.body.appendChild(textarea)
@@ -90,21 +107,33 @@ function JobShareModal({ job, onClose }: JobShareModalProps) {
 
                 <div className="admin-job-share-modal__qr-card">
                     <div className="admin-job-share-modal__qr">
-                        <svg viewBox="0 0 21 21" role="img" aria-label="QR Code de acesso à vaga" shapeRendering="crispEdges">
-                            <rect width="21" height="21" fill="#fff" />
-                            {qrPattern.flatMap((row, rowIndex) => [...row].map((cell, columnIndex) => cell === '1' ? (
-                                <rect x={columnIndex} y={rowIndex} width="1" height="1" fill="#000" key={`${rowIndex}-${columnIndex}`} />
-                            ) : null))}
-                        </svg>
+                        {shareError ? <div role="alert">{shareError}<button type="button" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div> : !shareUrl ? <p role="status">Gerando link seguro...</p> : qrFailed ? (
+                            <div className="admin-job-share-modal__qr-error" role="alert">
+                                Não foi possível carregar o QR Code.
+                                <button type="button" onClick={() => setQrFailed(false)}>Tentar novamente</button>
+                            </div>
+                        ) : (
+                            <img
+                                src={qrUrl}
+                                alt={`QR Code para acessar a vaga ${job.title}`}
+                                width="320"
+                                height="320"
+                                loading="eager"
+                                referrerPolicy="no-referrer"
+                                onError={() => setQrFailed(true)}
+                            />
+                        )}
                     </div>
                     <p>Aponte a câmera do celular para acessar a vaga</p>
+                    {localAddress && <p role="status">O link aponta para localhost e não funciona em outro aparelho. Publique o site ou configure a URL do frontend em CORS_ORIGINS na API.</p>}
+                    {job.visibility === 'Privado' && <p role="status">Acesso por convite: quem receber o link deverá entrar na conta para visualizar e se candidatar.</p>}
                 </div>
 
                 <div className="admin-job-share-modal__link">
                     <label htmlFor="admin-job-share-url">Link da vaga</label>
                     <div className="admin-job-share-modal__link-control">
-                        <a id="admin-job-share-url" href={job.shareUrl} target="_blank" rel="noreferrer" title={job.shareUrl}>{job.shareUrl}</a>
-                        <button className={copied ? 'is-copied' : ''} type="button" onClick={copyUrl} aria-label={copied ? 'Link copiado' : 'Copiar link da vaga'}>
+                        <a id="admin-job-share-url" href={shareUrl || undefined} target="_blank" rel="noreferrer" title={shareUrl}>{shareUrl || "Gerando link..."}</a>
+                        <button className={copied ? 'is-copied' : ''} type="button" onClick={copyUrl} disabled={!shareUrl} aria-label={copied ? 'Link copiado' : 'Copiar link da vaga'}>
                             {copied ? (
                                 <AdminIcon name="check" aria-hidden="true" />
                             ) : (

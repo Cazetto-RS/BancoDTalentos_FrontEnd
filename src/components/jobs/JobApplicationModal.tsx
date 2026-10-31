@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 
 interface JobApplicationModalProps {
     job: JobModalData
+    invitationToken?: string
     onClose: () => void
     mode?: 'apply' | 'details' | 'edit'
     applicationId?: number
@@ -18,7 +19,7 @@ interface JobApplicationModalProps {
     onUpdated?: (application: Record<string, unknown>) => void
 }
 
-function JobApplicationModal({ job, onClose, mode = 'apply', applicationId, initialValues, onUpdated }: JobApplicationModalProps) {
+function JobApplicationModal({ job, invitationToken, onClose, mode = 'apply', applicationId, initialValues, onUpdated }: JobApplicationModalProps) {
     const [step, setStep] = useState(mode === 'edit' ? 2 : 1)
     const [error, setError] = useState(''); const [loading, setLoading] = useState(false)
     const { user } = useAuth(); const navigate = useNavigate()
@@ -54,12 +55,12 @@ function JobApplicationModal({ job, onClose, mode = 'apply', applicationId, init
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        if (!user) return navigate('/login')
+        if (!user) return navigate('/login', { state: { from: { pathname: window.location.pathname, search: window.location.search } } })
         if (user.cargo !== 'candidato') return setError('Somente candidatos podem se inscrever.')
         const form = new FormData(event.currentTarget); setLoading(true); setError('')
         try {
             const payload = {
-                vaga_id: job.id, pretensao_salarial: Number(form.get('salary')),
+                vaga_id: job.id, ...(invitationToken ? { convite: invitationToken } : {}), pretensao_salarial: Number(form.get('salary')),
                 disponibilidade: form.get('availability'), preferencia_contrato: form.get('contract'), preferencia_modelo_trabalho: form.get('workModel'),
             }
             if(mode==='edit'){

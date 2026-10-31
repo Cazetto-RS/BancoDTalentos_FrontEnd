@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 import '../../styles/externalInterface.css'
 import '../../styles/JobsPage.css'
 import JobApplicationModal from '../../components/jobs/JobApplicationModal'
@@ -45,6 +46,15 @@ const fromApi = (job: ApiJob): PublicJob => ({
 
 function JobsPage() {
     const [searchParams] = useSearchParams()
+    const { isAuthenticated } = useAuth()
+    const location = useLocation()
+    const navigate = useNavigate()
+    const [invitedJob, setInvitedJob] = useState<PublicJob | null>(null)
+    const [invitationError, setInvitationError] = useState('')
+    const [invitationLoading, setInvitationLoading] = useState(false)
+    const invitation = searchParams.get('convite')
+    const invitedId = searchParams.get('vaga')
+
     const queryKey = searchParams.toString()
     const [jobs, setJobs] = useState<PublicJob[]>([])
     const [loading, setLoading] = useState(true)
@@ -57,7 +67,7 @@ function JobsPage() {
     const [filters, setFilters] = useState<JobFilters>(() => ({ search: searchParams.get('busca') || '', area: searchParams.get('area') || '', model: searchParams.get('modelo') || '', contract: searchParams.get('contrato') || '' }))
     const [selectedJobId, setSelectedJobId] = useState<number | null>(() => Number(searchParams.get('vaga')) || null)
     const activeFilterCount = [filters.area, filters.model, filters.contract].filter(Boolean).length
-    const selectedJob = jobs.find(job => job.id === selectedJobId) || null
+    const selectedJob = invitedJob?.id === selectedJobId ? invitedJob : jobs.find(job => job.id === selectedJobId) || null
 
     // Links externos e o histórico atualizam a busca. Digitar não dispara navegação.
     useEffect(() => {
@@ -81,6 +91,21 @@ function JobsPage() {
         }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
         return () => controller.abort()
     }, [reloadKey])
+
+    useEffect(() => {
+        if (!invitation || !invitedId || !/^\d+$/.test(invitedId)) { setInvitedJob(null); setInvitationError(''); return }
+        if (!isAuthenticated) {
+            navigate('/login', { replace: true, state: { from: { pathname: location.pathname, search: location.search } } })
+            return
+        }
+        const controller = new AbortController()
+        setInvitationLoading(true); setInvitationError(''); setInvitedJob(null)
+        api<ApiJob>(`/vagas/convite/${invitedId}/${encodeURIComponent(invitation)}`, { signal: controller.signal })
+            .then(result => { if (!controller.signal.aborted) { setInvitedJob(fromApi(result)); setSelectedJobId(result.id) } })
+            .catch(() => { if (!controller.signal.aborted) setInvitationError('Convite inválido, expirado ou vaga indisponível.') })
+            .finally(() => { if (!controller.signal.aborted) setInvitationLoading(false) })
+        return () => controller.abort()
+    }, [invitation, invitedId, isAuthenticated, navigate, location.pathname, location.search])
 
     useEffect(() => {
         const media = window.matchMedia('(max-width: 600px)')
@@ -132,6 +157,8 @@ function JobsPage() {
                     </div>}
                 </div>
             </section>
+            {invitationLoading && <p role="status" className="jobs__container">Carregando vaga compartilhada...</p>}
+            {invitationError && <p role="alert" className="jobs__container">{invitationError}</p>}
             <section className="jobs__list" aria-label="Vagas disponíveis" aria-busy={loading} ref={listRef}>
                 <div className="jobs__container jobs__result-bar">
                     <p role="status" aria-live="polite">{loading ? 'Buscando oportunidades...' : loadError ? 'Oportunidades' : `${filteredJobs.length} ${filteredJobs.length === 1 ? 'oportunidade encontrada' : 'oportunidades encontradas'}`}</p>
@@ -158,7 +185,7 @@ function JobsPage() {
                     <button type="button" onClick={() => changePage(page + 1)} disabled={page === totalPages} aria-label="Próxima página">›</button>
                 </nav>}
             </section>
-            {selectedJob && <JobApplicationModal job={selectedJob} onClose={() => setSelectedJobId(null)} />}
+            {selectedJob && <JobApplicationModal job={selectedJob} invitationToken={invitedJob?.id === selectedJob.id ? (invitation || undefined) : undefined} onClose={() => setSelectedJobId(null)} />}
         </main>
     )
 }
