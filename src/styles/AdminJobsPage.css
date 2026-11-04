@@ -696,3 +696,20 @@
 
 .admin-jobs-header { padding-right: 3rem; }
 @media (max-width: 900px) { .admin-jobs-header { padding-right: 0; } }
+
+/* Pesquisa e paginação dos inscritos: até seis candidatos por página. */
+.admin-applicants-toolbar{padding:1rem 1.25rem .6rem;display:grid;gap:.55rem}
+.admin-applicants-toolbar>p{margin:0;color:var(--color-text-muted);font-size:.8rem}
+.admin-applicants-search{display:flex;align-items:center;gap:.65rem;padding:.65rem .8rem;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-muted)}
+.admin-applicants-search svg{flex:none;width:1.1rem;height:1.1rem;color:var(--color-text-muted)}
+.admin-applicants-search input{width:100%;min-width:0;border:0;outline:none;background:transparent;color:var(--color-text);font:inherit;font-size:.9rem}
+.admin-applicants-search:focus-within{outline:2px solid var(--color-primary);outline-offset:2px}
+.admin-applicants-list article>div{min-width:0;overflow-wrap:anywhere}
+.admin-applicants-list article>div:last-child{text-align:right}
+.admin-applicants-list .admin-applicants-error{color:var(--color-danger)}
+.admin-applicants-pagination{display:flex;align-items:center;justify-content:center;gap:.65rem;flex-wrap:wrap;padding:1rem;border-top:1px solid var(--color-border)}
+.admin-applicants-pagination>div{display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;justify-content:center}
+.admin-applicants-pagination button{border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);min-width:2.2rem;min-height:2.2rem;padding:.3rem .55rem;border-radius:var(--radius-md);cursor:pointer}
+.admin-applicants-pagination button.is-active{background:var(--color-primary);border-color:var(--color-primary);color:#fff}
+.admin-applicants-pagination button:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:520px){.admin-applicants-modal{padding:.5rem}.admin-applicants-modal>section{max-height:90dvh}.admin-applicants-list article{padding:.85rem;gap:.5rem}.admin-applicants-toolbar{padding:.85rem}}

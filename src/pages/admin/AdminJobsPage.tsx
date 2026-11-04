@@ -32,6 +32,11 @@ function getJobIcon(area: string): AdminIconName {
 }
 
 const JOBS_PER_PAGE = 6
+const APPLICANTS_PER_PAGE = 6
+
+function normalizeApplicantSearch(value: unknown) {
+    return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
 const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({ value, label }))
 
 function mapApiJob(row: Record<string, any>): AdminJob {
@@ -69,6 +74,9 @@ function AdminJobsPage() {
     const [applicantsJob, setApplicantsJob] = useState<AdminJob | null>(null)
     const [applicants, setApplicants] = useState<Array<Record<string, any>>>([])
     const [applicantsLoading, setApplicantsLoading] = useState(false)
+    const [applicantsError, setApplicantsError] = useState('')
+    const [applicantsSearch, setApplicantsSearch] = useState('')
+    const [applicantsPage, setApplicantsPage] = useState(1)
     const [loadError, setLoadError] = useState('')
     const [areasCatalog, setAreasCatalog] = useState<Array<{id:number;nome:string}>>([])
     const [skillsCatalog, setSkillsCatalog] = useState<Array<{id:number;nome:string}>>([])
@@ -159,11 +167,27 @@ function AdminJobsPage() {
         await api(`/vagas/delete/${deletingJob.id}`, { method:'DELETE' }); setJobs(current => current.filter(job => job.id !== deletingJob.id)); setCurrentPage(1); setDeletingJob(null)
     }
     const openApplicants = async (job: AdminJob) => {
-        setApplicantsJob(job); setApplicants([]); setApplicantsLoading(true)
+        setApplicantsJob(job)
+        setApplicants([])
+        setApplicantsError('')
+        setApplicantsSearch('')
+        setApplicantsPage(1)
+        setApplicantsLoading(true)
         try { setApplicants(await api<Array<Record<string, any>>>(`/candidaturas/vaga/${job.id}`)) }
-        catch (reason) { setLoadError(reason instanceof Error ? reason.message : 'Não foi possível carregar os inscritos.') }
+        catch (reason) { setApplicantsError(reason instanceof Error ? reason.message : 'Não foi possível carregar os inscritos.') }
         finally { setApplicantsLoading(false) }
     }
+    const matchingApplicants = useMemo(() => {
+        const term = normalizeApplicantSearch(applicantsSearch.trim())
+        if (!term) return applicants
+        return applicants.filter(item => [item.candidato_nome, item.candidato_email, item.candidatura_status]
+            .some(value => normalizeApplicantSearch(value).includes(term)))
+    }, [applicants, applicantsSearch])
+    const applicantsPages = Math.max(1, Math.ceil(matchingApplicants.length / APPLICANTS_PER_PAGE))
+    const safeApplicantsPage = Math.min(applicantsPage, applicantsPages)
+    const visibleApplicants = matchingApplicants.slice(
+        (safeApplicantsPage - 1) * APPLICANTS_PER_PAGE, safeApplicantsPage * APPLICANTS_PER_PAGE,
+    )
 
     return (
         <section className="admin-jobs-page">
@@ -312,7 +336,46 @@ function AdminJobsPage() {
             {editingJob && <JobFormModal mode="edit" job={editingJob} areaOptions={areasCatalog.map(item=>item.nome)} skillOptions={skillsCatalog.map(item=>item.nome)} onClose={() => setEditingJob(null)} onSave={saveEditedJob} />}
             {creatingJob && <JobFormModal mode="create" nextId={Math.max(0, ...jobs.map((job) => job.id)) + 1} areaOptions={areasCatalog.map(item=>item.nome)} skillOptions={skillsCatalog.map(item=>item.nome)} onClose={() => setCreatingJob(false)} onSave={createJob} />}
             {sharingJob && <JobShareModal job={sharingJob} onClose={() => setSharingJob(null)} />}
-            {applicantsJob && <div className="admin-applicants-modal" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setApplicantsJob(null)}}><section role="dialog" aria-modal="true" aria-labelledby="applicants-title"><header><div><span>INSCRITOS</span><h2 id="applicants-title">{applicantsJob.title}</h2></div><button type="button" onClick={()=>setApplicantsJob(null)} aria-label="Fechar">×</button></header><div className="admin-applicants-list">{applicantsLoading?<p>Carregando...</p>:applicants.map(item=><article key={item.candidatura_id}><div><strong>{item.candidato_nome}</strong><span>{item.candidato_email}</span></div><div><strong>{item.candidatura_status}</strong><span>{item.data_inscricao?new Date(item.data_inscricao).toLocaleDateString('pt-BR'):''}</span></div></article>)}{!applicantsLoading&&!applicants.length&&<p>Nenhum candidato inscrito nesta vaga.</p>}</div></section></div>}
+            {applicantsJob && (
+                <div className="admin-applicants-modal" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setApplicantsJob(null) }}>
+                    <section role="dialog" aria-modal="true" aria-labelledby="applicants-title">
+                        <header>
+                            <div><span>INSCRITOS</span><h2 id="applicants-title">{applicantsJob.title}</h2></div>
+                            <button type="button" onClick={() => setApplicantsJob(null)} aria-label="Fechar">×</button>
+                        </header>
+                        <div className="admin-applicants-toolbar">
+                            <label className="admin-applicants-search">
+                                <AdminIcon name="search" aria-hidden="true" />
+                                <input type="search" value={applicantsSearch} placeholder="Pesquisar por nome, e-mail ou status..."
+                                    aria-label="Pesquisar candidatos inscritos"
+                                    onChange={event => { setApplicantsSearch(event.target.value); setApplicantsPage(1) }} />
+                            </label>
+                            {!applicantsLoading && !applicantsError && <p aria-live="polite">{matchingApplicants.length} {matchingApplicants.length === 1 ? 'candidato encontrado' : 'candidatos encontrados'}</p>}
+                        </div>
+                        <div className="admin-applicants-list">
+                            {applicantsLoading ? <p role="status">Carregando inscritos...</p> : applicantsError ? <p role="alert" className="admin-applicants-error">{applicantsError}</p> : (
+                                <>
+                                    {visibleApplicants.map(item => <article key={item.candidatura_id}>
+                                        <div><strong>{item.candidato_nome}</strong><span>{item.candidato_email}</span></div>
+                                        <div><strong>{item.candidatura_status}</strong><span>{item.data_inscricao ? new Date(item.data_inscricao).toLocaleDateString('pt-BR') : ''}</span></div>
+                                    </article>)}
+                                    {!matchingApplicants.length && <p>{applicantsSearch ? 'Nenhum candidato corresponde à pesquisa.' : 'Nenhum candidato inscrito nesta vaga.'}</p>}
+                                </>
+                            )}
+                        </div>
+                        {!applicantsLoading && !applicantsError && applicantsPages > 1 && (
+                            <nav className="admin-applicants-pagination" aria-label="Páginas de candidatos inscritos">
+                                <button type="button" disabled={safeApplicantsPage === 1} onClick={() => setApplicantsPage(page => Math.max(1, page - 1))}>Anterior</button>
+                                <div>{Array.from({ length: applicantsPages }, (_, index) => index + 1).map(page => (
+                                    <button key={page} type="button" aria-label={`Página ${page}`} aria-current={page === safeApplicantsPage ? 'page' : undefined}
+                                        className={page === safeApplicantsPage ? 'is-active' : ''} onClick={() => setApplicantsPage(page)}>{page}</button>
+                                ))}</div>
+                                <button type="button" disabled={safeApplicantsPage === applicantsPages} onClick={() => setApplicantsPage(page => Math.min(applicantsPages, page + 1))}>Próxima</button>
+                            </nav>
+                        )}
+                    </section>
+                </div>
+            )}
             <ConfirmModal
                 isOpen={Boolean(deletingJob)}
                 title="Excluir vaga?"
