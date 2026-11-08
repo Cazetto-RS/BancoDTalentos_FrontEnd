@@ -54,11 +54,11 @@ function Navbar() {
 
                 <div className="navbar__actions">
                     <NotificationCenter />
-                    <button className="navbar__theme-toggle" type="button" onClick={toggleTheme}
+                    {/* <button className="navbar__theme-toggle" type="button" onClick={toggleTheme}
                         aria-label={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'}
                         title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'} aria-pressed={theme === 'dark'}>
                         {themeIcon}
-                    </button>
+                    </button> */}
                     <Link className="navbar__profile__vazado" to={isAuthenticated ? accountPath : '/cadastro'}>
                         <span className="navbar__profile-text">{isAuthenticated ? 'Minha conta' : 'Registrar-se'}</span>
 
