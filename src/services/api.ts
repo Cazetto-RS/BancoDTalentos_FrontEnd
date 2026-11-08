@@ -7,8 +7,10 @@ export class ApiError extends Error {
     codigo?: string
     path: string
     requestId?: string
-    constructor(message: string, status: number, path: string, codigo?: string, requestId?: string) {
+    retryAfterSeconds?: number
+    constructor(message: string, status: number, path: string, codigo?: string, requestId?: string, retryAfterSeconds?: number) {
         super(message); this.name = 'ApiError'; this.status = status; this.path = path; this.codigo = codigo; this.requestId = requestId
+        this.retryAfterSeconds = retryAfterSeconds
     }
 }
 
@@ -29,7 +31,8 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
         console.error('[API]', { method: options.method || 'GET', path, status: response.status, codigo: payload?.codigo, requestId, payload })
         // Uma resposta 401 de rota pública não representa uma sessão expirada.
         if (response.status === 401 && token) window.dispatchEvent(new Event('talentos:unauthorized'))
-        throw new ApiError(payload?.mensagem || 'Não foi possível concluir a operação.', response.status, path, payload?.codigo, requestId)
+        throw new ApiError(payload?.mensagem || 'Não foi possível concluir a operação.', response.status, path, payload?.codigo, requestId,
+            typeof payload?.retry_after_segundos === 'number' ? payload.retry_after_segundos : undefined)
     }
     return (payload?.dados ?? payload) as T
 }

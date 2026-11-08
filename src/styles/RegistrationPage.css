@@ -978,3 +978,46 @@
         top: 2.25rem;
     }
 }
+/* Cartão de cadastro com altura fixa e conteúdo interno rolável. */
+.registration-page {
+    height: 100%; min-height: 0; overflow: hidden;
+    padding: clamp(.5rem, 2vh, 1.5rem) clamp(.65rem, 2.5vw, 1.5rem);
+}
+.registration-card {
+    width: min(100%, 920px);
+    height: min(790px, calc(100dvh - var(--navbar-height) - 2rem));
+    min-height: 0; max-height: 100%; overflow: hidden;
+    padding: clamp(1rem, 2vw, 1.7rem);
+}
+.registration-header { flex: 0 0 auto; }
+.registration-progress { flex: 0 0 auto; margin: .8rem 0 1.15rem; }
+.registration-form { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; overflow: hidden; }
+.registration-fields {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
+    align-content: start; padding: .3rem .35rem .65rem 0;
+    overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--color-border) transparent;
+}
+.registration-actions {
+    flex: 0 0 auto; margin-top: 0; padding-top: .85rem;
+    background: var(--color-surface);
+}
+.registration-form > .registration-error { flex: 0 0 auto; margin: .35rem 0 0; }
+@media (max-width: 760px) {
+    .registration-card { height: calc(100dvh - var(--navbar-height) - 1.25rem); min-height: 0; padding: 1rem; }
+    .registration-progress { margin: .65rem 0 .9rem; }
+    .registration-fields { gap: .8rem; }
+}
+@media (max-width: 480px) {
+    .registration-page { padding: .4rem; }
+    .registration-card { height: calc(100dvh - var(--navbar-height) - .8rem); padding: .75rem; }
+    .registration-progress { margin: .6rem 0 .8rem; }
+    .registration-header h1 { font-size: 1.4rem; }
+    .registration-actions { padding-top: .65rem; }
+    .registration-actions > div { gap: .5rem; }
+    .registration-button { min-height: 2.65rem; }
+}
+@media (max-height: 560px) {
+    .registration-card { padding: .7rem; }
+    .registration-header p { margin-top: 0; }
+    .registration-progress { margin: .35rem 0 .55rem; }
+}

@@ -307,3 +307,4 @@
         font-size: 1rem;
     }
 }
+.login-lockout { margin: 0; padding: .85rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface-muted); color: var(--color-text); font-size: .85rem; }

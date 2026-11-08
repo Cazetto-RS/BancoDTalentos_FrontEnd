@@ -90,3 +90,7 @@ Foto, currículo, certificados e carta de recomendação são enviados pela API 
 ## Executar no Windows
 
 Abra o terminal na pasta do projeto e execute `npm ci` e `npm run dev`. Se precisar criar um `.env` no PowerShell, use `Copy-Item .env.example .env` antes de iniciar. O servidor de desenvolvimento mostra o endereço local no terminal.
+
+## Atualização de interface e autenticação (08/11/2026)
+
+Consulte [MELHORIAS_UI_E_SEGURANCA.md](MELHORIAS_UI_E_SEGURANCA.md) para conhecer o tema claro/escuro persistente, os componentes visuais padronizados, o cartão de cadastro com rolagem interna e os estados de bloqueio de login. O bloqueio de cinco tentativas requer a API atualizada fornecida em conjunto.

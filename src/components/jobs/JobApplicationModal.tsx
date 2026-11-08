@@ -124,10 +124,10 @@ function JobApplicationModal({ job, invitationToken, onClose, mode = 'apply', ap
                             <span>Pretensão salarial</span>
                             <input name="salary" type="number" min="0" step="0.01" placeholder="R$ 0.000,00" defaultValue={initialValues?.pretensao_salarial||''} required />
                         </label>
-                        <fieldset className="job-modal__field">
-                            <legend>Disponibilidade de horário</legend>
+                        <label className="job-modal__field">
+                            <span>Disponibilidade de horário</span>
                             <select name="availability" defaultValue={initialValues?.disponibilidade||''} required><option value="" disabled>Selecione</option><option value="manhã">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option><option value="integral">Integral</option></select>
-                        </fieldset>
+                        </label>
                         <label className="job-modal__field">
                             <span>Tipo de contrato desejado</span>
                             <select name="contract" defaultValue={initialValues?.preferencia_contrato||''} required><option value="" disabled>Selecione uma opção</option><option value="CLT">CLT</option><option value="PJ">PJ</option><option value="Estágio">Estágio</option></select>

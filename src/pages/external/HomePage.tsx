@@ -13,7 +13,7 @@ function HomePage() {
     //     navigate(`/vagas-abertas${value ? `?busca=${encodeURIComponent(value)}` : ''}`)
     // }
     return (
-        <main className='fullBody home-page page-transition'>
+        <main className='fullBody home-page page-transition'> 
             <div className="align__Center">
                 <p className="home-eyebrow">POINT MEDIA <span aria-hidden="true">/</span> BANCO DE TALENTOS</p>
                 <h1 className='title__page_lg'>Sua <span className='span__rosa'>carreira</span> conosco começa <span className='span__azul'>aqui...</span></h1>

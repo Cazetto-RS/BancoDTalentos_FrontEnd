@@ -1,8 +1,9 @@
 import { PasswordVisibilityIcon } from '../../components/common/InterfaceIcons'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import '../../styles/LoginPage.css'
+import { ApiError } from '../../services/api'
 
 function LoginPage() {
     const { login, isAuthenticated, user } = useAuth()
@@ -11,6 +12,15 @@ function LoginPage() {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [showPassword,setShowPassword]=useState(false)
+    const [lockedUntil, setLockedUntil] = useState(0)
+    const [secondsLeft, setSecondsLeft] = useState(0)
+    useEffect(() => {
+        if (!lockedUntil) return
+        const update = () => setSecondsLeft(Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000)))
+        update()
+        const timer = window.setInterval(update, 1000)
+        return () => window.clearInterval(timer)
+    }, [lockedUntil])
 
     if (isAuthenticated) {
         return <Navigate to={user?.cargo === 'candidato' ? '/perfil' : '/admin/dashboard'} replace />
@@ -18,6 +28,7 @@ function LoginPage() {
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
+        if (secondsLeft > 0) return
         setError('')
         setLoading(true)
 
@@ -28,6 +39,9 @@ function LoginPage() {
             const requestedPath = from?.pathname?.startsWith('/') && !from.pathname.startsWith('//') ? `${from.pathname}${from.search || ''}` : undefined
             navigate(requestedPath || (loggedUser.cargo === 'candidato' ? '/perfil' : '/admin/dashboard'), { replace: true })
         } catch (reason) {
+            if (reason instanceof ApiError && reason.codigo === 'LOGIN_LOCKED') {
+                setLockedUntil(Date.now() + (reason.retryAfterSeconds ?? 900) * 1000)
+            }
             setError(reason instanceof Error ? reason.message : 'Não foi possível entrar.')
         } finally {
             setLoading(false)
@@ -73,8 +87,12 @@ function LoginPage() {
                     </label>
 
                     {error && <p className="login-error" role="alert">{error}</p>}
+                    {secondsLeft > 0 && <p className="login-lockout" role="status">
+                        Aguarde {Math.floor(secondsLeft / 60).toString().padStart(2, '0')}:{(secondsLeft % 60).toString().padStart(2, '0')} para tentar novamente.
+                        Você pode usar a recuperação de senha.
+                    </p>}
 
-                    <button className="login-submit" type="submit" disabled={loading}>
+                    <button className="login-submit" type="submit" disabled={loading || secondsLeft > 0}>
                         {loading ? 'Entrando...' : 'Entrar'}
                     </button>
                 </form>
