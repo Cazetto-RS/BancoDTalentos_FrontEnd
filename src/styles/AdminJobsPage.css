@@ -713,3 +713,16 @@
 .admin-applicants-pagination button.is-active{background:var(--color-primary);border-color:var(--color-primary);color:#fff}
 .admin-applicants-pagination button:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:520px){.admin-applicants-modal{padding:.5rem}.admin-applicants-modal>section{max-height:90dvh}.admin-applicants-list article{padding:.85rem;gap:.5rem}.admin-applicants-toolbar{padding:.85rem}}
+
+/* Acesso ao mesmo perfil completo utilizado em Candidatos. */
+.admin-applicants-list article {padding:0;display:block}
+.admin-applicants-profile{width:100%;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.25rem;border:0;background:transparent;color:var(--color-text);text-align:left;font:inherit;cursor:pointer}
+.admin-applicants-profile:hover{background:var(--color-surface-muted)}
+.admin-applicants-profile:focus-visible{outline:2px solid var(--color-primary);outline-offset:-3px}
+.admin-applicants-profile:disabled{opacity:.65;cursor:wait}
+.admin-applicants-profile>span:first-child{display:grid;gap:.25rem;min-width:0;overflow-wrap:anywhere}
+.admin-applicants-profile small{color:var(--color-text-muted);font-size:.8rem}
+.admin-applicants-profile__metadata{display:grid;gap:.25rem;text-align:right;flex-shrink:0}
+.admin-applicants-profile__action{color:var(--color-primary);font-size:.78rem;font-weight:700;white-space:nowrap}
+.admin-applicants-modal .admin-applicants-error{color:var(--color-danger);padding:.4rem 1.25rem;margin:0}
+@media(max-width:600px){.admin-applicants-profile{flex-wrap:wrap;gap:.65rem}.admin-applicants-profile__action{flex-basis:100%}}

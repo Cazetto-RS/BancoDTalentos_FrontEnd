@@ -5,6 +5,9 @@ import AdminSummaryCards from '../../components/admin/AdminSummaryCards'
 import JobFormModal from '../../components/admin/JobFormModal'
 import JobShareModal from '../../components/admin/JobShareModal'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import CandidateDetailsModal from '../../components/admin/CandidateDetailsModal'
+import type { AdminCandidate } from '../../types/AdminCandidate'
+import { mapApiCandidate, hydrateCandidateFiles } from '../../services/adminCandidateMapper'
 import { createJobShareUrl } from '../../services/jobStorage'
 import { api } from '../../services/api'
 import type { AdminJob, JobStatus } from '../../types/Job'
@@ -77,6 +80,9 @@ function AdminJobsPage() {
     const [applicantsError, setApplicantsError] = useState('')
     const [applicantsSearch, setApplicantsSearch] = useState('')
     const [applicantsPage, setApplicantsPage] = useState(1)
+    const [selectedApplicant, setSelectedApplicant] = useState<AdminCandidate | null>(null)
+    const [applicantProfileLoading, setApplicantProfileLoading] = useState<number | null>(null)
+    const [applicantProfileError, setApplicantProfileError] = useState('')
     const [loadError, setLoadError] = useState('')
     const [areasCatalog, setAreasCatalog] = useState<Array<{id:number;nome:string}>>([])
     const [skillsCatalog, setSkillsCatalog] = useState<Array<{id:number;nome:string}>>([])
@@ -168,6 +174,8 @@ function AdminJobsPage() {
     }
     const openApplicants = async (job: AdminJob) => {
         setApplicantsJob(job)
+        setSelectedApplicant(null)
+        setApplicantProfileError('')
         setApplicants([])
         setApplicantsError('')
         setApplicantsSearch('')
@@ -176,6 +184,35 @@ function AdminJobsPage() {
         try { setApplicants(await api<Array<Record<string, any>>>(`/candidaturas/vaga/${job.id}`)) }
         catch (reason) { setApplicantsError(reason instanceof Error ? reason.message : 'Não foi possível carregar os inscritos.') }
         finally { setApplicantsLoading(false) }
+    }
+    const openApplicantProfile = async (applicationId: number) => {
+        if (applicantProfileLoading !== null) return
+        setApplicantProfileLoading(applicationId)
+        setApplicantProfileError('')
+        try {
+            // A listagem de uma vaga fornece apenas dados resumidos. A relação
+            // administrativa de candidaturas contém o perfil necessário ao modal.
+            const records = await api<Array<Record<string, any>>>('/candidaturas')
+            const record = records.find(item => Number(item.candidatura_id) === applicationId)
+            if (!record || Number(record.vaga_id) !== Number(applicantsJob?.id)) {
+                throw new Error('Não foi possível localizar o perfil desta candidatura.')
+            }
+            setSelectedApplicant(mapApiCandidate(await hydrateCandidateFiles(record)))
+        } catch (reason) {
+            setApplicantProfileError(reason instanceof Error ? reason.message : 'Não foi possível abrir o perfil do candidato.')
+        } finally {
+            setApplicantProfileLoading(null)
+        }
+    }
+    const updateApplicant = async (candidate: AdminCandidate) => {
+        await api(`/candidaturas/atualizar-status/${candidate.application.id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status: candidate.application.status, favorito: candidate.application.favorite }),
+        })
+        setSelectedApplicant(candidate)
+        setApplicants(current => current.map(item => Number(item.candidatura_id) === candidate.application.id
+            ? { ...item, candidatura_status: candidate.application.status, favorito: candidate.application.favorite }
+            : item))
     }
     const matchingApplicants = useMemo(() => {
         const term = normalizeApplicantSearch(applicantsSearch.trim())
@@ -352,12 +389,19 @@ function AdminJobsPage() {
                             </label>
                             {!applicantsLoading && !applicantsError && <p aria-live="polite">{matchingApplicants.length} {matchingApplicants.length === 1 ? 'candidato encontrado' : 'candidatos encontrados'}</p>}
                         </div>
+                        {applicantProfileError && <p className="admin-applicants-error" role="alert">{applicantProfileError}</p>}
                         <div className="admin-applicants-list">
                             {applicantsLoading ? <p role="status">Carregando inscritos...</p> : applicantsError ? <p role="alert" className="admin-applicants-error">{applicantsError}</p> : (
                                 <>
                                     {visibleApplicants.map(item => <article key={item.candidatura_id}>
-                                        <div><strong>{item.candidato_nome}</strong><span>{item.candidato_email}</span></div>
-                                        <div><strong>{item.candidatura_status}</strong><span>{item.data_inscricao ? new Date(item.data_inscricao).toLocaleDateString('pt-BR') : ''}</span></div>
+                                        <button className="admin-applicants-profile" type="button"
+                                            disabled={applicantProfileLoading !== null}
+                                            onClick={() => void openApplicantProfile(Number(item.candidatura_id))}
+                                            aria-label={`Visualizar perfil de ${item.candidato_nome}`}>
+                                            <span><strong>{item.candidato_nome}</strong><small>{item.candidato_email}</small></span>
+                                            <span className="admin-applicants-profile__metadata"><strong>{item.candidatura_status}</strong><small>{item.data_inscricao ? new Date(item.data_inscricao).toLocaleDateString('pt-BR') : ''}</small></span>
+                                            <span className="admin-applicants-profile__action">{applicantProfileLoading === Number(item.candidatura_id) ? 'Carregando...' : 'Ver perfil →'}</span>
+                                        </button>
                                     </article>)}
                                     {!matchingApplicants.length && <p>{applicantsSearch ? 'Nenhum candidato corresponde à pesquisa.' : 'Nenhum candidato inscrito nesta vaga.'}</p>}
                                 </>
@@ -376,6 +420,11 @@ function AdminJobsPage() {
                     </section>
                 </div>
             )}
+            {selectedApplicant && <CandidateDetailsModal
+                candidate={selectedApplicant}
+                onChange={updateApplicant}
+                onClose={() => setSelectedApplicant(null)}
+            />}
             <ConfirmModal
                 isOpen={Boolean(deletingJob)}
                 title="Excluir vaga?"
